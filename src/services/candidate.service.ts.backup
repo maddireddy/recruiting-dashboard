@@ -1,0 +1,78 @@
+import api from './api';
+
+export const candidateService = {
+  // Get all candidates with pagination
+  getAll: async (page = 0, size = 10) => {
+    console.debug('[CandidateService] Getting all candidates', { page, size });
+    const response = await api.get(`/candidates?page=${page}&size=${size}`);
+    console.debug('[CandidateService] Get all response:', response);
+    return response;
+  },
+  
+  // Get single candidate
+  getById: async (id: string) => {
+    console.debug('[CandidateService] Getting candidate by ID', { id });
+    const response = await api.get(`/candidates/${id}`);
+    console.debug('[CandidateService] Get by ID response:', response);
+    return response;
+  },
+  
+  // Create new candidate
+  create: async (data: unknown) => {
+    console.debug('[CandidateService] Creating candidate', { data });
+    const response = await api.post('/candidates', data);
+    console.debug('[CandidateService] Create response:', response);
+    return response;
+  },
+  
+  // Update candidate
+  update: async (id: string, data: unknown) => {
+    console.debug('[CandidateService] Updating candidate', { id, data });
+    const response = await api.put(`/candidates/${id}`, data);
+    console.debug('[CandidateService] Update response:', response);
+    return response;
+  },
+  
+  // Delete candidate
+  delete: async (id: string) => {
+    console.debug('[CandidateService] Deleting candidate', { id });
+    const response = await api.delete(`/candidates/${id}`);
+    console.debug('[CandidateService] Delete response:', response);
+    return response;
+  },
+  
+  // Generic search and filter
+  search: async (params: Record<string, any>) => {
+    console.debug('[CandidateService] Searching candidates', params);
+    const queryParams = new URLSearchParams();
+    // Map all params to query string
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        if (Array.isArray(value)) {
+          queryParams.set(key, value.join(','));
+        } else {
+          queryParams.set(key, value);
+        }
+      }
+    });
+    // Use /search/skills for skills, otherwise /search for generic
+    if (params.skills) {
+      const response = await api.get(`/candidates/search/skills?${queryParams.toString()}`);
+      console.debug('[CandidateService] Skills search response:', response);
+      return response;
+    }
+    if (params.q) {
+      const response = await api.get(`/candidates/search?${queryParams.toString()}`);
+      console.debug('[CandidateService] Generic search response:', response);
+      return response;
+    }
+    // Fallback to /candidates for no search
+    const response = await api.get(`/candidates?${queryParams.toString()}`);
+    console.debug('[CandidateService] Fallback response:', response);
+    return response;
+  },
+  
+  // Get stats
+  getStats: () => 
+    api.get('/candidates/stats'),
+};
