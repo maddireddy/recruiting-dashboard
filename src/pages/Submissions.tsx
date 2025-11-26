@@ -3,7 +3,8 @@ import { submissionService } from '../services/submission.service';
 import SubmissionModal from '../components/submissions/SubmissionModal';
 import type { Submission } from '../types/submission';
 import { useState } from 'react';
-import { Plus, Briefcase, User, Calendar, DollarSign } from 'lucide-react';
+import { Plus, Briefcase, User, Calendar, DollarSign, Download } from 'lucide-react';
+import { reportService } from '../services/report.service';
 
 const STATUS_COLORS = {
   SUBMITTED: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
@@ -62,27 +63,38 @@ export default function SubmissionsPage() {
           <h1 className="text-2xl font-bold">Submissions</h1>
           <p className="text-dark-600">Track candidate submissions to jobs</p>
         </div>
-        <button
-          onClick={() => {
-            // Prefetch candidates and jobs to speed up modal open
-            queryClient.prefetchQuery({
-              queryKey: ['candidates'],
-              queryFn: () => import('../services/candidate.service').then(m => m.candidateService.getAll(0, 1000)).then(r => r.data.content || []),
-              staleTime: 60_000,
-            });
-            queryClient.prefetchQuery({
-              queryKey: ['jobs'],
-              queryFn: () => import('../services/job.service').then(m => m.jobService.getAll(0, 1000)).then(r => r.data.content || []),
-              staleTime: 60_000,
-            });
-            setSelectedSubmission(null);
-            setShowModal(true);
-          }}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 rounded transition"
-        >
-          <Plus size={18} />
-          Add Submission
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              // Prefetch candidates and jobs to speed up modal open
+              queryClient.prefetchQuery({
+                queryKey: ['candidates'],
+                queryFn: () => import('../services/candidate.service').then(m => m.candidateService.getAll(0, 1000)).then(r => r.data.content || []),
+                staleTime: 60_000,
+              });
+              queryClient.prefetchQuery({
+                queryKey: ['jobs'],
+                queryFn: () => import('../services/job.service').then(m => m.jobService.getAll(0, 1000)).then(r => r.data.content || []),
+                staleTime: 60_000,
+              });
+              setSelectedSubmission(null);
+              setShowModal(true);
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 rounded transition"
+          >
+            <Plus size={18} />
+            Add Submission
+          </button>
+
+          <button
+            onClick={() => reportService.exportSubmissionsCSV()}
+            title="Export submissions CSV"
+            className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 rounded transition"
+          >
+            <Download size={18} />
+            Export CSV
+          </button>
+        </div>
       </div>
 
       {submissionsQuery.isLoading && <p>Loading submissions...</p>}
@@ -174,3 +186,5 @@ export default function SubmissionsPage() {
     </div>
   );
 }
+
+// (export button integrated into header above)

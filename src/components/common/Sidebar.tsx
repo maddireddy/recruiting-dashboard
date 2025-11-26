@@ -12,6 +12,7 @@ const menuItems = [
   { path: '/documents', icon: FileText, label: 'Documents' },
   { path: '/email-templates', icon: Mail, label: 'Email Templates' },
   { path: '/email-logs', icon: FileText, label: 'Email Logs' },
+  { path: '/reports', icon: FileText, label: 'Reports' }
 ];
 
 export default function Sidebar() {

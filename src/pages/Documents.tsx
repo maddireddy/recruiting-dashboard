@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { documentService } from '../services/document.service';
 import DocumentUploadModal from '../components/documents/DocumentUploadModal';
+import toast from 'react-hot-toast';
 import { Plus, FileText, Download, Trash2 } from 'lucide-react';
 import type { Document } from '../types/document';
 
@@ -40,6 +41,7 @@ export default function DocumentsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['documents'] });
       setShowUploadModal(false);
+      toast.success('Document uploaded');
     }
   });
 
@@ -47,6 +49,14 @@ export default function DocumentsPage() {
     mutationFn: (id: string) => documentService.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['documents'] })
   });
+
+  // notify on delete result
+  const handleDelete = (id: string) => {
+    deleteDocument.mutate(id, {
+      onSuccess: () => toast.success('Document deleted'),
+      onError: (err: any) => toast.error(err?.message || 'Failed to delete document')
+    });
+  };
 
   return (
     <div className="p-6">
@@ -125,7 +135,7 @@ export default function DocumentsPage() {
                 <button
                   onClick={() => {
                     if (confirm('Delete this document?')) {
-                      deleteDocument.mutate(doc.id!);
+                      handleDelete(doc.id!);
                     }
                   }}
                   className="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded transition"

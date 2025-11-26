@@ -1,7 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { documentService } from '../../services/document.service';
 import type { Document } from '../../types/document';
 import { FileText, Download, Trash2 } from 'lucide-react';
+import DocumentPreview from './DocumentPreview';
 
 interface Props {
   entityType: string;
@@ -31,6 +33,7 @@ const formatFileSize = (bytes: number) => {
 
 export default function DocumentList({ entityType, entityId }: Props) {
   const queryClient = useQueryClient();
+  const [previewDoc, setPreviewDoc] = useState<Document | null>(null);
 
   const documentsQuery = useQuery({
     queryKey: ['documents', entityType, entityId],
@@ -93,9 +96,21 @@ export default function DocumentList({ entityType, entityId }: Props) {
               <Download size={16} />
             </button>
             <button
+              onClick={() => setPreviewDoc(doc)}
+              className="p-2 bg-dark-200/20 hover:bg-dark-200/30 text-dark-600 rounded transition"
+              title="Preview"
+            >
+              👁️
+            </button>
+            <button
               onClick={() => {
                 if (confirm('Delete this document?')) {
-                  deleteDocument.mutate(doc.id!);
+                  deleteDocument.mutate(doc.id!, {
+                    onSuccess: () => {
+                      // notify parent via invalidation already handled
+                    },
+                    onError: (err: any) => alert(err?.message || 'Failed to delete document')
+                  });
                 }
               }}
               className="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded transition"
@@ -106,6 +121,15 @@ export default function DocumentList({ entityType, entityId }: Props) {
           </div>
         </div>
       ))}
+      {previewDoc && (
+        <DocumentPreview
+          id={previewDoc.id!}
+          fileType={previewDoc.fileType}
+          fileName={previewDoc.originalFileName}
+          onClose={() => setPreviewDoc(null)}
+        />
+      )}
     </div>
   );
 }
+

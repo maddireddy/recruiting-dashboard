@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { emailService } from '../services/email.service';
 import type { EmailLog } from '../types/email';
 import { Mail, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { useState } from 'react';
+import EmailLogModal from '../components/email/EmailLogModal';
 
 const STATUS_COLORS = {
   SENT: 'bg-green-500/20 text-green-400 border-green-500/30',
@@ -29,6 +31,8 @@ export default function EmailLogsPage() {
     queryKey: ['email-stats'],
     queryFn: () => emailService.getEmailStats().then(r => r.data)
   });
+
+  const [selectedLog, setSelectedLog] = useState<EmailLog | null>(null);
 
   return (
     <div className="p-6">
@@ -114,7 +118,7 @@ export default function EmailLogsPage() {
               </thead>
               <tbody className="divide-y divide-dark-300">
                 {logsQuery.data.map((log: EmailLog) => (
-                  <tr key={log.id} className="hover:bg-dark-200/50 transition-colors">
+                  <tr key={log.id} className="hover:bg-dark-200/50 transition-colors cursor-pointer" onClick={() => setSelectedLog(log)}>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <Mail size={16} className="text-dark-600" />
@@ -151,6 +155,10 @@ export default function EmailLogsPage() {
             </table>
           </div>
         </div>
+      )}
+
+      {selectedLog && (
+        <EmailLogModal log={selectedLog} onClose={() => setSelectedLog(null)} />
       )}
     </div>
   );

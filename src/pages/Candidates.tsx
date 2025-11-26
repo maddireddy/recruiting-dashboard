@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Download } from 'lucide-react';
+import { reportService } from '../services/report.service';
 import toast from 'react-hot-toast';
 import type { Candidate } from '../types';
 import CandidateTable from '../components/candidates/CandidateTable';
@@ -357,10 +358,19 @@ export default function Candidates() {
           <h1 className="text-3xl font-bold">Candidates</h1>
           <p className="text-dark-600 mt-1">Manage your candidate database</p>
         </div>
-        <button onClick={handleAddNew} className="btn-primary flex items-center gap-2">
-          <Plus size={20} />
-          Add Candidate
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={handleAddNew} className="btn-primary flex items-center gap-2">
+            <Plus size={20} />
+            Add Candidate
+          </button>
+          <button
+            onClick={() => reportService.exportCandidatesCSV()}
+            className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 rounded transition"
+          >
+            <Download size={18} />
+            Export CSV
+          </button>
+        </div>
       </div>
 
       <div className="card">
@@ -525,3 +535,5 @@ export default function Candidates() {
     </div>
   );
 }
+
+// (export button integrated into header above)

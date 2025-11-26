@@ -18,7 +18,14 @@ export default function EmailTemplatesPage() {
 
   const deleteTemplate = useMutation({
     mutationFn: (id: string) => emailService.deleteTemplate(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['email-templates'] })
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['email-templates'] });
+    },
+    onError: (err: any) => {
+      // show toast on error
+      // import react-hot-toast dynamically to avoid adding top-level import here
+      import('react-hot-toast').then(mod => mod.default.error(err?.message || 'Failed to delete template'));
+    }
   });
 
   return (

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Suspense, lazy } from 'react';
+import ErrorBoundary from './components/common/ErrorBoundary';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './store/authStore';
@@ -7,6 +8,7 @@ import ClientsPage from './pages/Clients';
 import InterviewsPage from './pages/Interviews';
 import EmailTemplatesPage from './pages/EmailTemplates';
 import EmailLogsPage from './pages/EmailLogs';
+import ReportsPage from './pages/Reports';
 const DocumentsPage = lazy(() => import('./pages/Documents'));
 
 // Layouts
@@ -62,8 +64,9 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <Suspense fallback={<div className="p-6">Loading...</div>}>
-          <Routes>
+        <ErrorBoundary>
+          <Suspense fallback={<div className="p-6">Loading...</div>}>
+            <Routes>
             {/* Public Routes */}
             <Route element={<AuthLayout />}>
               <Route path="/login" element={<Login />} />
@@ -87,13 +90,15 @@ function App() {
               <Route path="/interviews" element={<InterviewsPage />} />
               <Route path="/documents" element={<DocumentsPage />} />
               <Route path="/email-templates" element={<EmailTemplatesPage />} />
-              <Route path="/email-logs" element={<EmailLogsPage />} />
+              <Route path="/email-logs" element={<EmailLogsPage />}/>
+              <Route path="/reports" element={<ReportsPage />} />
             </Route>
 
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Suspense>
+            </Routes>
+          </Suspense>
+        </ErrorBoundary>
       </BrowserRouter>
       <ReactQueryDevtoolsBridge />
       <Toaster position="top-right" />

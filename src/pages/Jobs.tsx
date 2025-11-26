@@ -4,7 +4,8 @@ import { Suspense, lazy, useMemo, useState, useEffect } from 'react';
 const KanbanBoard = lazy(() => import('../components/jobs/KanbanBoard'));
 const JobModal = lazy(() => import('../components/jobs/JobModal'));
 import type { Job, JobStatus } from '../types/job';
-import { Plus, Filter } from 'lucide-react';
+import { Plus, Filter, Download } from 'lucide-react';
+import { reportService } from '../services/report.service';
 import toast from 'react-hot-toast';
 import { useSearchParams } from 'react-router-dom';
 import JobFiltersSidebar, { type JobFilters } from '../components/jobs/JobFiltersSidebar';
@@ -236,6 +237,13 @@ export default function JobsPage() {
             <Plus size={18} />
             Add Job
           </button>
+          <button
+            onClick={() => reportService.exportJobsCSV()}
+            className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 rounded transition"
+          >
+            <Download size={18} />
+            Export CSV
+          </button>
         </div>
       </div>
 
@@ -302,3 +310,5 @@ export default function JobsPage() {
     </div>
   );
 }
+
+// (export button integrated into header above)
