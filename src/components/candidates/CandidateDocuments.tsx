@@ -22,17 +22,20 @@ export default function CandidateDocuments({ candidateId }: Props) {
   });
 
   return (
-    <div className="bg-dark-100 rounded-lg border border-dark-200 p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold">Documents</h3>
+    <section className="card space-y-4">
+      <header className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-[rgb(var(--app-text-primary))]">Documents</h3>
+          <p className="text-sm text-muted">Store resumes, work samples, and compliance paperwork.</p>
+        </div>
         <button
           onClick={() => setShowUploadModal(true)}
-          className="flex items-center gap-1 text-sm px-3 py-1 bg-primary-500 hover:bg-primary-600 rounded transition"
+          className="btn-primary inline-flex items-center gap-2 px-3 py-1.5 text-sm"
         >
           <Plus size={16} />
           Upload
         </button>
-      </div>
+      </header>
 
       <DocumentList entityType="CANDIDATE" entityId={candidateId} />
 
@@ -44,6 +47,6 @@ export default function CandidateDocuments({ candidateId }: Props) {
           onClose={() => setShowUploadModal(false)}
         />
       )}
-    </div>
+    </section>
   );
 }

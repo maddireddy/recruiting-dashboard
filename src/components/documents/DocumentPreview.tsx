@@ -37,26 +37,31 @@ export default function DocumentPreview({ id, fileType, fileName, onClose }: Pro
   }, [id]);
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="bg-dark-100 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-dark-200">
-          <h2 className="text-lg font-bold">Preview - {fileName || 'Document'}</h2>
-          <button onClick={onClose} className="p-2 hover:bg-dark-200 rounded">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4">
+      <div className="w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-2xl border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface))] shadow-2xl">
+        <div className="flex items-center justify-between border-b border-[rgba(var(--app-border-subtle))] px-6 py-4">
+          <div>
+            <h2 className="text-lg font-semibold text-[rgb(var(--app-text-primary))]">Preview</h2>
+            <p className="text-xs uppercase tracking-[0.18em] text-muted">{fileName || 'Document'}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="rounded-full border border-transparent p-2 text-[rgb(var(--app-text-secondary))] transition hover:border-[rgba(var(--app-primary-from),0.4)] hover:text-[rgb(var(--app-primary-from))]"
+          >
             <X size={18} />
           </button>
         </div>
-        <div className="p-4">
-          {loading && <p className="text-sm text-dark-600">Loading preview...</p>}
-          {error && <p className="text-sm text-red-500">{error}</p>}
+        <div className="bg-[rgb(var(--app-surface-muted))] p-4">
+          {loading && <p className="text-sm text-muted">Loading preview…</p>}
+          {error && <p className="text-sm text-red-400">{error}</p>}
           {!loading && !error && url && (
-            <div className="w-full h-[80vh]">
+            <div className="h-[80vh] w-full overflow-auto rounded-xl border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface))]">
               {fileType && fileType.toLowerCase().includes('image') ? (
-                <img src={url} alt={fileName} className="max-w-full max-h-full mx-auto block" />
+                <img src={url} alt={fileName} className="mx-auto block max-h-full max-w-full" />
               ) : fileType && fileType.toLowerCase().includes('pdf') ? (
-                <iframe src={url} title={fileName} className="w-full h-full border-0" />
+                <iframe src={url} title={fileName} className="h-full w-full border-0" />
               ) : (
-                // Fallback to iframe for other types
-                <iframe src={url} title={fileName} className="w-full h-full border-0" />
+                <iframe src={url} title={fileName} className="h-full w-full border-0" />
               )}
             </div>
           )}

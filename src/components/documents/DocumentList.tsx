@@ -47,13 +47,16 @@ export default function DocumentList({ entityType, entityId }: Props) {
     }
   });
 
-  if (documentsQuery.isLoading) return <p className="text-sm text-dark-600">Loading documents...</p>;
-  if (documentsQuery.error) return <p className="text-sm text-red-500">Error loading documents</p>;
+  if (documentsQuery.isLoading) return <p className="text-sm text-muted">Loading documents…</p>;
+  if (documentsQuery.error) return <p className="text-sm text-red-400">Error loading documents</p>;
   if (!documentsQuery.data || documentsQuery.data.length === 0) {
     return (
-      <div className="text-center py-8 bg-dark-200 rounded border border-dark-300">
-        <FileText size={32} className="mx-auto mb-2 text-dark-600" />
-        <p className="text-sm text-dark-600">No documents uploaded yet</p>
+      <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] px-6 py-10 text-center">
+        <FileText size={32} className="text-muted" />
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-[rgb(var(--app-text-primary))]">No documents yet</p>
+          <p className="text-xs text-muted">Upload resumes, compliance packets, and samples to keep this profile complete.</p>
+        </div>
       </div>
     );
   }
@@ -63,13 +66,13 @@ export default function DocumentList({ entityType, entityId }: Props) {
       {documentsQuery.data.map((doc: Document) => (
         <div
           key={doc.id}
-          className="flex items-center justify-between p-3 bg-dark-200 rounded border border-dark-300 hover:border-primary-500 transition-colors"
+          className="flex items-center justify-between gap-4 rounded-xl border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] px-4 py-3 transition hover:border-[rgba(var(--app-primary-from),0.45)]"
         >
           <div className="flex items-center gap-3 flex-1">
             <span className="text-2xl">{getFileIcon(doc.fileType)}</span>
             <div className="flex-1 min-w-0">
-              <p className="font-medium truncate">{doc.originalFileName}</p>
-              <div className="flex items-center gap-3 text-xs text-dark-600">
+              <p className="truncate font-medium text-[rgb(var(--app-text-primary))]">{doc.originalFileName}</p>
+              <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
                 <span>{doc.documentType.replace('_', ' ')}</span>
                 <span>•</span>
                 <span>{formatFileSize(doc.fileSize)}</span>
@@ -79,7 +82,7 @@ export default function DocumentList({ entityType, entityId }: Props) {
               {doc.tags && doc.tags.length > 0 && (
                 <div className="flex gap-1 mt-1">
                   {doc.tags.map(tag => (
-                    <span key={tag} className="px-2 py-0.5 bg-primary-500/20 text-primary-400 text-xs rounded">
+                    <span key={tag} className="rounded-full border border-[rgba(var(--app-primary-from),0.4)] bg-[rgba(var(--app-primary-from),0.08)] px-2 py-0.5 text-xs font-medium text-[rgb(var(--app-primary-from))]">
                       {tag}
                     </span>
                   ))}
@@ -90,14 +93,14 @@ export default function DocumentList({ entityType, entityId }: Props) {
           <div className="flex gap-2">
             <button
               onClick={() => documentService.download(doc.id!)}
-              className="p-2 bg-primary-500/20 hover:bg-primary-500/30 text-primary-400 rounded transition"
+              className="rounded-lg border border-transparent bg-[rgba(var(--app-primary-from),0.12)] p-2 text-[rgb(var(--app-primary-from))] transition hover:border-[rgba(var(--app-primary-from),0.45)] hover:bg-[rgba(var(--app-primary-from),0.18)]"
               title="Download"
             >
               <Download size={16} />
             </button>
             <button
               onClick={() => setPreviewDoc(doc)}
-              className="p-2 bg-dark-200/20 hover:bg-dark-200/30 text-dark-600 rounded transition"
+              className="rounded-lg border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface))] p-2 text-[rgb(var(--app-text-secondary))] transition hover:border-[rgba(var(--app-primary-from),0.4)] hover:text-[rgb(var(--app-primary-from))]"
               title="Preview"
             >
               👁️
@@ -116,7 +119,7 @@ export default function DocumentList({ entityType, entityId }: Props) {
                   });
                 }
               }}
-              className="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded transition"
+              className="rounded-lg border border-transparent bg-rose-500/15 p-2 text-rose-400 transition hover:border-rose-400/50 hover:bg-rose-500/25"
               title="Delete"
             >
               <Trash2 size={16} />

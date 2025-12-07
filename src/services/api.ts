@@ -116,6 +116,7 @@ api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('accessToken') || '';
     const tenantId = localStorage.getItem('tenantId') || '';
+    const userId = localStorage.getItem('userId') || '';
 
     // Always attach tenant header if present (even for auth endpoints)
     const headers = ensureHeaders(config.headers);
@@ -123,6 +124,11 @@ api.interceptors.request.use(
     if (tenantId) {
       headers.set('X-Tenant-Id', tenantId);
       headers.set('X-Tenant-ID', tenantId);
+    }
+
+    if (userId) {
+      headers.set('X-User-Id', userId);
+      headers.set('X-User-ID', userId);
     }
 
     // Attach Authorization for non-auth endpoints only when token is present
@@ -141,7 +147,11 @@ api.interceptors.request.use(
     if (import.meta.env.DEV) {
       try {
         const snapshot = headers.toJSON() as Record<string, string>;
-        if (snapshot.Authorization) snapshot.Authorization = 'Bearer ***';
+  if (snapshot.Authorization) snapshot.Authorization = 'Bearer ***';
+  if (snapshot['X-Tenant-Id']) snapshot['X-Tenant-Id'] = '***';
+  if (snapshot['X-Tenant-ID']) snapshot['X-Tenant-ID'] = '***';
+        if (snapshot['X-User-Id']) snapshot['X-User-Id'] = '***';
+        if (snapshot['X-User-ID']) snapshot['X-User-ID'] = '***';
         console.debug('[api][request]', {
           method: config.method,
           url: config.url,

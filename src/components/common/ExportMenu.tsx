@@ -2,7 +2,7 @@ import { Fragment, type ComponentType } from 'react';
 import { Menu, Transition } from '@headlessui/react';
 import { Download, FileSpreadsheet, Users, Briefcase, Send, FileText } from 'lucide-react';
 import { reportService } from '../../services/report.service';
-import { proCandidateExportService } from '../../services/proCandidateExport.service';
+import { portfolioExportService } from '../../services/proCandidateExport.service';
 import toast from 'react-hot-toast';
 
 type ExportOption = {
@@ -19,7 +19,21 @@ const exportOptions: ExportOption[] = [
     label: 'Candidates Portfolio (PDF)',
     description: 'Presentation-ready talent brief matching your app aesthetic',
     icon: Users,
-    action: () => proCandidateExportService.exportPortfolio(),
+    action: () => portfolioExportService.exportCandidatesPortfolio(),
+  },
+  {
+    id: 'jobs-portfolio',
+    label: 'Jobs Portfolio (PDF)',
+    description: 'Executive summary of active requisitions and pipeline health',
+    icon: Briefcase,
+    action: () => portfolioExportService.exportJobsPortfolio(),
+  },
+  {
+    id: 'submissions-portfolio',
+    label: 'Submissions Portfolio (PDF)',
+    description: 'Showcase pipeline momentum from submission to offer',
+    icon: Send,
+    action: () => portfolioExportService.exportSubmissionsPortfolio(),
   },
   {
     id: 'candidates',

@@ -1,7 +1,11 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { candidateService } from './candidate.service';
+import { jobService } from './job.service';
+import { submissionService } from './submission.service';
 import type { Candidate } from '../types/candidate';
+import type { Job } from '../types/job';
+import type { Submission } from '../types/submission';
 
 const primaryPalette = {
   emerald: [16, 185, 129] as [number, number, number],
@@ -22,11 +26,51 @@ type FrequencyMap = Record<string, number>;
 
 const safeString = (value?: string | null) => (value && value.trim().length ? value.trim() : '—');
 
+const formatDate = (value?: string | null, options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' }) => {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+  return new Intl.DateTimeFormat('en-US', options).format(date);
+};
+
 const formatExperience = (value?: number | null) => {
   if (value === undefined || value === null || Number.isNaN(value)) return 'N/A';
   if (value === 0) return 'New Grad';
   if (value < 1) return `${(value * 12).toFixed(0)} mo`;
   return `${Number(value).toFixed(1).replace(/\.0$/, '')} yrs`;
+};
+
+const formatExperienceRange = (min?: number | null, max?: number | null) => {
+  const hasMin = typeof min === 'number' && !Number.isNaN(min);
+  const hasMax = typeof max === 'number' && !Number.isNaN(max);
+  if (!hasMin && !hasMax) return '—';
+  if (hasMin && hasMax) {
+    return `${formatExperience(min)} – ${formatExperience(max)}`;
+  }
+  if (hasMin) return `From ${formatExperience(min)}`;
+  return `Up to ${formatExperience(max)}`;
+};
+
+const formatCurrency = (amount?: number | null, currency = 'USD', maximumFractionDigits = 0) => {
+  if (typeof amount !== 'number' || Number.isNaN(amount)) return '—';
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits }).format(amount);
+};
+
+const formatRateRange = (min?: number | null, max?: number | null, currency?: string | null) => {
+  const hasMin = typeof min === 'number' && !Number.isNaN(min);
+  const hasMax = typeof max === 'number' && !Number.isNaN(max);
+  const resolvedCurrency = currency ?? 'USD';
+  if (!hasMin && !hasMax) return '—';
+  if (hasMin && hasMax) {
+    return `${formatCurrency(min, resolvedCurrency)} – ${formatCurrency(max, resolvedCurrency)}`;
+  }
+  if (hasMin) return `From ${formatCurrency(min, resolvedCurrency)}`;
+  return `Up to ${formatCurrency(max, resolvedCurrency)}`;
+};
+
+const formatPercentage = (portion: number, total: number) => {
+  if (!total) return '0%';
+  return `${Math.round((portion / total) * 100)}%`;
 };
 
 const formatAvailability = (candidate: Candidate) => {
@@ -60,7 +104,7 @@ const formatLocation = (candidate: Candidate) => {
   return '—';
 };
 
-const statusPalette = (status: string | null | undefined): { fill: [number, number, number]; text: [number, number, number] } => {
+const candidateStatusPalette = (status: string | null | undefined): { fill: [number, number, number]; text: [number, number, number] } => {
   const normalized = status?.toLowerCase() ?? '';
   if (normalized.includes('placed') || normalized.includes('offer')) {
     return { fill: [236, 253, 245], text: primaryPalette.emeraldDeep };
@@ -181,9 +225,394 @@ const fetchAllCandidates = async () => {
   return aggregated;
 };
 
-const drawHeroHeader = (doc: jsPDF, generatedOn: string, totalCandidates: number) => {
+const fetchAllJobs = async () => {
+  const pageSize = 150;
+  let page = 0;
+  let totalPages = 1;
+  const aggregated: Job[] = [];
+
+  while (page < totalPages) {
+  const response = await jobService.getAll(page, pageSize);
+  const data = response.data as { content?: Job[]; totalPages?: number; totalElements?: number };
+  const { content = [], totalPages: remoteTotalPages, totalElements } = data;
+    aggregated.push(...((content ?? []) as Job[]));
+
+    if (remoteTotalPages !== undefined && remoteTotalPages !== null) {
+      totalPages = remoteTotalPages;
+    } else if ((content ?? []).length < pageSize) {
+      totalPages = page + 1;
+    } else if (totalElements !== undefined && totalElements !== null) {
+      totalPages = Math.ceil(totalElements / pageSize);
+    } else {
+      totalPages += 1;
+    }
+
+    page += 1;
+    if (page >= 12) break;
+  }
+
+  return aggregated;
+};
+
+const fetchAllSubmissions = async () => {
+  const pageSize = 150;
+  let page = 0;
+  let totalPages = 1;
+  const aggregated: Submission[] = [];
+
+  while (page < totalPages) {
+  const response = await submissionService.getAll(page, pageSize);
+  const data = response.data as { content?: Submission[]; totalPages?: number; totalElements?: number };
+  const { content = [], totalPages: remoteTotalPages, totalElements } = data;
+    aggregated.push(...((content ?? []) as Submission[]));
+
+    if (remoteTotalPages !== undefined && remoteTotalPages !== null) {
+      totalPages = remoteTotalPages;
+    } else if ((content ?? []).length < pageSize) {
+      totalPages = page + 1;
+    } else if (totalElements !== undefined && totalElements !== null) {
+      totalPages = Math.ceil(totalElements / pageSize);
+    } else {
+      totalPages += 1;
+    }
+
+    page += 1;
+    if (page >= 12) break;
+  }
+
+  return aggregated;
+};
+
+const jobStatusPalette = (status: Job['status']): { fill: [number, number, number]; text: [number, number, number] } => {
+  switch (status) {
+    case 'OPEN':
+      return { fill: [236, 253, 245], text: primaryPalette.emeraldDeep };
+    case 'IN_PROGRESS':
+      return { fill: [239, 246, 255], text: [37, 99, 235] };
+    case 'INTERVIEW':
+      return { fill: [240, 249, 255], text: [30, 64, 175] };
+    case 'OFFERED':
+      return { fill: [255, 251, 235], text: [180, 83, 9] };
+    case 'CLOSED':
+    default:
+      return { fill: [248, 250, 252], text: primaryPalette.slateSecondary };
+  }
+};
+
+const submissionStatusPalette = (status: Submission['status']): { fill: [number, number, number]; text: [number, number, number] } => {
+  switch (status) {
+    case 'SUBMITTED':
+      return { fill: [239, 246, 255], text: [37, 99, 235] };
+    case 'SHORTLISTED':
+      return { fill: [237, 233, 254], text: [79, 70, 229] };
+    case 'INTERVIEW_SCHEDULED':
+      return { fill: [240, 249, 255], text: [30, 64, 175] };
+    case 'INTERVIEWED':
+      return { fill: [236, 252, 255], text: [12, 74, 110] };
+    case 'OFFERED':
+      return { fill: [236, 253, 245], text: primaryPalette.emeraldDeep };
+    case 'REJECTED':
+      return { fill: [254, 242, 242], text: [225, 29, 72] };
+    case 'WITHDRAWN':
+    default:
+      return { fill: [250, 250, 250], text: [113, 113, 122] };
+  }
+};
+
+const computeJobStats = (jobs: Job[]): PipelineStat[] => {
+  const total = jobs.length;
+  const active = jobs.filter((job) => job.status !== 'CLOSED').length;
+  const closed = total - active;
+  const averageOpenings = total ? jobs.reduce((sum, job) => sum + job.openings, 0) / total : 0;
+
+  const clientFrequency: FrequencyMap = {};
+  const engagementFrequency: FrequencyMap = {};
+
+  jobs.forEach((job) => {
+    if (job.client) {
+      const key = job.client.toLowerCase();
+      clientFrequency[key] = (clientFrequency[key] ?? 0) + 1;
+    }
+    engagementFrequency[job.jobType] = (engagementFrequency[job.jobType] ?? 0) + 1;
+  });
+
+  const topClients = Object.entries(clientFrequency)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([client]) => client
+      .split(' ')
+      .map((token) => token.charAt(0).toUpperCase() + token.slice(1))
+      .join(' '))
+    .join(' • ');
+
+  const engagementMix = Object.entries(engagementFrequency)
+    .map(([type, count]) => {
+      const label = type === 'FULL_TIME' ? 'Full-Time' : type === 'CONTRACT' ? 'Contract' : 'Contract-to-Hire';
+      return `${label} ${formatPercentage(count, Math.max(total, 1))}`;
+    })
+    .join('   ');
+
+  return [
+    {
+      label: 'Active Reqs',
+      value: `${active} / ${total}`,
+      helper: `${closed} closed in backlog`,
+    },
+    {
+      label: 'Avg Openings',
+      value: averageOpenings ? averageOpenings.toFixed(1) : '0',
+      helper: 'Headcount required per requisition',
+    },
+    {
+      label: 'Top Clients',
+      value: topClients || 'Diversified footprint',
+      helper: 'Based on requisition count',
+    },
+    {
+      label: 'Engagement Mix',
+      value: engagementMix || 'Balanced spectrum',
+      helper: 'Full-time vs contract distribution',
+    },
+  ];
+};
+
+const computeSubmissionStats = (submissions: Submission[]): PipelineStat[] => {
+  const total = submissions.length;
+  const active = submissions.filter((submission) => !['REJECTED', 'WITHDRAWN'].includes(submission.status)).length;
+  const offers = submissions.filter((submission) => submission.status === 'OFFERED').length;
+  const interviews = submissions.filter((submission) => ['INTERVIEW_SCHEDULED', 'INTERVIEWED', 'OFFERED'].includes(submission.status)).length;
+
+  const rateValues = submissions.filter((submission) => typeof submission.proposedRate === 'number' && !Number.isNaN(submission.proposedRate));
+  const averageRate = rateValues.length
+    ? rateValues.reduce((sum, submission) => sum + (submission.proposedRate ?? 0), 0) / rateValues.length
+    : null;
+  const primaryCurrency = rateValues[0]?.rateCurrency ?? 'USD';
+
+  const clientFrequency: FrequencyMap = {};
+  submissions.forEach((submission) => {
+    if (submission.client) {
+      const key = submission.client.toLowerCase();
+      clientFrequency[key] = (clientFrequency[key] ?? 0) + 1;
+    }
+  });
+
+  const topClients = Object.entries(clientFrequency)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([client]) => client
+      .split(' ')
+      .map((token) => token.charAt(0).toUpperCase() + token.slice(1))
+      .join(' '))
+    .join(' • ');
+
+  return [
+    {
+      label: 'Total Submissions',
+      value: total.toString(),
+      helper: `${active} active in play`,
+    },
+    {
+      label: 'Interview Conversion',
+      value: formatPercentage(interviews, Math.max(total, 1)),
+      helper: `${interviews} progressed to interviews`,
+    },
+    {
+      label: 'Offer Rate',
+      value: formatPercentage(offers, Math.max(total, 1)),
+      helper: `${offers} offers extended`,
+    },
+    {
+      label: 'Avg Proposed Rate',
+      value: averageRate !== null ? formatCurrency(averageRate, primaryCurrency, 2) : '—',
+      helper: rateValues.length ? `Across ${rateValues.length} submissions` : undefined,
+    },
+    {
+      label: 'Top Clients',
+      value: topClients || 'Momentum building',
+      helper: 'Submission volume concentration',
+    },
+  ];
+};
+
+const buildJobTable = (doc: jsPDF, generatedOn: string, jobs: Job[], startY: number) => {
+  const marginX = 44;
+  const engagementLabels: Record<Job['jobType'], string> = {
+    FULL_TIME: 'Full-time',
+    CONTRACT: 'Contract',
+    CONTRACT_TO_HIRE: 'Contract-to-Hire',
+  };
+
+  autoTable(doc, {
+    startY,
+    margin: { left: marginX, right: marginX, top: 0, bottom: 48 },
+    head: [[
+      'Opportunity',
+      'Client',
+      'Location',
+      'Engagement',
+      'Status',
+      'Pipeline Health',
+    ]],
+    body: jobs.map((job) => {
+      const opportunityLines = [job.title];
+      const experienceRange = formatExperienceRange(job.minExperience, job.maxExperience);
+      if (experienceRange !== '—') {
+        opportunityLines.push(`Experience: ${experienceRange}`);
+      }
+      const compensation = formatRateRange(job.rateMin, job.rateMax, job.rateCurrency);
+      if (compensation !== '—') {
+        opportunityLines.push(`Rate: ${compensation}`);
+      }
+
+      const pipelineSummary = [
+        `Openings ${job.openings}`,
+        `Subm. ${job.submissionsCount}`,
+        `Interviews ${job.interviewsCount}`,
+      ].join('  •  ');
+
+      return [
+        opportunityLines.join('\n'),
+        job.client || '—',
+        job.location || '—',
+        engagementLabels[job.jobType],
+        job.status,
+        pipelineSummary,
+      ];
+    }),
+    styles: {
+      fillColor: [255, 255, 255],
+      textColor: primaryPalette.slateSecondary,
+      fontSize: 9.5,
+      cellPadding: { top: 7, bottom: 7, left: 8, right: 8 },
+      valign: 'middle',
+      halign: 'left',
+      lineColor: [229, 231, 235],
+      lineWidth: 0.4,
+    },
+    headStyles: {
+      fillColor: primaryPalette.emerald,
+      textColor: [255, 255, 255],
+      fontSize: 10.5,
+      fontStyle: 'bold',
+      halign: 'left',
+      valign: 'middle',
+      cellPadding: { top: 10, bottom: 10, left: 10, right: 10 },
+      lineWidth: 0,
+    },
+    columnStyles: {
+      3: { halign: 'center' },
+      4: { halign: 'center' },
+      5: { halign: 'center' },
+    },
+    alternateRowStyles: {
+      fillColor: [248, 250, 252],
+    },
+    didParseCell: (data) => {
+      if (data.section === 'body' && data.column.index === 4) {
+        const palette = jobStatusPalette(data.cell.raw as Job['status']);
+        data.cell.styles.fillColor = palette.fill;
+        data.cell.styles.textColor = palette.text;
+        data.cell.styles.fontStyle = 'bold';
+      }
+      if (data.section === 'body' && data.column.index === 5) {
+        data.cell.styles.textColor = primaryPalette.slatePrimary;
+        data.cell.styles.fontStyle = 'bold';
+      }
+    },
+    didDrawPage: createFooterHook(doc, generatedOn, 'Hiring Insights'),
+  });
+};
+
+const buildSubmissionTable = (doc: jsPDF, generatedOn: string, submissions: Submission[], startY: number) => {
+  const marginX = 44;
+
+  autoTable(doc, {
+    startY,
+    margin: { left: marginX, right: marginX, top: 0, bottom: 48 },
+    head: [[
+      'Candidate',
+      'Opportunity',
+      'Status',
+      'Submitted',
+      'Proposed Rate',
+      'Last Touch',
+    ]],
+    body: submissions.map((submission) => {
+      const opportunityLines = [submission.jobTitle || '—'];
+      if (submission.client) {
+        opportunityLines.push(submission.client);
+      }
+      const lastTouch = submission.interviewDate ?? submission.updatedAt ?? submission.submittedDate;
+      return [
+        submission.candidateName || '—',
+        opportunityLines.join('\n'),
+        submission.status,
+        formatDate(submission.submittedDate),
+        formatCurrency(submission.proposedRate, submission.rateCurrency ?? 'USD', 2),
+        formatDate(lastTouch, { month: 'short', day: 'numeric' }),
+      ];
+    }),
+    styles: {
+      fillColor: [255, 255, 255],
+      textColor: primaryPalette.slateSecondary,
+      fontSize: 9.5,
+      cellPadding: { top: 7, bottom: 7, left: 8, right: 8 },
+      valign: 'middle',
+      halign: 'left',
+      lineColor: [229, 231, 235],
+      lineWidth: 0.4,
+    },
+    headStyles: {
+      fillColor: primaryPalette.emerald,
+      textColor: [255, 255, 255],
+      fontSize: 10.5,
+      fontStyle: 'bold',
+      halign: 'left',
+      valign: 'middle',
+      cellPadding: { top: 10, bottom: 10, left: 10, right: 10 },
+      lineWidth: 0,
+    },
+    columnStyles: {
+      2: { halign: 'center' },
+      4: { halign: 'right' },
+      5: { halign: 'center' },
+    },
+    alternateRowStyles: {
+      fillColor: [248, 250, 252],
+    },
+    didParseCell: (data) => {
+      if (data.section === 'body' && data.column.index === 2) {
+        const palette = submissionStatusPalette(data.cell.raw as Submission['status']);
+        data.cell.styles.fillColor = palette.fill;
+        data.cell.styles.textColor = palette.text;
+        data.cell.styles.fontStyle = 'bold';
+      }
+      if (data.section === 'body' && data.column.index === 4) {
+        data.cell.styles.textColor = primaryPalette.slatePrimary;
+        data.cell.styles.fontStyle = 'bold';
+        data.cell.styles.halign = 'right';
+      }
+    },
+    didDrawPage: createFooterHook(doc, generatedOn, 'Pipeline Health'),
+  });
+};
+
+const drawHeroHeader = (
+  doc: jsPDF,
+  {
+    generatedOn,
+    title,
+    summary,
+    kicker,
+  }: {
+    generatedOn: string;
+    title: string;
+    summary: string;
+    kicker?: string;
+  },
+) => {
   const pageWidth = doc.internal.pageSize.getWidth();
-  const headerHeight = 120;
+  const headerHeight = 140;
 
   doc.setFillColor(...primaryPalette.emerald);
   doc.rect(0, 0, pageWidth, headerHeight, 'F');
@@ -194,12 +623,15 @@ const drawHeroHeader = (doc: jsPDF, generatedOn: string, totalCandidates: number
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(28);
-  doc.text('Candidate Experience Portfolio', 44, 58);
+  doc.text(title, 44, 58);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(12);
-  doc.text(`Generated ${generatedOn}`, 44, 82);
-  doc.text(`${totalCandidates} candidates curated for your talent pipeline`, 44, 100);
+  doc.text(`Generated ${generatedOn}`, 44, 86);
+  if (kicker) {
+    doc.text(kicker, 44, 104);
+  }
+  doc.text(summary, 44, kicker ? 122 : 104);
 };
 
 const drawStatsSection = (doc: jsPDF, stats: PipelineStat[], startY: number) => {
@@ -255,7 +687,28 @@ const drawStatsSection = (doc: jsPDF, stats: PipelineStat[], startY: number) => 
   }
 };
 
-const buildCandidateTable = (doc: jsPDF, candidates: Candidate[], startY: number) => {
+const createFooterHook = (doc: jsPDF, generatedOn: string, label = 'Confidential') => {
+  return (data: { settings: { margin: { left: number; right: number } } }) => {
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...primaryPalette.slateSecondary);
+    doc.setFontSize(9);
+    doc.text(
+      `${label} · ${generatedOn}`,
+      data.settings.margin.left,
+      pageHeight - 24,
+    );
+    doc.text(
+      `Page ${doc.getNumberOfPages()}`,
+      pageWidth - data.settings.margin.right,
+      pageHeight - 24,
+      { align: 'right' },
+    );
+  };
+};
+
+const buildCandidateTable = (doc: jsPDF, generatedOn: string, candidates: Candidate[], startY: number) => {
   const marginX = 44;
   const rows = candidates.map((candidate) => {
     const fullName = candidate.fullName || `${safeString(candidate.firstName)} ${safeString(candidate.lastName)}`.trim();
@@ -317,7 +770,7 @@ const buildCandidateTable = (doc: jsPDF, candidates: Candidate[], startY: number
     },
     didParseCell: (data) => {
       if (data.section === 'body' && data.column.index === 3) {
-        const palette = statusPalette(String(data.cell.raw));
+  const palette = candidateStatusPalette(String(data.cell.raw));
         data.cell.styles.fillColor = palette.fill;
         data.cell.styles.textColor = palette.text;
         data.cell.styles.fontStyle = 'bold';
@@ -328,67 +781,140 @@ const buildCandidateTable = (doc: jsPDF, candidates: Candidate[], startY: number
         data.cell.styles.fontStyle = 'bold';
       }
     },
-    didDrawPage: (data) => {
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...primaryPalette.slateSecondary);
-      doc.setFontSize(9);
-      doc.text(
-        `Confidential · ${new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date())}`,
-        data.settings.margin.left,
-        pageHeight - 24,
-      );
-      doc.text(
-        `Page ${doc.getNumberOfPages()}`,
-        pageWidth - data.settings.margin.right,
-        pageHeight - 24,
-        { align: 'right' },
-      );
-    },
+    didDrawPage: createFooterHook(doc, generatedOn, 'Confidential'),
   });
 };
 
-const buildEmptyState = (doc: jsPDF, generatedOn: string) => {
+const buildEmptyState = (
+  doc: jsPDF,
+  generatedOn: string,
+  {
+    headline,
+    body,
+  }: {
+    headline: string;
+    body: string;
+  },
+) => {
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...primaryPalette.slatePrimary);
   doc.setFontSize(20);
-  doc.text('No candidates found in your workspace yet.', 44, 180);
+  doc.text(headline, 44, 180);
 
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...primaryPalette.slateSecondary);
   doc.setFontSize(12);
-  const lines = doc.splitTextToSize(
-    'Once candidates are added to the pipeline, you can download a curated, presentation-ready portfolio outlining their strengths, availability, and current momentum.',
-    doc.internal.pageSize.getWidth() - 88,
-  );
+  const lines = doc.splitTextToSize(body, doc.internal.pageSize.getWidth() - 88);
   doc.text(lines, 44, 210);
 
   doc.text(`Generated ${generatedOn}`, 44, 260);
 };
 
+const exportCandidatesPortfolio = async () => {
+  const candidates = await fetchAllCandidates();
+  const generatedOn = new Intl.DateTimeFormat('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(new Date());
+
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+
+  drawHeroHeader(doc, {
+    generatedOn,
+    title: 'Candidate Experience Portfolio',
+    summary: `${candidates.length} candidates curated for your talent pipeline`,
+    kicker: 'Your curated talent snapshot ready for executive review',
+  });
+
+  if (candidates.length === 0) {
+    buildEmptyState(doc, generatedOn, {
+      headline: 'No candidates found in your workspace yet.',
+      body: 'Once candidates are added to the pipeline, you can download a curated, presentation-ready portfolio outlining their strengths, availability, and current momentum.',
+    });
+  } else {
+    const stats = computePipelineStats(candidates);
+    drawStatsSection(doc, stats, 160);
+    buildCandidateTable(doc, generatedOn, candidates, stats.length > 3 ? 320 : 300);
+  }
+
+  const filename = `Candidate-Portfolio-${new Date().toISOString().slice(0, 10)}.pdf`;
+  doc.save(filename);
+};
+
+const exportJobsPortfolio = async () => {
+  const jobs = await fetchAllJobs();
+  const generatedOn = new Intl.DateTimeFormat('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(new Date());
+
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+  const active = jobs.filter((job) => job.status !== 'CLOSED').length;
+  const closed = jobs.length - active;
+
+  drawHeroHeader(doc, {
+    generatedOn,
+    title: 'Strategic Requirement Portfolio',
+    summary: `${jobs.length} total requisitions • ${active} active • ${closed} closed`,
+    kicker: 'Visibility into hiring velocity and demand mix',
+  });
+
+  if (jobs.length === 0) {
+    buildEmptyState(doc, generatedOn, {
+      headline: 'No requisitions available yet.',
+      body: 'Once requisitions are created, you can download a polished PDF summarizing priority roles, engagement mix, and pipeline health for stakeholders.',
+    });
+  } else {
+    const stats = computeJobStats(jobs);
+    drawStatsSection(doc, stats, 160);
+    buildJobTable(doc, generatedOn, jobs, stats.length > 3 ? 320 : 300);
+  }
+
+  const filename = `Job-Portfolio-${new Date().toISOString().slice(0, 10)}.pdf`;
+  doc.save(filename);
+};
+
+const exportSubmissionsPortfolio = async () => {
+  const submissions = await fetchAllSubmissions();
+  const generatedOn = new Intl.DateTimeFormat('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(new Date());
+
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+  const active = submissions.filter((submission) => !['REJECTED', 'WITHDRAWN'].includes(submission.status)).length;
+
+  drawHeroHeader(doc, {
+    generatedOn,
+    title: 'Pipeline Submission Portfolio',
+    summary: `${submissions.length} submissions logged • ${active} active in play`,
+    kicker: 'Monitor conversion from submission to offer across clients',
+  });
+
+  if (submissions.length === 0) {
+    buildEmptyState(doc, generatedOn, {
+      headline: 'No submissions recorded yet.',
+      body: 'Export a portfolio once candidates are submitted to requisitions to keep hiring managers aligned on momentum and conversion.',
+    });
+  } else {
+    const stats = computeSubmissionStats(submissions);
+    drawStatsSection(doc, stats, 160);
+    buildSubmissionTable(doc, generatedOn, submissions, stats.length > 3 ? 330 : 300);
+  }
+
+  const filename = `Submission-Portfolio-${new Date().toISOString().slice(0, 10)}.pdf`;
+  doc.save(filename);
+};
+
+export const portfolioExportService = {
+  exportCandidatesPortfolio,
+  exportJobsPortfolio,
+  exportSubmissionsPortfolio,
+};
+
 export const proCandidateExportService = {
-  async exportPortfolio() {
-    const candidates = await fetchAllCandidates();
-    const generatedOn = new Intl.DateTimeFormat('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    }).format(new Date());
-
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
-
-    drawHeroHeader(doc, generatedOn, candidates.length);
-
-    if (candidates.length === 0) {
-      buildEmptyState(doc, generatedOn);
-    } else {
-      const stats = computePipelineStats(candidates);
-      drawStatsSection(doc, stats, 150);
-      buildCandidateTable(doc, candidates, stats.length > 3 ? 310 : 290);
-    }
-
-    const filename = `Candidate-Portfolio-${new Date().toISOString().slice(0, 10)}.pdf`;
-    doc.save(filename);
-  },
+  exportPortfolio: exportCandidatesPortfolio,
 };
