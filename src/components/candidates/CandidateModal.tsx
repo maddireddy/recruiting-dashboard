@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { X } from 'lucide-react';
 import type { Candidate } from '../../types';
+import { FormField } from '../common/FormField';
 
 interface Props {
   isOpen: boolean;
@@ -82,55 +83,57 @@ export default function CandidateModal({ isOpen, onClose, onSave, candidate }: P
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-dark-100 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-dark-200">
-          <h2 className="text-2xl font-bold">
-            {candidate ? 'Edit Candidate' : 'Add New Candidate'}
-          </h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6">
+      <div className="card w-full max-w-3xl max-h-[90vh] overflow-hidden p-0">
+        <div className="sticky top-0 flex items-center justify-between border-b border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface))] px-6 py-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">
+              {candidate ? 'Edit candidate' : 'Add candidate'}
+            </p>
+            <h2 className="text-xl font-semibold text-[rgb(var(--app-text-primary))]">Candidate profile</h2>
+          </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-dark-200 rounded-lg transition-colors"
+            type="button"
+            className="rounded-lg border border-transparent p-2 text-muted transition hover:border-[rgba(var(--app-border-subtle))]"
           >
             <X size={20} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">First Name</label>
-              <input type="text" {...register('firstName')} className="input" />
-              {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName.message}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Last Name</label>
-              <input type="text" {...register('lastName')} className="input" />
-              {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName.message}</p>}
-            </div>
-          </div>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="max-h-[calc(90vh-72px)] space-y-6 overflow-y-auto px-6 py-6"
+        >
+          <section className="grid gap-4 md:grid-cols-2">
+            <FormField label="First name" required error={errors.firstName?.message}>
+              <input type="text" {...register('firstName')} className="input" placeholder="Jane" />
+            </FormField>
+            <FormField label="Last name" required error={errors.lastName?.message}>
+              <input type="text" {...register('lastName')} className="input" placeholder="Doe" />
+            </FormField>
+          </section>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">Email</label>
-            <input type="email" {...register('email')} className="input" />
-            {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
-          </div>
+          <section className="grid gap-4 md:grid-cols-2">
+            <FormField label="Email" required error={errors.email?.message}>
+              <input type="email" {...register('email')} className="input" placeholder="jane@example.com" />
+            </FormField>
+            <FormField label="Phone" required error={errors.phone?.message}>
+              <input type="tel" {...register('phone')} className="input" placeholder="(555) 123-4567" />
+            </FormField>
+          </section>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">Phone</label>
-            <input type="tel" {...register('phone')} className="input" />
-            {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2">Primary Skills (comma-separated)</label>
+          <FormField
+            label="Primary skills"
+            required
+            description="Separate skills with commas"
+            error={errors.primarySkills?.message}
+          >
             <input type="text" {...register('primarySkills')} className="input" placeholder="Java, React, Spring Boot" />
-            {errors.primarySkills && <p className="text-red-500 text-sm mt-1">{errors.primarySkills.message}</p>}
-          </div>
+          </FormField>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Visa Status</label>
+          <section className="grid gap-4 md:grid-cols-2">
+            <FormField label="Visa status" required>
               <select {...register('visaStatus')} className="input">
                 <option value="H1B">H1B</option>
                 <option value="GREEN_CARD">Green Card</option>
@@ -138,45 +141,41 @@ export default function CandidateModal({ isOpen, onClose, onSave, candidate }: P
                 <option value="EAD">EAD</option>
                 <option value="OPT">OPT</option>
               </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Experience (years)</label>
-              <input type="number" min="0" {...register('totalExperience')} className="input" />
-              {errors.totalExperience && <p className="text-red-500 text-sm mt-1">{errors.totalExperience.message}</p>}
-            </div>
-          </div>
+            </FormField>
+            <FormField label="Experience (years)" required error={errors.totalExperience?.message}>
+              <input type="number" min="0" {...register('totalExperience')} className="input" placeholder="5" />
+            </FormField>
+          </section>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Availability</label>
+          <section className="grid gap-4 md:grid-cols-2">
+            <FormField label="Availability" required>
               <select {...register('availability')} className="input">
                 <option value="IMMEDIATE">Immediate</option>
                 <option value="2_WEEKS">2 Weeks</option>
                 <option value="1_MONTH">1 Month</option>
                 <option value="NOT_AVAILABLE">Not Available</option>
               </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Status</label>
+            </FormField>
+            <FormField label="Status" required>
               <select {...register('status')} className="input">
                 <option value="AVAILABLE">Available</option>
                 <option value="PLACED">Placed</option>
                 <option value="INTERVIEWING">Interviewing</option>
                 <option value="INACTIVE">Inactive</option>
               </select>
-            </div>
-          </div>
+            </FormField>
+          </section>
 
-          <div className="flex gap-4 pt-4">
-            <button type="submit" disabled={isSubmitting} className="btn-primary flex-1 disabled:opacity-60">
-              {candidate ? 'Update Candidate' : 'Add Candidate'}
-            </button>
+          <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-3 bg-dark-200 hover:bg-dark-300 rounded-lg transition-colors"
+              className="btn-muted"
             >
               Cancel
+            </button>
+            <button type="submit" disabled={isSubmitting} className="btn-primary disabled:opacity-60">
+              {candidate ? 'Update candidate' : 'Add candidate'}
             </button>
           </div>
         </form>

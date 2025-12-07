@@ -37,7 +37,7 @@ export default function DocumentList({ entityType, entityId }: Props) {
 
   const documentsQuery = useQuery({
     queryKey: ['documents', entityType, entityId],
-  queryFn: () => documentService.getByEntityType(entityType, entityId).then((r: any) => r.data)
+    queryFn: () => documentService.getByEntityType(entityType, entityId).then((r: { data: Document[] }) => r.data)
   });
 
   const deleteDocument = useMutation({
@@ -109,7 +109,10 @@ export default function DocumentList({ entityType, entityId }: Props) {
                     onSuccess: () => {
                       // notify parent via invalidation already handled
                     },
-                    onError: (err: any) => alert(err?.message || 'Failed to delete document')
+                    onError: (err: unknown) => {
+                      const message = err instanceof Error ? err.message : 'Failed to delete document';
+                      alert(message);
+                    }
                   });
                 }
               }}

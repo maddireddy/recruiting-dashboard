@@ -21,14 +21,14 @@ export const jobService = {
     api.delete(`/jobs/${id}`),
 
   // Generic search/filter
-  search: async (params: Record<string, any>) => {
+  search: async (params: Record<string, string | number | boolean | string[]>) => {
     const queryParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== '') {
         if (Array.isArray(value)) {
           queryParams.set(key, value.join(','));
         } else {
-          queryParams.set(key, value);
+          queryParams.set(key, String(value));
         }
       }
     });

@@ -18,10 +18,13 @@ export default function JobsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Saved views
-  const [savedViews, setSavedViews] = useState<{ name: string; params: Record<string, any> }[]>(() => {
+  const [savedViews, setSavedViews] = useState<{ name: string; params: Record<string, string | string[]> }[]>(() => {
     try {
       return JSON.parse(localStorage.getItem('jobsSavedViews') || '[]');
-    } catch { return []; }
+    } catch {
+      // Failed to parse saved views from localStorage, returning empty array
+      return [];
+    }
   });
 
   useEffect(() => {
@@ -49,7 +52,7 @@ export default function JobsPage() {
     queryFn: () =>
       jobService
         .search({ page: 0, size: 100, ...paramsObject })
-        .then((r) => (Array.isArray((r as any).data) ? (r as any).data : ((r as any).data?.content || [])))
+        .then((r) => (r.data.content || []))
   });
 
   const updateStatus = useMutation({
@@ -70,7 +73,7 @@ export default function JobsPage() {
     onError: (_err, _vars, context) => {
       if (context?.previousEntries) {
         for (const [key, data] of context.previousEntries) {
-          queryClient.setQueryData(key as any, data);
+          queryClient.setQueryData(key as string[], data);
         }
       }
       toast.error('Failed to move job. Reverting change.');
@@ -133,7 +136,7 @@ export default function JobsPage() {
     onError: (_err, _vars, context) => {
       if (context?.previousEntries) {
         for (const [key, data] of context.previousEntries) {
-          queryClient.setQueryData(key as any, data);
+          queryClient.setQueryData(key as string[], data);
         }
       }
       toast.error('Failed to create job');
@@ -168,7 +171,7 @@ export default function JobsPage() {
     onError: (_err, _vars, context) => {
       if (context?.previousEntries) {
         for (const [key, data] of context.previousEntries) {
-          queryClient.setQueryData(key as any, data);
+          queryClient.setQueryData(key as string[], data);
         }
       }
       toast.error('Failed to update job');
@@ -194,7 +197,7 @@ export default function JobsPage() {
     onError: (_err, _vars, context) => {
       if (context?.previousEntries) {
         for (const [key, data] of context.previousEntries) {
-          queryClient.setQueryData(key as any, data);
+          queryClient.setQueryData(key as string[], data);
         }
       }
       toast.error('Failed to delete job');
@@ -213,45 +216,48 @@ export default function JobsPage() {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Jobs</h1>
-          <p className="text-dark-600">Manage client requirements & workflow</p>
+    <div className="space-y-8">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-semibold text-[rgb(var(--app-text-primary))]">Jobs</h1>
+          <p className="text-muted">Manage client requirements & workflow</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => setFiltersOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-dark-200 hover:bg-dark-300 rounded transition"
+            className="btn-muted"
+            type="button"
           >
-            <Filter size={18} />
+            <Filter size={16} />
             Filters
+          </button>
+          <button
+            onClick={() => reportService.exportJobsCSV()}
+            className="btn-muted"
+            type="button"
+          >
+            <Download size={16} />
+            Export CSV
           </button>
           <button
             onClick={() => {
               setSelectedJob(null);
               setShowModal(true);
             }}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 rounded transition"
+            className="btn-primary"
+            type="button"
           >
-            <Plus size={18} />
-            Add Job
-          </button>
-          <button
-            onClick={() => reportService.exportJobsCSV()}
-            className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 rounded transition"
-          >
-            <Download size={18} />
-            Export CSV
+            <Plus size={16} />
+            New Job
           </button>
         </div>
       </div>
 
-      {jobsQuery.isLoading && <p>Loading jobs...</p>}
-      {jobsQuery.error && <p className="text-red-500">Error loading jobs</p>}
+      {jobsQuery.isLoading && <div className="card">Loading jobs...</div>}
+      {jobsQuery.error && <div className="card text-sm text-red-500">Error loading jobs</div>}
 
       {jobsQuery.data && (
-        <Suspense fallback={<div className="p-6">Loading jobs board...</div>}>
+        <Suspense fallback={<div className="card">Loading jobs board...</div>}>
           <KanbanBoard
             jobs={jobsQuery.data}
             onUpdateStatus={(jobId, newStatus) => updateStatus.mutate({ jobId, newStatus })}
@@ -267,7 +273,7 @@ export default function JobsPage() {
       )}
 
       {showModal && (
-        <Suspense fallback={<div className="p-6">Loading job form...</div>}>
+        <Suspense fallback={<div className="card">Loading job form...</div>}>
           <JobModal
             job={selectedJob}
             onSave={handleSave}

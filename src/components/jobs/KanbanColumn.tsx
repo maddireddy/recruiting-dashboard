@@ -4,29 +4,30 @@ import type { ReactNode } from 'react';
 interface Props {
   id: string;
   title: string;
-  color: string;
+  accent: {
+    header: string;
+    badge: string;
+  };
   count: number;
   children: ReactNode;
 }
 
-export default function KanbanColumn({ id, title, color, count, children }: Props) {
+export default function KanbanColumn({ id, title, accent, count, children }: Props) {
   const { setNodeRef, isOver } = useDroppable({ id });
 
   return (
     <div
       ref={setNodeRef}
-      className={`flex flex-col bg-dark-100 rounded-lg border ${
-        isOver ? 'border-primary-500 bg-primary-500/5' : 'border-dark-200'
-      } transition-colors`}
+      className={`card flex h-full flex-col p-0 transition duration-200 ${isOver ? 'border-[rgba(var(--app-primary-from),0.55)] shadow-xl' : ''}`}
     >
-      <div className={`px-4 py-3 border-b border-dark-200 rounded-t-lg ${color}`}>
+      <div className={`flex items-center justify-between border-b border-[rgba(var(--app-border-subtle))] px-4 py-3 ${accent.header}`}>
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold">{title}</h3>
-          <span className="px-2 py-1 bg-dark-300 text-xs rounded-full">{count}</span>
+          <h3 className="text-sm font-semibold uppercase tracking-wide">{title}</h3>
         </div>
+        <span className={`chip ${accent.badge}`}>{count}</span>
       </div>
-      
-      <div className="flex-1 p-3 overflow-y-auto">
+
+      <div className="flex-1 space-y-3 overflow-y-auto px-3 py-4">
         {children}
       </div>
     </div>

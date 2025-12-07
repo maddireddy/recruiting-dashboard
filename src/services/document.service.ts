@@ -22,7 +22,7 @@ export const documentService = {
   download: async (id: string) => {
     const token = localStorage.getItem('accessToken');
     const tenantId = localStorage.getItem('tenantId');
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8083/api';
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8084/api';
     if (!token || token === 'null' || token === 'undefined') {
       alert('Authentication token missing. Please log in again to download documents.');
       return;
@@ -34,10 +34,15 @@ export const documentService = {
       });
       if (!resp.ok) {
         let errorMsg = 'Failed to download document.';
-        try {
-          const errorJson = await resp.json();
-          errorMsg = errorJson.message || errorMsg;
-        } catch {}
+        const errorBody = await resp.text();
+        if (errorBody) {
+          try {
+            const errorJson = JSON.parse(errorBody) as { message?: string };
+            errorMsg = errorJson.message || errorMsg;
+          } catch {
+            errorMsg = errorBody;
+          }
+        }
         alert(errorMsg);
         return;
       }
@@ -70,7 +75,7 @@ export const documentService = {
   fetchBlob: async (id: string) => {
     const token = localStorage.getItem('accessToken');
     const tenantId = localStorage.getItem('tenantId');
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8083/api';
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8084/api';
     if (!token || token === 'null' || token === 'undefined') {
       throw new Error('Authentication token missing');
     }

@@ -13,12 +13,54 @@ interface Props {
   onDelete: (id: string) => void;
 }
 
-const STATUSES: { id: JobStatus; title: string; color: string }[] = [
-  { id: 'OPEN', title: 'Open', color: 'bg-blue-500/20 border-blue-500/30' },
-  { id: 'IN_PROGRESS', title: 'In Progress', color: 'bg-yellow-500/20 border-yellow-500/30' },
-  { id: 'INTERVIEW', title: 'Interview', color: 'bg-purple-500/20 border-purple-500/30' },
-  { id: 'OFFERED', title: 'Offered', color: 'bg-green-500/20 border-green-500/30' },
-  { id: 'CLOSED', title: 'Closed', color: 'bg-gray-500/20 border-gray-500/30' },
+const COLUMN_META: Array<{
+  id: JobStatus;
+  title: string;
+  accent: {
+    header: string;
+    badge: string;
+  };
+}> = [
+  {
+    id: 'OPEN',
+    title: 'Open',
+    accent: {
+      header: 'bg-emerald-500/10 text-emerald-400',
+      badge: 'border-transparent bg-emerald-500/15 text-emerald-200',
+    },
+  },
+  {
+    id: 'IN_PROGRESS',
+    title: 'In Progress',
+    accent: {
+      header: 'bg-sky-500/10 text-sky-400',
+      badge: 'border-transparent bg-sky-500/15 text-sky-200',
+    },
+  },
+  {
+    id: 'INTERVIEW',
+    title: 'Interview',
+    accent: {
+      header: 'bg-violet-500/10 text-violet-400',
+      badge: 'border-transparent bg-violet-500/15 text-violet-200',
+    },
+  },
+  {
+    id: 'OFFERED',
+    title: 'Offered',
+    accent: {
+      header: 'bg-amber-500/10 text-amber-400',
+      badge: 'border-transparent bg-amber-500/15 text-amber-200',
+    },
+  },
+  {
+    id: 'CLOSED',
+    title: 'Closed',
+    accent: {
+      header: 'bg-slate-500/10 text-slate-300',
+      badge: 'border-transparent bg-slate-500/15 text-slate-200',
+    },
+  },
 ];
 
 export default function KanbanBoard({ jobs, onUpdateStatus, onEdit, onDelete }: Props) {
@@ -33,7 +75,7 @@ export default function KanbanBoard({ jobs, onUpdateStatus, onEdit, onDelete }: 
   );
 
   const jobsByStatus = useMemo(() => {
-    return STATUSES.reduce((acc, status) => {
+    return COLUMN_META.reduce((acc, status) => {
       acc[status.id] = jobs.filter(job => job.status === status.id);
       return acc;
     }, {} as Record<JobStatus, Job[]>);
@@ -67,13 +109,13 @@ export default function KanbanBoard({ jobs, onUpdateStatus, onEdit, onDelete }: 
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-4 h-[calc(100vh-200px)] overflow-x-auto pb-4">
-        {STATUSES.map(status => (
+      <div className="flex h-[calc(100vh-280px)] gap-4 overflow-x-auto pb-4">
+        {COLUMN_META.map(status => (
           <div key={status.id} className="min-w-[260px] max-w-xs flex-shrink-0">
             <KanbanColumn
               id={status.id}
               title={status.title}
-              color={status.color}
+              accent={status.accent}
               count={jobsByStatus[status.id]?.length || 0}
             >
               <SortableContext

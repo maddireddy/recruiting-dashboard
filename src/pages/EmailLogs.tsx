@@ -1,9 +1,10 @@
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Mail, CheckCircle, XCircle, Clock, BarChart3 } from 'lucide-react';
+import EmailLogModal from '../components/email/EmailLogModal';
+import StatsCard from '../components/dashboard/StatsCard';
 import { emailService } from '../services/email.service';
 import type { EmailLog } from '../types/email';
-import { Mail, CheckCircle, XCircle, Clock } from 'lucide-react';
-import { useState } from 'react';
-import EmailLogModal from '../components/email/EmailLogModal';
 
 const STATUS_COLORS = {
   SENT: 'bg-green-500/20 text-green-400 border-green-500/30',
@@ -34,127 +35,107 @@ export default function EmailLogsPage() {
 
   const [selectedLog, setSelectedLog] = useState<EmailLog | null>(null);
 
+  const logs = useMemo(() => logsQuery.data || [], [logsQuery.data]);
+  const stats = statsQuery.data;
+
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-2">Email Logs</h1>
-        <p className="text-dark-600">Track all sent emails and their delivery status</p>
-      </div>
+    <div className="space-y-8 px-6 py-8">
+      <header className="flex flex-col gap-2">
+        <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--app-border-subtle))] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted">
+          <BarChart3 size={14} />
+          Delivery Insights
+        </div>
+        <h1 className="text-3xl font-semibold text-[rgb(var(--app-text-primary))]">Email Logs</h1>
+        <p className="max-w-2xl text-sm text-muted">
+          Track delivery across campaigns, triage failures quickly, and keep a record of every template used.
+        </p>
+      </header>
 
-      {/* Stats Cards */}
-      {statsQuery.data && (
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-dark-100 rounded-lg border border-dark-200 p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-green-500/20 rounded-lg">
-                <CheckCircle size={24} className="text-green-400" />
-              </div>
-              <div>
-                <p className="text-sm text-dark-600">Sent Successfully</p>
-                <p className="text-2xl font-bold">{statsQuery.data.sent}</p>
-              </div>
-            </div>
+      {stats && (
+        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <StatsCard title="Sent successfully" value={stats.sent} icon={<CheckCircle size={18} className="text-green-400" />} />
+          <StatsCard title="Failed deliveries" value={stats.failed} icon={<XCircle size={18} className="text-red-400" />} />
+          <StatsCard title="Pending queue" value={stats.pending} icon={<Clock size={18} className="text-amber-400" />} />
+        </section>
+      )}
+
+      {logsQuery.isLoading && (
+        <div className="card space-y-3">
+          <div className="h-4 w-48 animate-pulse rounded-full bg-[rgba(var(--app-border-subtle))]" />
+          <div className="h-4 w-full animate-pulse rounded-full bg-[rgba(var(--app-border-subtle))]" />
+          <div className="h-4 w-2/3 animate-pulse rounded-full bg-[rgba(var(--app-border-subtle))]" />
+        </div>
+      )}
+
+      {!logsQuery.isLoading && logsQuery.error && (
+        <div className="card border-red-400/40 bg-red-500/5 text-red-300">
+          Error loading email logs. Refresh and try again.
+        </div>
+      )}
+
+      {!logsQuery.isLoading && !logsQuery.error && logs.length === 0 && (
+        <div className="card flex flex-col items-center justify-center gap-4 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full border border-dashed border-[rgba(var(--app-border-subtle))] text-muted">
+            <Mail size={28} />
           </div>
-
-          <div className="bg-dark-100 rounded-lg border border-dark-200 p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-red-500/20 rounded-lg">
-                <XCircle size={24} className="text-red-400" />
-              </div>
-              <div>
-                <p className="text-sm text-dark-600">Failed</p>
-                <p className="text-2xl font-bold">{statsQuery.data.failed}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-dark-100 rounded-lg border border-dark-200 p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-yellow-500/20 rounded-lg">
-                <Clock size={24} className="text-yellow-400" />
-              </div>
-              <div>
-                <p className="text-sm text-dark-600">Pending</p>
-                <p className="text-2xl font-bold">{statsQuery.data.pending}</p>
-              </div>
-            </div>
+          <div className="space-y-1">
+            <h3 className="text-lg font-semibold">No emails sent yet</h3>
+            <p className="max-w-sm text-sm text-muted">Emails triggered from templates and automations will appear here for auditing.</p>
           </div>
         </div>
       )}
 
-      {/* Email Logs Table */}
-      {logsQuery.isLoading && <p>Loading email logs...</p>}
-      {logsQuery.error && <p className="text-red-500">Error loading logs</p>}
-
-      {logsQuery.data && logsQuery.data.length === 0 && (
-        <div className="text-center py-12 bg-dark-100 rounded-lg border border-dark-200">
-          <Mail size={48} className="mx-auto mb-4 text-dark-600" />
-          <p className="text-dark-600">No emails sent yet</p>
-        </div>
-      )}
-
-      {logsQuery.data && logsQuery.data.length > 0 && (
-        <div className="bg-dark-100 rounded-lg border border-dark-200 overflow-hidden">
+      {logs.length > 0 && (
+        <section className="card overflow-hidden p-0">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-dark-300">
-              <thead className="bg-dark-200">
+            <table className="min-w-full text-left text-sm">
+              <thead className="border-b border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] text-xs uppercase tracking-[0.18em] text-muted">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-dark-600 uppercase tracking-wider">
-                    To
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-dark-600 uppercase tracking-wider">
-                    Subject
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-dark-600 uppercase tracking-wider">
-                    Template
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-dark-600 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-dark-600 uppercase tracking-wider">
-                    Date
-                  </th>
+                  <th className="px-4 py-3 font-semibold">To</th>
+                  <th className="px-4 py-3 font-semibold">Subject</th>
+                  <th className="px-4 py-3 font-semibold">Template</th>
+                  <th className="px-4 py-3 font-semibold">Status</th>
+                  <th className="px-4 py-3 font-semibold">Date</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-dark-300">
-                {logsQuery.data.map((log: EmailLog) => (
-                  <tr key={log.id} className="hover:bg-dark-200/50 transition-colors cursor-pointer" onClick={() => setSelectedLog(log)}>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <Mail size={16} className="text-dark-600" />
-                        <span className="text-sm">{log.toEmail}</span>
+              <tbody>
+                {logs.map((log: EmailLog) => {
+                  const statusKey = (log.status || 'PENDING').toUpperCase() as keyof typeof STATUS_COLORS;
+                  const statusClasses = STATUS_COLORS[statusKey] ?? STATUS_COLORS.PENDING;
+                  const statusIcon = STATUS_ICONS[statusKey] ?? STATUS_ICONS.PENDING;
+                  return (
+                  <tr
+                    key={log.id}
+                    className="cursor-pointer border-b border-[rgba(var(--app-border-subtle))] text-[rgb(var(--app-text-primary))] transition hover:bg-[rgba(var(--app-surface-muted),0.6)]"
+                    onClick={() => setSelectedLog(log)}
+                  >
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2 text-sm text-muted">
+                        <Mail size={16} />
+                        <span className="text-[rgb(var(--app-text-primary))]">{log.toEmail}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3">
-                      <p className="text-sm font-medium truncate max-w-xs">{log.subject}</p>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
+                    <td className="px-4 py-3 max-w-[260px] truncate text-sm">{log.subject}</td>
+                    <td className="px-4 py-3 text-xs">
                       {log.templateUsed ? (
-                        <span className="px-2 py-1 bg-primary-500/20 text-primary-400 text-xs rounded">
-                          {log.templateUsed}
-                        </span>
+                        <span className="chip surface-muted">{log.templateUsed}</span>
                       ) : (
-                        <span className="text-xs text-dark-600">Custom</span>
+                        <span className="text-muted">Custom</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <div className={`flex items-center gap-2 px-3 py-1 rounded-full border inline-flex ${STATUS_COLORS[log.status]}`}>
-                        {STATUS_ICONS[log.status]}
-                        <span className="text-xs font-medium">{log.status}</span>
-                      </div>
+                    <td className="px-4 py-3">
+                      <span className={`chip ${statusClasses} inline-flex items-center gap-2`}>{statusIcon}<span className="font-medium">{statusKey}</span></span>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-dark-600">
-                      {log.sentAt 
-                        ? new Date(log.sentAt).toLocaleString()
-                        : new Date(log.createdAt).toLocaleString()
-                      }
+                    <td className="px-4 py-3 text-sm text-muted">
+                      {log.sentAt ? new Date(log.sentAt).toLocaleString() : new Date(log.createdAt).toLocaleString()}
                     </td>
                   </tr>
-                ))}
+                );
+                })}
               </tbody>
             </table>
           </div>
-        </div>
+        </section>
       )}
 
       {selectedLog && (

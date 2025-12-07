@@ -35,7 +35,7 @@ export default function JobCard({ job, onEdit, onDelete }: Props) {
       style={style}
       {...attributes}
       {...listeners}
-      className="bg-dark-200 rounded-lg border border-dark-300 p-4 cursor-move hover:border-primary-500 transition-colors"
+      className={`card cursor-move space-y-3 p-4 transition duration-200 ${isDragging ? 'border-[rgba(var(--app-primary-from),0.45)] shadow-xl' : 'hover:border-[rgba(var(--app-primary-from),0.35)]'}`}
       onMouseEnter={() => {
         // Prefetch job details so edit modal interactions feel snappier
         queryClient.prefetchQuery({
@@ -45,63 +45,67 @@ export default function JobCard({ job, onEdit, onDelete }: Props) {
         });
       }}
     >
-      <div className="flex items-start justify-between mb-2">
-        <h4 className="font-semibold text-sm">
-          <Link to={`/jobs/${job.id}`} onClick={(e) => e.stopPropagation()} className="hover:underline text-primary-400">
+      <div className="flex items-start justify-between gap-3">
+        <h4 className="text-sm font-semibold">
+          <Link
+            to={`/jobs/${job.id}`}
+            onClick={(e) => e.stopPropagation()}
+            className="transition hover:text-[rgb(var(--app-primary-from))]"
+          >
             {job.title}
           </Link>
         </h4>
-        <div className="flex gap-1">
+        <div className="flex gap-2">
           <button
             onClick={(e) => {
               e.stopPropagation();
               onEdit(job);
             }}
-            className="p-1 hover:bg-primary-500/20 rounded"
+            className="rounded-lg border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] p-1.5 text-[rgb(var(--app-text-secondary))] transition hover:text-[rgb(var(--app-primary-from))]"
           >
-            <Edit size={14} className="text-primary-500" />
+            <Edit size={14} />
           </button>
           <button
             onClick={(e) => {
               e.stopPropagation();
               onDelete(job.id);
             }}
-            className="p-1 hover:bg-red-500/20 rounded"
+            className="rounded-lg border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] p-1.5 text-[rgb(var(--app-text-secondary))] transition hover:text-red-400"
           >
-            <Trash2 size={14} className="text-red-500" />
+            <Trash2 size={14} />
           </button>
         </div>
       </div>
 
-      <p className="text-sm text-dark-600 mb-3">{job.client}</p>
+      <p className="text-sm text-muted">{job.client}</p>
 
-      <div className="space-y-2 text-xs text-dark-600">
+      <div className="space-y-2 text-xs text-[rgb(var(--app-text-secondary))]">
         <div className="flex items-center gap-2">
-          <MapPin size={12} />
+          <MapPin size={12} className="text-muted" />
           <span>{job.location}</span>
         </div>
         <div className="flex items-center gap-2">
-          <Briefcase size={12} />
+          <Briefcase size={12} className="text-muted" />
           <span>{job.jobType ? job.jobType.replace('_', ' ') : ''}</span>
         </div>
         <div className="flex items-center gap-2">
-          <DollarSign size={12} />
+          <DollarSign size={12} className="text-muted" />
           <span>${job.rateMin} - ${job.rateMax}</span>
         </div>
         <div className="flex items-center gap-2">
-          <Users size={12} />
+          <Users size={12} className="text-muted" />
           <span>{job.submissionsCount} submissions</span>
         </div>
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-1">
+      <div className="flex flex-wrap gap-1.5">
         {(job.requiredSkills ?? []).slice(0, 3).map(skill => (
-          <span key={skill} className="px-2 py-1 bg-primary-500/20 text-primary-400 text-xs rounded">
+          <span key={skill} className="chip chip-active">
             {skill}
           </span>
         ))}
         {(job.requiredSkills ?? []).length > 3 && (
-          <span className="px-2 py-1 bg-dark-300 text-dark-600 text-xs rounded">
+          <span className="chip text-[rgb(var(--app-text-secondary))]">
             +{(job.requiredSkills ?? []).length - 3}
           </span>
         )}

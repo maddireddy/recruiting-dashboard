@@ -62,10 +62,10 @@ export default function FileUpload({ onFileSelect, accept = '*', maxSize = 10 }:
   return (
     <div className="w-full">
       <div
-        className={`relative border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+        className={`relative cursor-pointer rounded-2xl border-2 border-dashed p-8 text-center transition-all ${
           dragActive
-            ? 'border-primary-500 bg-primary-500/10'
-            : 'border-dark-300 hover:border-primary-500 bg-dark-200'
+            ? 'border-[rgba(var(--app-primary-from),0.6)] bg-[rgba(var(--app-primary-from),0.08)]'
+            : 'border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] hover:border-[rgba(var(--app-primary-from),0.45)]'
         }`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
@@ -73,33 +73,27 @@ export default function FileUpload({ onFileSelect, accept = '*', maxSize = 10 }:
         onDrop={handleDrop}
         onClick={handleClick}
       >
-        <input
-          ref={inputRef}
-          type="file"
-          className="hidden"
-          accept={accept}
-          onChange={handleChange}
-        />
+        <input ref={inputRef} type="file" className="hidden" accept={accept} onChange={handleChange} />
 
         {!selectedFile ? (
           <div className="flex flex-col items-center gap-3">
-            <Upload size={48} className="text-dark-600" />
-            <div>
-              <p className="text-lg font-medium">Drop file here or click to upload</p>
-              <p className="text-sm text-dark-600 mt-1">
-                Maximum file size: {maxSize}MB
-              </p>
+            <div className="flex h-14 w-14 items-center justify-center rounded-full border border-dashed border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface))] text-muted">
+              <Upload size={28} />
+            </div>
+            <div className="space-y-1">
+              <p className="text-lg font-semibold text-[rgb(var(--app-text-primary))]">Drop file here or click to upload</p>
+              <p className="text-sm text-muted">Supports PDF, Word, images, and more. Max size {maxSize}MB.</p>
             </div>
           </div>
         ) : (
-          <div className="flex items-center justify-center gap-3">
-            <CheckCircle size={24} className="text-green-500" />
-            <File size={24} />
-            <div className="text-left">
-              <p className="font-medium">{selectedFile.name}</p>
-              <p className="text-sm text-dark-600">
-                {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-              </p>
+          <div className="flex flex-wrap items-center justify-center gap-4 text-left sm:flex-nowrap">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[rgba(var(--app-primary-from),0.12)] text-[rgb(var(--app-primary-from))]">
+              <CheckCircle size={24} />
+            </span>
+            <File size={24} className="text-muted" />
+            <div className="min-w-[12rem] flex-1">
+              <p className="font-semibold text-[rgb(var(--app-text-primary))] line-clamp-2">{selectedFile.name}</p>
+              <p className="text-sm text-muted">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
             </div>
             <button
               type="button"
@@ -107,9 +101,10 @@ export default function FileUpload({ onFileSelect, accept = '*', maxSize = 10 }:
                 e.stopPropagation();
                 clearFile();
               }}
-              className="ml-auto p-1 hover:bg-red-500/20 rounded"
+              className="rounded-lg border border-transparent p-2 text-sm text-red-400 transition hover:border-red-400"
             >
-              <X size={20} className="text-red-500" />
+              <X size={18} />
+              Clear
             </button>
           </div>
         )}

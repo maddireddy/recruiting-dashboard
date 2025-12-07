@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { documentService } from '../services/document.service';
-import DocumentUploadModal from '../components/documents/DocumentUploadModal';
 import toast from 'react-hot-toast';
-import { Plus, FileText, Download, Trash2 } from 'lucide-react';
+import { Plus, FileText, Download, Trash2, ShieldCheck } from 'lucide-react';
+import DocumentUploadModal from '../components/documents/DocumentUploadModal';
+import { documentService } from '../services/document.service';
 import type { Document } from '../types/document';
 
 const getFileIcon = (fileType: string) => {
@@ -54,69 +54,83 @@ export default function DocumentsPage() {
   const handleDelete = (id: string) => {
     deleteDocument.mutate(id, {
       onSuccess: () => toast.success('Document deleted'),
-      onError: (err: any) => toast.error(err?.message || 'Failed to delete document')
+      onError: (err: Error) => toast.error(err?.message || 'Failed to delete document')
     });
   };
 
+  const documents = useMemo(() => documentsQuery.data || [], [documentsQuery.data]);
+  const dateFormatter = useMemo(() => new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' }), []);
+
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Documents</h1>
-          <p className="text-dark-600">Manage all uploaded documents</p>
+    <div className="space-y-10 px-6 py-8">
+      <header className="flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--app-border-subtle))] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted">
+            <ShieldCheck size={14} />
+            Secure Vault
+          </div>
+          <h1 className="text-3xl font-semibold text-[rgb(var(--app-text-primary))]">Documents</h1>
+          <p className="max-w-2xl text-sm text-muted">Store contracts, resumes, and compliance records in one place. Manage access, audit trails, and lightning-fast downloads.</p>
         </div>
-        <button
-          onClick={() => setShowUploadModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 rounded transition"
-        >
+        <button onClick={() => setShowUploadModal(true)} type="button" className="btn-primary">
           <Plus size={18} />
-          Upload Document
+          Upload document
         </button>
-      </div>
+      </header>
 
-      {documentsQuery.isLoading && <p>Loading documents...</p>}
-      {documentsQuery.error && <p className="text-red-500">Error loading documents</p>}
+      {documentsQuery.isLoading && (
+        <div className="card space-y-3">
+          <div className="h-4 w-48 animate-pulse rounded-full bg-[rgba(var(--app-border-subtle))]" />
+          <div className="h-4 w-full animate-pulse rounded-full bg-[rgba(var(--app-border-subtle))]" />
+          <div className="h-4 w-5/6 animate-pulse rounded-full bg-[rgba(var(--app-border-subtle))]" />
+        </div>
+      )}
 
-      {documentsQuery.data && documentsQuery.data.length === 0 && (
-        <div className="text-center py-12 bg-dark-100 rounded-lg border border-dark-200">
-          <FileText size={48} className="mx-auto mb-4 text-dark-600" />
-          <p className="text-dark-600">No documents uploaded yet</p>
-          <button
-            onClick={() => setShowUploadModal(true)}
-            className="mt-4 px-4 py-2 bg-primary-500 hover:bg-primary-600 rounded transition"
-          >
-            Upload Your First Document
+      {documentsQuery.error && (
+        <div className="card border-red-400/40 bg-red-500/5 text-red-300">
+          Unable to load documents right now. Please try again shortly.
+        </div>
+      )}
+
+      {documentsQuery.data && documents.length === 0 && !documentsQuery.isLoading && (
+        <div className="card flex flex-col items-center justify-center gap-4 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full border border-dashed border-[rgba(var(--app-border-subtle))] text-muted">
+            <FileText size={28} />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-lg font-semibold">No documents uploaded yet</h3>
+            <p className="max-w-sm text-sm text-muted">Upload resumes, offer letters, or compliance paperwork to keep your pipeline aligned.</p>
+          </div>
+          <button onClick={() => setShowUploadModal(true)} type="button" className="btn-primary">
+            <Plus size={16} />
+            Upload your first document
           </button>
         </div>
       )}
 
-      {documentsQuery.data && documentsQuery.data.length > 0 && (
-        <div className="grid gap-3">
-          {documentsQuery.data.map((doc: Document) => (
-            <div
-              key={doc.id}
-              className="flex items-center justify-between p-4 bg-dark-100 rounded-lg border border-dark-200 hover:border-primary-500 transition-colors"
-            >
-              <div className="flex items-center gap-4 flex-1">
-                <span className="text-3xl">{getFileIcon(doc.fileType)}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-lg truncate">{doc.originalFileName}</p>
-                  <div className="flex items-center gap-4 text-sm text-dark-600 mt-1">
-                    <span className="px-2 py-0.5 bg-primary-500/20 text-primary-400 rounded text-xs">
-                      {doc.documentType.replace('_', ' ')}
-                    </span>
-                    <span>{doc.relatedEntityType}</span>
-                    <span>•</span>
-                    <span>{formatFileSize(doc.fileSize)}</span>
-                    <span>•</span>
-                    <span>Uploaded by {doc.uploadedBy}</span>
-                    <span>•</span>
-                    <span>{new Date(doc.createdAt!).toLocaleDateString()}</span>
+      {documents.length > 0 && (
+        <section className="grid gap-4">
+          {documents.map((doc: Document) => (
+            <article key={doc.id} className="card flex flex-col gap-4 border-transparent transition hover:border-[rgba(var(--app-primary-from),0.45)] md:flex-row md:items-center md:justify-between">
+              <div className="flex w-full flex-1 items-start gap-4">
+                <span className="text-4xl drop-shadow-sm">{getFileIcon(doc.fileType)}</span>
+                <div className="flex-1 space-y-3">
+                  <div className="flex flex-col gap-1">
+                    <h3 className="truncate text-lg font-semibold text-[rgb(var(--app-text-primary))]">{doc.originalFileName}</h3>
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
+                      <span className="chip chip-active text-[rgb(var(--app-primary-text))]">{doc.documentType.replace('_', ' ')}</span>
+                      <span className="chip surface-muted">{doc.relatedEntityType}</span>
+                      <span>{formatFileSize(doc.fileSize)}</span>
+                      <span>•</span>
+                      <span>Uploaded by {doc.uploadedBy}</span>
+                      <span>•</span>
+                      <span>{dateFormatter.format(new Date(doc.createdAt!))}</span>
+                    </div>
                   </div>
                   {doc.tags && doc.tags.length > 0 && (
-                    <div className="flex gap-1 mt-2">
-                      {doc.tags.map(tag => (
-                        <span key={tag} className="px-2 py-0.5 bg-dark-300 text-dark-600 text-xs rounded">
+                    <div className="flex flex-wrap gap-2">
+                      {doc.tags.map((tag) => (
+                        <span key={tag} className="chip surface-muted text-xs">
                           #{tag}
                         </span>
                       ))}
@@ -124,13 +138,15 @@ export default function DocumentsPage() {
                   )}
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-shrink-0 items-center gap-2 self-end md:self-center">
                 <button
                   onClick={() => documentService.download(doc.id!)}
-                  className="p-2 bg-primary-500/20 hover:bg-primary-500/30 text-primary-400 rounded transition"
+                  type="button"
+                  className="btn-muted px-3 py-2 text-sm"
                   title="Download"
                 >
-                  <Download size={18} />
+                  <Download size={16} />
+                  Download
                 </button>
                 <button
                   onClick={() => {
@@ -138,15 +154,16 @@ export default function DocumentsPage() {
                       handleDelete(doc.id!);
                     }
                   }}
-                  className="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded transition"
+                  type="button"
+                  className="btn-muted px-3 py-2 text-sm text-red-400 hover:border-red-400 hover:text-red-300"
                   title="Delete"
                 >
-                  <Trash2 size={18} />
+                  <Trash2 size={16} />
                 </button>
               </div>
-            </div>
+            </article>
           ))}
-        </div>
+        </section>
       )}
 
       {showUploadModal && (

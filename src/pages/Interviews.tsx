@@ -1,22 +1,22 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, type ReactNode } from 'react';
+import { Plus, Calendar, Video, Phone, MapPin, Users, Edit, Trash2, Briefcase, Clock } from 'lucide-react';
 import { interviewService } from '../services/interview.service';
 import InterviewModal from '../components/interviews/InterviewModal';
 import type { Interview } from '../types/interview';
-import { useState } from 'react';
-import { Plus, Calendar, Video, Phone, MapPin, Users, Edit, Trash2 } from 'lucide-react';
 
-const MODE_ICONS = {
-  VIDEO: <Video size={16} />,
-  PHONE: <Phone size={16} />,
-  ONSITE: <MapPin size={16} />,
-  REMOTE: <Video size={16} />
+const MODE_META: Record<NonNullable<Interview['mode']>, { label: string; icon: ReactNode }> = {
+  VIDEO: { label: 'Video', icon: <Video size={16} /> },
+  PHONE: { label: 'Phone', icon: <Phone size={16} /> },
+  ONSITE: { label: 'Onsite', icon: <MapPin size={16} /> },
+  REMOTE: { label: 'Remote', icon: <Video size={16} /> },
 };
 
-const STATUS_COLORS = {
-  SCHEDULED: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  COMPLETED: 'bg-green-500/20 text-green-400 border-green-500/30',
-  CANCELLED: 'bg-red-500/20 text-red-400 border-red-500/30',
-  RESCHEDULED: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+const STATUS_META: Record<NonNullable<Interview['status']>, { label: string; accent: string }> = {
+  SCHEDULED: { label: 'Scheduled', accent: 'chip bg-[rgba(59,130,246,0.16)] text-[rgb(96,165,250)] border border-[rgba(59,130,246,0.4)]' },
+  COMPLETED: { label: 'Completed', accent: 'chip bg-[rgba(34,197,94,0.16)] text-[rgb(34,197,94)] border border-[rgba(34,197,94,0.4)]' },
+  CANCELLED: { label: 'Cancelled', accent: 'chip bg-[rgba(248,113,113,0.18)] text-[rgb(248,113,113)] border border-[rgba(248,113,113,0.4)]' },
+  RESCHEDULED: { label: 'Rescheduled', accent: 'chip bg-[rgba(250,204,21,0.18)] text-[rgb(202,138,4)] border border-[rgba(250,204,21,0.45)]' },
 };
 
 export default function InterviewsPage() {
@@ -61,129 +61,151 @@ export default function InterviewsPage() {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Interviews</h1>
-          <p className="text-dark-600">Schedule and manage candidate interviews</p>
+    <div className="space-y-10 px-6 py-8">
+      <header className="flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--app-border-subtle))] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted">
+            <Clock size={14} />
+            Interview Ops
+          </div>
+          <h1 className="text-3xl font-semibold text-[rgb(var(--app-text-primary))]">Interviews</h1>
+          <p className="max-w-2xl text-sm text-muted">Coordinate candidate conversations, capture feedback, and keep hiring teams aligned without leaving your workspace.</p>
         </div>
         <button
           onClick={() => {
             setSelectedInterview(null);
             setShowModal(true);
           }}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 rounded transition"
+          className="btn-primary"
+          type="button"
         >
           <Plus size={18} />
           Schedule Interview
         </button>
-      </div>
+      </header>
 
-      {interviewsQuery.isLoading && <p>Loading interviews...</p>}
-      {interviewsQuery.error && <p className="text-red-500">Error loading interviews</p>}
+      {interviewsQuery.isLoading && (
+        <div className="card space-y-3">
+          <div className="h-4 w-40 animate-pulse rounded-full bg-[rgba(var(--app-border-subtle))]" />
+          <div className="h-4 w-full animate-pulse rounded-full bg-[rgba(var(--app-border-subtle))]" />
+          <div className="h-4 w-3/4 animate-pulse rounded-full bg-[rgba(var(--app-border-subtle))]" />
+        </div>
+      )}
+
+      {interviewsQuery.error && (
+        <div className="card border-red-400/40 bg-red-500/5 text-red-300">
+          Unable to load interviews right now. Please try again shortly.
+        </div>
+      )}
 
       {interviewsQuery.data && interviewsQuery.data.length === 0 && (
-        <div className="text-center py-12 bg-dark-100 rounded-lg border border-dark-200">
-          <Calendar size={48} className="mx-auto mb-4 text-dark-600" />
-          <p className="text-dark-600">No interviews scheduled yet</p>
-          <button
-            onClick={() => setShowModal(true)}
-            className="mt-4 px-4 py-2 bg-primary-500 hover:bg-primary-600 rounded transition"
-          >
-            Schedule Your First Interview
+        <div className="card flex flex-col items-center justify-center gap-4 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full border border-dashed border-[rgba(var(--app-border-subtle))] text-muted">
+            <Calendar size={28} />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-lg font-semibold">No interviews on the calendar</h3>
+            <p className="max-w-sm text-sm text-muted">Get ahead of hiring by scheduling your first conversation with top candidates.</p>
+          </div>
+          <button onClick={() => setShowModal(true)} type="button" className="btn-primary">
+            <Plus size={16} />
+            Schedule your first interview
           </button>
         </div>
       )}
 
       {interviewsQuery.data && interviewsQuery.data.length > 0 && (
-        <div className="grid gap-4">
-          {interviewsQuery.data.map((interview: Interview) => (
-            <div
-              key={interview.id}
-              className="bg-dark-100 rounded-lg border border-dark-200 p-5 hover:border-primary-500 transition-colors"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="font-semibold text-lg">Interview</h3>
-                    <span className={`px-3 py-1 text-xs rounded-full border ${STATUS_COLORS[interview.status || 'SCHEDULED']}`}>
-                      {interview.status || 'SCHEDULED'}
-                    </span>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4 text-sm text-dark-600">
-                    <div className="flex items-center gap-2">
-                      <Users size={14} />
-                      <span>Candidate ID: {interview.candidateId}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Calendar size={14} />
-                      <span>{new Date(interview.scheduledAt).toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {MODE_ICONS[interview.mode]}
-                      <span>{interview.mode}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs">Job ID: {interview.jobId}</span>
-                    </div>
-                  </div>
-                </div>
+        <section className="grid gap-4">
+          {interviewsQuery.data.map((interview: Interview) => {
+            const statusKey = (interview.status || 'SCHEDULED') as NonNullable<Interview['status']>;
+            const statusMeta = STATUS_META[statusKey];
+            const modeMeta = interview.mode ? MODE_META[interview.mode] : null;
 
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      setSelectedInterview(interview);
-                      setShowModal(true);
-                    }}
-                    className="p-2 bg-dark-200 hover:bg-dark-300 rounded transition"
-                    title="Edit Interview"
-                  >
-                    <Edit size={16} />
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (confirm('Delete this interview?')) {
-                        deleteInterview.mutate(interview.id!);
-                      }
-                    }}
-                    className="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded transition"
-                    title="Delete Interview"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-
-              {interview.panel && interview.panel.length > 0 && (
-                <div className="mb-3">
-                  <p className="text-xs font-semibold mb-2 text-dark-600">Interview Panel:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {interview.panel.map((member, idx) => (
-                      <div
-                        key={idx}
-                        className="px-3 py-1 bg-dark-200 rounded text-xs flex items-center gap-2"
-                      >
-                        <span className="font-medium">{member.name}</span>
-                        <span className="text-dark-600">({member.role || 'Interviewer'})</span>
-                        {member.isExternal && (
-                          <span className="text-yellow-500 text-xs">External</span>
-                        )}
+            return (
+              <article key={interview.id} className="card border-transparent transition hover:border-[rgba(var(--app-primary-from),0.45)]">
+                <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <h3 className="text-lg font-semibold text-[rgb(var(--app-text-primary))]">Interview</h3>
+                      <span className={statusMeta.accent}>{statusMeta.label}</span>
+                      <span className="chip surface-muted flex items-center gap-2"><Briefcase size={14} />Job {interview.jobId}</span>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2 text-sm text-muted">
+                      <div className="flex items-center gap-2">
+                        <Users size={14} />
+                        <span>Candidate #{interview.candidateId}</span>
                       </div>
-                    ))}
+                      <div className="flex items-center gap-2">
+                        <Calendar size={14} />
+                        <span>{new Date(interview.scheduledAt).toLocaleString()}</span>
+                      </div>
+                      {modeMeta && (
+                        <div className="flex items-center gap-2">
+                          {modeMeta.icon}
+                          <span>{modeMeta.label}</span>
+                        </div>
+                      )}
+                      {interview.panel && interview.panel.length > 0 && (
+                        <div className="flex items-center gap-2">
+                          <Users size={14} />
+                          <span>{interview.panel.length} panel member{interview.panel.length > 1 ? 's' : ''}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-shrink-0 items-center gap-2 self-end md:self-start">
+                    <button
+                      onClick={() => {
+                        setSelectedInterview(interview);
+                        setShowModal(true);
+                      }}
+                      type="button"
+                      className="btn-muted px-3 py-2 text-sm"
+                      title="Edit interview"
+                    >
+                      <Edit size={16} />
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm('Delete this interview?')) {
+                          deleteInterview.mutate(interview.id!);
+                        }
+                      }}
+                      type="button"
+                      className="btn-muted px-3 py-2 text-sm text-red-400 hover:border-red-400 hover:text-red-300"
+                      title="Delete interview"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                 </div>
-              )}
 
-              {interview.feedback && (
-                <div className="mt-3 pt-3 border-t border-dark-300">
-                  <p className="text-xs font-semibold mb-1 text-dark-600">Feedback:</p>
-                  <p className="text-sm text-dark-500">{interview.feedback}</p>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+                {interview.panel && interview.panel.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">Interview panel</p>
+                    <div className="flex flex-wrap gap-2">
+                      {interview.panel.map((member, idx) => (
+                        <span key={idx} className="chip flex items-center gap-2">
+                          <span className="font-semibold text-[rgb(var(--app-text-primary))]">{member.name}</span>
+                          <span className="text-muted">{member.role || 'Interviewer'}</span>
+                          {member.isExternal && <span className="chip-active px-3 py-1 text-xs uppercase tracking-wide">External</span>}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {interview.feedback && (
+                  <div className="mt-6 space-y-2 border-t border-[rgba(var(--app-border-subtle))] pt-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">Feedback</p>
+                    <p className="text-sm text-[rgb(var(--app-text-primary))]">{interview.feedback}</p>
+                  </div>
+                )}
+              </article>
+            );
+          })}
+        </section>
       )}
 
       {showModal && (

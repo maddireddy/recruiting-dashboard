@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ChangeEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { X, Plus, Trash2 } from 'lucide-react';
 import type { Interview, PanelMember } from '../../types/interview';
@@ -61,7 +61,7 @@ export default function InterviewModal({ interview, onSave, onClose }: Props) {
     }
   }, [interview]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -98,206 +98,237 @@ export default function InterviewModal({ interview, onSave, onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="bg-dark-100 rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-dark-100 border-b border-dark-200 px-6 py-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold">{interview ? 'Edit Interview' : 'Schedule Interview'}</h2>
-          <button onClick={onClose} className="p-2 hover:bg-dark-200 rounded">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6">
+      <div className="card w-full max-w-4xl max-h-[90vh] overflow-hidden p-0">
+        <div className="sticky top-0 flex items-center justify-between border-b border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface))] px-6 py-4">
+          <h2 className="text-xl font-semibold text-[rgb(var(--app-text-primary))]">{interview ? 'Edit Interview' : 'Schedule Interview'}</h2>
+          <button onClick={onClose} type="button" className="rounded-lg border border-transparent p-2 text-muted transition hover:border-[rgba(var(--app-border-subtle))]">
             <X size={20} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Candidate *</label>
-              <select
-                name="candidateId"
-                value={formData.candidateId}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 bg-dark-200 border border-dark-300 rounded focus:border-primary-500 focus:outline-none"
-                required
-                disabled={!!interview}
-              >
-                <option value="">Select Candidate</option>
-                {candidatesQuery.data?.map((candidate: any) => (
-                  <option key={candidate.id} value={candidate.id}>
-                    {candidate.name} - {candidate.primarySkill}
-                  </option>
-                ))}
-              </select>
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-6 overflow-y-auto px-6 py-6 max-h-[calc(90vh-72px)]">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <SelectField
+              label="Candidate"
+              name="candidateId"
+              value={formData.candidateId ?? ''}
+              onChange={handleInputChange}
+              disabled={!!interview}
+              required
+              options={candidatesQuery.data?.map((candidate) => ({
+                value: candidate.id,
+                label: `${candidate.fullName}${candidate.primarySkills?.[0] ? ` • ${candidate.primarySkills[0]}` : ''}`,
+              })) ?? []}
+            />
+            <SelectField
+              label="Job"
+              name="jobId"
+              value={formData.jobId ?? ''}
+              onChange={handleInputChange}
+              disabled={!!interview}
+              required
+              options={jobsQuery.data?.map((job) => ({
+                value: job.id,
+                label: `${job.title} • ${job.client}`,
+              })) ?? []}
+            />
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Job *</label>
-              <select
-                name="jobId"
-                value={formData.jobId}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 bg-dark-200 border border-dark-300 rounded focus:border-primary-500 focus:outline-none"
-                required
-                disabled={!!interview}
-              >
-                <option value="">Select Job</option>
-                {jobsQuery.data?.map((job: any) => (
-                  <option key={job.id} value={job.id}>
-                    {job.title} - {job.client}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <SelectField
+              label="Submission (Optional)"
+              name="submissionId"
+              value={formData.submissionId ?? ''}
+              onChange={handleInputChange}
+              options={submissionsQuery.data?.map((submission) => ({
+                value: submission.id,
+                label: `${submission.candidateName} → ${submission.jobTitle}`,
+              })) ?? []}
+              placeholder="Select submission"
+            />
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Submission (Optional)</label>
-              <select
-                name="submissionId"
-                value={formData.submissionId || ''}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 bg-dark-200 border border-dark-300 rounded focus:border-primary-500 focus:outline-none"
-              >
-                <option value="">Select Submission</option>
-                {submissionsQuery.data?.map((submission: any) => (
-                  <option key={submission.id} value={submission.id}>
-                    {submission.candidateName} → {submission.jobTitle}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <Field
+              label="Scheduled Date & Time"
+              name="scheduledAt"
+              type="datetime-local"
+              value={formData.scheduledAt ?? ''}
+              onChange={handleInputChange}
+              required
+            />
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Scheduled Date & Time *</label>
-              <input
-                type="datetime-local"
-                name="scheduledAt"
-                value={formData.scheduledAt}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 bg-dark-200 border border-dark-300 rounded focus:border-primary-500 focus:outline-none"
-                required
-              />
-            </div>
+            <SelectField
+              label="Mode"
+              name="mode"
+              value={formData.mode ?? ''}
+              onChange={handleInputChange}
+              required
+              options={MODES.map((mode) => ({ value: mode, label: mode }))}
+            />
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Mode *</label>
-              <select
-                name="mode"
-                value={formData.mode}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 bg-dark-200 border border-dark-300 rounded focus:border-primary-500 focus:outline-none"
-                required
-              >
-                {MODES.map(mode => (
-                  <option key={mode} value={mode}>{mode}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Status</label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 bg-dark-200 border border-dark-300 rounded focus:border-primary-500 focus:outline-none"
-              >
-                {STATUSES.map(status => (
-                  <option key={status} value={status}>{status}</option>
-                ))}
-              </select>
-            </div>
+            <SelectField
+              label="Status"
+              name="status"
+              value={formData.status ?? ''}
+              onChange={handleInputChange}
+              options={STATUSES.map((status) => ({ value: status, label: status }))}
+            />
           </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium">Interview Panel</label>
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <label className="text-sm font-semibold uppercase tracking-[0.18em] text-[rgb(var(--app-text-primary))]">Interview Panel</label>
               <button
                 type="button"
                 onClick={handleAddPanelMember}
-                className="flex items-center gap-1 text-primary-500 hover:text-primary-400 text-sm"
+                className="btn-muted px-3 py-2 text-sm"
               >
-                <Plus size={16} /> Add Panel Member
+                <Plus size={16} />
+                Add panel member
               </button>
             </div>
-            
+
             <div className="space-y-3">
               {formData.panel?.map((member, index) => (
-                <div key={index} className="bg-dark-200 p-3 rounded border border-dark-300">
-                  <div className="grid grid-cols-2 gap-3 mb-2">
+                <div key={index} className="rounded-2xl border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] p-4">
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                     <input
                       type="text"
                       placeholder="Name *"
-                      value={member.name}
-                      onChange={e => handlePanelMemberChange(index, 'name', e.target.value)}
-                      className="px-3 py-2 bg-dark-300 border border-dark-400 rounded focus:border-primary-500 focus:outline-none"
+                      value={member.name ?? ''}
+                      onChange={(e) => handlePanelMemberChange(index, 'name', e.target.value)}
+                      className="input"
                       required
                     />
                     <input
                       type="email"
                       placeholder="Email *"
-                      value={member.email}
-                      onChange={e => handlePanelMemberChange(index, 'email', e.target.value)}
-                      className="px-3 py-2 bg-dark-300 border border-dark-400 rounded focus:border-primary-500 focus:outline-none"
+                      value={member.email ?? ''}
+                      onChange={(e) => handlePanelMemberChange(index, 'email', e.target.value)}
+                      className="input"
                       required
                     />
                     <input
                       type="text"
                       placeholder="Role"
                       value={member.role || ''}
-                      onChange={e => handlePanelMemberChange(index, 'role', e.target.value)}
-                      className="px-3 py-2 bg-dark-300 border border-dark-400 rounded focus:border-primary-500 focus:outline-none"
+                      onChange={(e) => handlePanelMemberChange(index, 'role', e.target.value)}
+                      className="input"
                     />
-                    <div className="flex items-center gap-3">
-                      <label className="flex items-center gap-2 text-sm">
+                    <div className="flex items-center gap-3 rounded-2xl border border-dashed border-[rgba(var(--app-border-subtle))] px-4 py-3">
+                      <label className="flex items-center gap-2 text-sm text-muted">
                         <input
                           type="checkbox"
                           checked={member.isExternal || false}
-                          onChange={e => handlePanelMemberChange(index, 'isExternal', e.target.checked)}
-                          className="rounded"
+                          onChange={(e) => handlePanelMemberChange(index, 'isExternal', e.target.checked)}
+                          className="h-4 w-4 rounded border-[rgba(var(--app-border-subtle))] accent-[rgb(var(--app-primary-from))]"
                         />
-                        External Interviewer
+                        External interviewer
                       </label>
                       <button
                         type="button"
                         onClick={() => handleRemovePanelMember(index)}
-                        className="ml-auto p-1 text-red-500 hover:bg-red-500/20 rounded"
+                        className="ml-auto flex items-center gap-1 rounded-lg border border-transparent px-2 py-1 text-sm text-red-400 transition hover:border-red-400"
                       >
                         <Trash2 size={16} />
+                        Remove
                       </button>
                     </div>
                   </div>
                 </div>
               ))}
+              {!(formData.panel && formData.panel.length) && (
+                <p className="text-xs text-muted">Add interviewers to keep everyone in the loop with calendar invites and debriefs.</p>
+              )}
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">Feedback / Notes</label>
+          <div className="space-y-2">
+            <label className="text-sm font-semibold uppercase tracking-[0.18em] text-[rgb(var(--app-text-primary))]">Feedback / Notes</label>
             <textarea
               name="feedback"
               value={formData.feedback || ''}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 bg-dark-200 border border-dark-300 rounded focus:border-primary-500 focus:outline-none"
-              rows={4}
+              className="input min-h-[140px]"
               placeholder="Interview feedback, notes, or instructions..."
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-dark-200 hover:bg-dark-300 rounded transition"
-            >
+          <div className="flex justify-end gap-3 pt-2">
+            <button type="button" onClick={onClose} className="btn-muted">
               Cancel
             </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-primary-500 hover:bg-primary-600 rounded transition"
-            >
+            <button type="submit" className="btn-primary">
               {interview ? 'Update Interview' : 'Schedule Interview'}
             </button>
           </div>
         </form>
       </div>
+    </div>
+  );
+}
+
+type FieldProps = {
+  label: string;
+  name: string;
+  type?: string;
+  value: string;
+  onChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  required?: boolean;
+  disabled?: boolean;
+};
+
+function Field({ label, name, type = 'text', value, onChange, required, disabled }: FieldProps) {
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-semibold uppercase tracking-[0.18em] text-[rgb(var(--app-text-primary))]">
+        {label}
+        {required && <span className="ml-1 text-red-400">*</span>}
+      </label>
+      <input
+        name={name}
+        type={type}
+        value={value}
+        onChange={onChange}
+        required={required}
+        disabled={disabled}
+        className="input"
+      />
+    </div>
+  );
+}
+
+type SelectFieldProps = {
+  label: string;
+  name: string;
+  value: string;
+  onChange: (event: ChangeEvent<HTMLSelectElement>) => void;
+  options: Array<{ value: string; label: string }>;
+  required?: boolean;
+  disabled?: boolean;
+  placeholder?: string;
+};
+
+function SelectField({ label, name, value, onChange, options, required, disabled, placeholder }: SelectFieldProps) {
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-semibold uppercase tracking-[0.18em] text-[rgb(var(--app-text-primary))]">
+        {label}
+        {required && <span className="ml-1 text-red-400">*</span>}
+      </label>
+      <select
+        name={name}
+        value={value}
+        onChange={onChange}
+        required={required}
+        disabled={disabled}
+        className="input"
+      >
+        <option value="">{placeholder ?? `Select ${label.toLowerCase()}`}</option>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }

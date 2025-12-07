@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Download } from 'lucide-react';
+import { Plus, Search, Download, SlidersHorizontal, RotateCcw, Users, UserCheck, UserCog, Briefcase } from 'lucide-react';
 import { reportService } from '../services/report.service';
 import toast from 'react-hot-toast';
 import type { Candidate } from '../types';
@@ -8,6 +8,38 @@ import CandidateTable from '../components/candidates/CandidateTable';
 import CandidateModal from '../components/candidates/CandidateModal';
 import { candidateService } from '../services/candidate.service';
 import { useSearchParams } from 'react-router-dom';
+import StatsCard from '../components/dashboard/StatsCard';
+
+type CandidateColumnKey = 'name' | 'contact' | 'skills' | 'experience' | 'status' | 'actions';
+type ResizableCandidateColumnKey = Exclude<CandidateColumnKey, 'actions'>;
+type CandidateColumnWidths = Partial<Record<ResizableCandidateColumnKey, number>>;
+type CandidateQueryResult = { content: Candidate[]; totalElements?: number; totalPages?: number };
+type CandidateSavedView = {
+  name: string;
+  filters: Record<string, string>;
+  visibleColumns: CandidateColumnKey[];
+  columnWidths: CandidateColumnWidths;
+};
+type CandidateQuerySnapshots = Array<[readonly unknown[], CandidateQueryResult | undefined]>;
+
+const ALL_CANDIDATE_COLUMNS: CandidateColumnKey[] = ['name', 'contact', 'skills', 'experience', 'status', 'actions'];
+const RESIZABLE_CANDIDATE_COLUMNS: ResizableCandidateColumnKey[] = ['name', 'contact', 'skills', 'experience', 'status'];
+const isCandidateColumn = (value: string): value is CandidateColumnKey =>
+  ALL_CANDIDATE_COLUMNS.includes(value as CandidateColumnKey);
+const QUICK_STATUS_FILTERS = ['AVAILABLE', 'INTERVIEWING', 'PLACED', 'ON_HOLD'] as const;
+
+const normalizeColumnWidths = (value: unknown): CandidateColumnWidths => {
+  const widths: CandidateColumnWidths = {};
+  if (value && typeof value === 'object') {
+    RESIZABLE_CANDIDATE_COLUMNS.forEach((column) => {
+      const maybeNumber = (value as Record<string, unknown>)[column];
+      if (typeof maybeNumber === 'number') {
+        widths[column] = maybeNumber;
+      }
+    });
+  }
+  return widths;
+};
 
 export default function Candidates() {
   const queryClient = useQueryClient();
@@ -21,34 +53,50 @@ export default function Candidates() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [visibleColumns, setVisibleColumns] = useState<Set<'name' | 'contact' | 'skills' | 'experience' | 'status' | 'actions'>>(
+  const [visibleColumns, setVisibleColumns] = useState<Set<CandidateColumnKey>>(
     () => {
       const raw = localStorage.getItem('candidateTable.visibleColumns.v1');
       if (raw) {
         try {
-          const arr = JSON.parse(raw) as string[];
-          return new Set(arr as any);
-        } catch {}
+          const parsed = JSON.parse(raw) as unknown;
+          const columns = Array.isArray(parsed)
+            ? parsed.filter((col): col is CandidateColumnKey => typeof col === 'string' && isCandidateColumn(col))
+            : ALL_CANDIDATE_COLUMNS;
+          return new Set(columns);
+        } catch {
+          // Fallback to defaults if parse fails
+        }
       }
-      return new Set(['name','contact','skills','experience','status','actions']);
+      return new Set(ALL_CANDIDATE_COLUMNS);
     }
   );
-  const [columnWidths, setColumnWidths] = useState<Partial<Record<'name' | 'contact' | 'skills' | 'experience' | 'status' | 'actions', number>>>(() => {
+  const [columnWidths, setColumnWidths] = useState<CandidateColumnWidths>(() => {
     const raw = localStorage.getItem('candidateTable.columnWidths.v1');
     if (raw) {
-      try { return JSON.parse(raw); } catch {}
+      try {
+        const parsed = JSON.parse(raw) as unknown;
+        return normalizeColumnWidths(parsed);
+      } catch {
+        // Fallback to defaults if parse fails
+      }
     }
     return { name: 260, contact: 240, skills: 300, experience: 140, status: 140 };
   });
   const [showColumnsPanel, setShowColumnsPanel] = useState(false);
-  const [savedViews, setSavedViews] = useState<Array<{
-    name: string;
-    filters: Record<string, string>;
-    visibleColumns: string[];
-    columnWidths: Record<string, number>;
-  }>>(() => {
+  const [savedViews, setSavedViews] = useState<CandidateSavedView[]>(() => {
     const raw = localStorage.getItem('candidateTable.savedViews.v1');
-    if (raw) { try { return JSON.parse(raw); } catch {} }
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw) as CandidateSavedView[];
+        return parsed.map((view) => ({
+          ...view,
+          visibleColumns: view.visibleColumns.filter((col): col is CandidateColumnKey => isCandidateColumn(col)),
+          columnWidths: normalizeColumnWidths(view.columnWidths),
+        }));
+      } catch {
+        // Fallback to empty if parse fails
+      }
+    }
     return [];
   });
   const [selectedView, setSelectedView] = useState<string>('');
@@ -89,7 +137,7 @@ export default function Candidates() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['candidates', page, searchTerm, selectedStatus, availability, visaStatus, recruiterId],
     queryFn: async () => {
-      const params: Record<string, any> = { page, size: 10 };
+  const params: Record<string, string | number | boolean | string[] | undefined> = { page, size: 10 };
       if (/[,;|]/.test(searchTerm)) {
         params.skills = searchTerm.split(/[,;|]/).map(s => s.trim()).filter(Boolean);
       } else if (searchTerm) {
@@ -113,16 +161,21 @@ export default function Candidates() {
     setSelectedIds(new Set());
   }, [page, searchTerm, selectedStatus, availability, visaStatus, recruiterId]);
 
+  // Debug: log candidate list whenever query data changes
+  useEffect(() => {
+    console.debug('[Candidates.tsx] candidate list', data?.content);
+  }, [data]);
+
   // Create mutation
   const createMutation = useMutation({
     mutationFn: (c: Partial<Candidate>) => candidateService.create(c),
     onMutate: async (newCandidate) => {
       await queryClient.cancelQueries({ queryKey: ['candidates'] });
-      const snapshots = queryClient.getQueriesData<any>({ queryKey: ['candidates'] });
+      const snapshots = queryClient.getQueriesData<CandidateQueryResult>({ queryKey: ['candidates'] });
 
       // Optimistically insert only into page 0 queries to avoid pagination inconsistencies
       snapshots.forEach(([key, data]) => {
-        const keyArr = key as unknown as any[];
+        const keyArr = Array.isArray(key) ? key : [];
         const keyPage = keyArr?.[1];
         if (data && typeof data === 'object' && keyPage === 0 && Array.isArray(data.content)) {
           const tempId = `optimistic-${Date.now()}`;
@@ -133,11 +186,11 @@ export default function Candidates() {
             lastName: newCandidate.lastName || '',
             email: newCandidate.email || '',
             phone: newCandidate.phone || '',
-            status: (newCandidate as any).status || 'AVAILABLE',
-            availability: (newCandidate as any).availability || 'AVAILABLE',
-            visaStatus: (newCandidate as any).visaStatus || 'H1B',
-            primarySkills: (newCandidate as any).primarySkills || [],
-            totalExperience: (newCandidate as any).totalExperience || 0,
+            status: (newCandidate as Candidate).status || 'AVAILABLE',
+            availability: (newCandidate as Candidate).availability || 'AVAILABLE',
+            visaStatus: (newCandidate as Candidate).visaStatus || 'H1B',
+            primarySkills: (newCandidate as Candidate).primarySkills || [],
+            totalExperience: (newCandidate as Candidate).totalExperience || 0,
             updatedAt: new Date().toISOString(),
           } as Candidate;
           queryClient.setQueryData(key, {
@@ -147,10 +200,11 @@ export default function Candidates() {
         }
       });
 
-      return { snapshots };
+      return { snapshots: snapshots as CandidateQuerySnapshots };
     },
     onError: (_e, _vars, ctx) => {
-      ctx?.snapshots?.forEach(([key, data]: any) => {
+      const snapshots = (ctx as { snapshots?: CandidateQuerySnapshots } | undefined)?.snapshots;
+      snapshots?.forEach(([key, data]) => {
         queryClient.setQueryData(key, data);
       });
       toast.error('Failed to add candidate');
@@ -170,17 +224,22 @@ export default function Candidates() {
       candidateService.update(id, data),
     onMutate: async ({ id, data }) => {
       await queryClient.cancelQueries({ queryKey: ['candidates'] });
-      const snapshots = queryClient.getQueriesData<any>({ queryKey: ['candidates'] });
+      const snapshots = queryClient.getQueriesData<CandidateQueryResult>({ queryKey: ['candidates'] });
       snapshots.forEach(([key, prev]) => {
         if (prev && Array.isArray(prev.content)) {
           const updated = prev.content.map((c: Candidate) => (c.id === id ? { ...c, ...data } : c));
           queryClient.setQueryData(key, { ...prev, content: updated });
         }
       });
-      return { snapshots };
+      return {
+        snapshots: snapshots as CandidateQuerySnapshots,
+      };
     },
     onError: (_e, _vars, ctx) => {
-      ctx?.snapshots?.forEach(([key, data]: any) => queryClient.setQueryData(key, data));
+      const snapshots = (ctx as { snapshots?: CandidateQuerySnapshots } | undefined)?.snapshots;
+      snapshots?.forEach(([key, data]) => {
+        queryClient.setQueryData(key, data);
+      });
       toast.error('Failed to update candidate');
     },
     onSuccess: () => {
@@ -197,24 +256,38 @@ export default function Candidates() {
   const deleteMutation = useMutation({
     mutationFn: candidateService.delete,
     onMutate: async (id: string) => {
+      setSelectedIds(prev => {
+        if (!prev.has(id)) return prev;
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
       await queryClient.cancelQueries({ queryKey: ['candidates'] });
-      const snapshots = queryClient.getQueriesData<any>({ queryKey: ['candidates'] });
+      const snapshots = queryClient.getQueriesData<CandidateQueryResult>({ queryKey: ['candidates'] });
       snapshots.forEach(([key, prev]) => {
         if (prev && Array.isArray(prev.content)) {
           const filtered = prev.content.filter((c: Candidate) => c.id !== id);
           queryClient.setQueryData(key, { ...prev, content: filtered });
         }
       });
-      return { snapshots };
+      return {
+        snapshots: snapshots as CandidateQuerySnapshots,
+      };
     },
     onError: (_e, _vars, ctx) => {
-      ctx?.snapshots?.forEach(([key, data]: any) => queryClient.setQueryData(key, data));
+      const snapshots = (ctx as { snapshots?: CandidateQuerySnapshots } | undefined)?.snapshots;
+      snapshots?.forEach(([key, data]) => {
+        queryClient.setQueryData(key, data);
+      });
       toast.error('Failed to delete candidate');
     },
     onSuccess: () => {
       toast.success('Candidate deleted successfully!');
     },
-    onSettled: () => {
+    onSettled: (_result, _error, id) => {
+      if (id) {
+        queryClient.invalidateQueries({ queryKey: ['candidate', id] });
+      }
       queryClient.invalidateQueries({ queryKey: ['candidates'] });
     },
   });
@@ -243,8 +316,69 @@ export default function Candidates() {
     setIsModalOpen(true);
   };
 
-  const candidates = data?.content || [];
+  const candidates = useMemo(() => data?.content ?? [], [data?.content]);
   const totalPages = data?.totalPages || 0;
+  const totalCandidates = data?.totalElements ?? candidates.length;
+
+  const statusBreakdown = useMemo(() => {
+    return candidates.reduce(
+      (acc, candidate) => {
+        const status = (candidate.status || '').toUpperCase();
+        if (status === 'AVAILABLE') acc.available += 1;
+        else if (status === 'INTERVIEWING') acc.interviewing += 1;
+        else if (status === 'PLACED') acc.placed += 1;
+        else if (status === 'ON_HOLD') acc.onHold += 1;
+        return acc;
+      },
+      { available: 0, interviewing: 0, placed: 0, onHold: 0 }
+    );
+  }, [candidates]);
+
+  const summaryCards = useMemo(
+    () => [
+      {
+        title: 'Total Candidates',
+        value: totalCandidates,
+        icon: <Users size={18} className="text-primary-400" />,
+        accentClassName: 'hover:border-[rgba(var(--app-primary-from),0.45)] transition-colors',
+      },
+      {
+        title: 'Available Now',
+        value: statusBreakdown.available,
+        icon: <UserCheck size={18} className="text-green-400" />,
+        accentClassName: 'hover:border-emerald-400/40 transition-colors',
+      },
+      {
+        title: 'Interviewing',
+        value: statusBreakdown.interviewing,
+        icon: <UserCog size={18} className="text-yellow-400" />,
+        accentClassName: 'hover:border-amber-400/40 transition-colors',
+      },
+      {
+        title: 'Placed',
+        value: statusBreakdown.placed,
+        icon: <Briefcase size={18} className="text-blue-400" />,
+        accentClassName: 'hover:border-sky-400/40 transition-colors',
+      },
+    ],
+    [statusBreakdown, totalCandidates]
+  );
+
+  const hasActiveFilters = useMemo(
+    () => Boolean(searchTerm || selectedStatus || availability || visaStatus || recruiterId),
+    [searchTerm, selectedStatus, availability, visaStatus, recruiterId]
+  );
+
+  const clearFilters = () => {
+    if (!hasActiveFilters) return;
+    setSearchTerm('');
+    setSelectedStatus('');
+    setAvailability('');
+    setVisaStatus('');
+    setRecruiterId('');
+    setSelectedView('');
+    setPage(0);
+  };
 
   const toggleOne = (id: string) => {
     setSelectedIds(prev => {
@@ -267,11 +401,9 @@ export default function Candidates() {
     if (!window.confirm(`Delete ${selectedIds.size} selected candidate(s)?`)) return;
     const ids = Array.from(selectedIds);
     // Fire individual mutations (each does optimistic update + rollback)
-    await Promise.all(ids.map(id => new Promise<void>((resolve) => {
-      // Use mutate to trigger optimistic behavior but wrap in a Promise
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      deleteMutation.mutate(id, { onSettled: () => resolve() });
-    })));
+    await Promise.all(
+      ids.map((id) => deleteMutation.mutateAsync(id).catch(() => undefined))
+    );
     setSelectedIds(new Set());
   };
 
@@ -304,14 +436,14 @@ export default function Candidates() {
     URL.revokeObjectURL(url);
   };
 
-  const toggleColumnVisibility = (id: 'name' | 'contact' | 'skills' | 'experience' | 'status' | 'actions', checked: boolean) => {
+  const toggleColumnVisibility = (id: CandidateColumnKey, checked: boolean) => {
     setVisibleColumns(prev => {
-      const next = new Set(prev);
+      const next = new Set<CandidateColumnKey>(prev);
       if (checked) next.add(id); else next.delete(id);
-      return next as any;
+      return next;
     });
   };
-  const handleColumnResize = (id: 'name' | 'contact' | 'skills' | 'experience' | 'status', width: number) => {
+  const handleColumnResize = (id: ResizableCandidateColumnKey, width: number) => {
     setColumnWidths(prev => ({ ...prev, [id]: width }));
   };
 
@@ -329,7 +461,7 @@ export default function Candidates() {
       name,
       filters,
       visibleColumns: Array.from(visibleColumns),
-      columnWidths: columnWidths as Record<string, number>,
+      columnWidths: normalizeColumnWidths(columnWidths),
     };
     const next = [...savedViews.filter(v => v.name !== name), view];
     setSavedViews(next);
@@ -346,51 +478,71 @@ export default function Candidates() {
     setAvailability(view.filters.availability || '');
     setVisaStatus(view.filters.visaStatus || '');
     setRecruiterId(view.filters.recruiterId || '');
-    setVisibleColumns(new Set(view.visibleColumns as any));
-    setColumnWidths(view.columnWidths as any);
+    const nextColumns = view.visibleColumns.filter((col): col is CandidateColumnKey => isCandidateColumn(col));
+    setVisibleColumns(new Set(nextColumns));
+    setColumnWidths(normalizeColumnWidths(view.columnWidths));
     setPage(0);
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Candidates</h1>
-          <p className="text-dark-600 mt-1">Manage your candidate database</p>
+    <div className="space-y-10 px-6 py-8">
+      <header className="flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--app-border-subtle))] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted">
+            <Users size={14} />
+            Talent Network
+          </div>
+          <h1 className="text-3xl font-semibold text-[rgb(var(--app-text-primary))]">Candidates</h1>
+          <p className="max-w-2xl text-sm text-muted">
+            Monitor talent availability, collaborate with recruiters, and keep every candidate interaction polished.
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={handleAddNew} className="btn-primary flex items-center gap-2">
-            <Plus size={20} />
-            Add Candidate
+        <div className="flex flex-wrap items-center gap-2">
+          <button onClick={handleAddNew} type="button" className="btn-primary">
+            <Plus size={18} />
+            New candidate
           </button>
           <button
             onClick={() => reportService.exportCandidatesCSV()}
-            className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 rounded transition"
+            type="button"
+            className="btn-muted"
           >
             <Download size={18} />
             Export CSV
           </button>
         </div>
-      </div>
+      </header>
 
-      <div className="card">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex-1 relative min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-500" size={20} />
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {summaryCards.map((card) => (
+          <StatsCard
+            key={card.title}
+            title={card.title}
+            value={card.value}
+            icon={card.icon}
+            accentClassName={card.accentClassName}
+          />
+        ))}
+      </section>
+
+      <section className="card space-y-6">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+          <div className="relative md:col-span-2 xl:col-span-2">
+            <Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted" size={20} />
             <input
               type="text"
               placeholder="Search by any field or skills (comma/semicolon/pipe for skills)..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-dark-50 border border-dark-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              onChange={(e) => { setSearchTerm(e.target.value); setPage(0); }}
+              className="input pl-11"
             />
           </div>
           <select
             value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            className="py-3 px-4 bg-dark-50 border border-dark-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            onChange={(e) => { setSelectedStatus(e.target.value); setPage(0); }}
+            className="input"
           >
-            <option value="">All Status</option>
+            <option value="">All status</option>
             <option value="AVAILABLE">Available</option>
             <option value="INTERVIEWING">Interviewing</option>
             <option value="PLACED">Placed</option>
@@ -398,19 +550,19 @@ export default function Candidates() {
           </select>
           <select
             value={availability}
-            onChange={(e) => setAvailability(e.target.value)}
-            className="py-3 px-4 bg-dark-50 border border-dark-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            onChange={(e) => { setAvailability(e.target.value); setPage(0); }}
+            className="input"
           >
-            <option value="">All Availability</option>
+            <option value="">All availability</option>
             <option value="AVAILABLE">Available</option>
             <option value="NOT_AVAILABLE">Not Available</option>
           </select>
           <select
             value={visaStatus}
-            onChange={(e) => setVisaStatus(e.target.value)}
-            className="py-3 px-4 bg-dark-50 border border-dark-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            onChange={(e) => { setVisaStatus(e.target.value); setPage(0); }}
+            className="input"
           >
-            <option value="">All Visa Status</option>
+            <option value="">All visa status</option>
             <option value="H1B">H1B</option>
             <option value="GC">GC</option>
             <option value="CITIZEN">Citizen</option>
@@ -421,69 +573,149 @@ export default function Candidates() {
             type="text"
             placeholder="Recruiter ID"
             value={recruiterId}
-            onChange={(e) => setRecruiterId(e.target.value)}
-            className="py-3 px-4 bg-dark-50 border border-dark-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 min-w-[120px]"
+            onChange={(e) => { setRecruiterId(e.target.value); setPage(0); }}
+            className="input"
           />
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => setShowColumnsPanel(v => !v)} className="py-3 px-4 bg-dark-50 border border-dark-200 rounded-lg">Columns</button>
-          <select value={selectedView} onChange={(e) => applyView(e.target.value)} className="py-3 px-4 bg-dark-50 border border-dark-200 rounded-lg">
-            <option value="">Saved Views</option>
-            {savedViews.map(v => (
-              <option key={v.name} value={v.name}>{v.name}</option>
-            ))}
-          </select>
-          <button onClick={saveCurrentView} className="py-3 px-4 bg-dark-50 border border-dark-200 rounded-lg">Save View</button>
-        </div>
-      </div>
-      {showColumnsPanel && (
-        <div className="card -mt-3">
-          <div className="flex flex-wrap gap-4 text-sm">
-            {(['name','contact','skills','experience','status','actions'] as const).map(id => (
-              <label key={id} className="flex items-center gap-2">
-                <input type="checkbox" checked={visibleColumns.has(id)} onChange={(e) => toggleColumnVisibility(id, e.target.checked)} />
-                {id.charAt(0).toUpperCase() + id.slice(1)}
-              </label>
-            ))}
-            <div className="text-dark-600">Drag the tiny handle on header to resize columns.</div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[rgba(var(--app-border-subtle))] pt-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => setShowColumnsPanel((prev) => !prev)}
+              type="button"
+              className="btn-muted"
+            >
+              <SlidersHorizontal size={16} />
+              Columns
+            </button>
+            <button
+              onClick={clearFilters}
+              type="button"
+              disabled={!hasActiveFilters}
+              className="btn-muted disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <RotateCcw size={16} />
+              Reset filters
+            </button>
           </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={selectedView}
+              onChange={(e) => applyView(e.target.value)}
+              className="input py-2.5"
+            >
+              <option value="">Saved views</option>
+              {savedViews.map((view) => (
+                <option key={view.name} value={view.name}>
+                  {view.name}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={saveCurrentView}
+              type="button"
+              className="btn-primary"
+            >
+              Save view
+            </button>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {QUICK_STATUS_FILTERS.map((status) => (
+            <button
+              key={status}
+              onClick={() => { setSelectedStatus(status); setPage(0); }}
+              type="button"
+              className={`chip ${selectedStatus === status ? 'chip-active' : ''}`}
+            >
+              {status.replace('_', ' ')}
+            </button>
+          ))}
+          {selectedStatus && (
+            <button
+              onClick={() => {
+                setSelectedStatus('');
+                setPage(0);
+              }}
+              type="button"
+              className="chip"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+
+        {showColumnsPanel && (
+          <div className="rounded-2xl border border-dashed border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] p-4">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted">Display preferences</p>
+            <p className="text-sm text-muted">Choose which columns appear in the table. Drag the resize handle in the header to adjust widths.</p>
+            <div className="mt-3 flex flex-wrap gap-4 text-sm text-[rgb(var(--app-text-primary))]">
+              {(['name', 'contact', 'skills', 'experience', 'status', 'actions'] as const).map((id) => (
+                <label key={id} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={visibleColumns.has(id)}
+                    onChange={(e) => toggleColumnVisibility(id, e.target.checked)}
+                  />
+                  {id.charAt(0).toUpperCase() + id.slice(1)}
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+
+      {isLoading && (
+        <div className="card space-y-3">
+          <div className="h-4 w-40 animate-pulse rounded-full bg-[rgba(var(--app-border-subtle))]" />
+          <div className="h-4 w-full animate-pulse rounded-full bg-[rgba(var(--app-border-subtle))]" />
+          <div className="h-4 w-5/6 animate-pulse rounded-full bg-[rgba(var(--app-border-subtle))]" />
         </div>
       )}
 
-      {/* Quick filter chips */}
-      <div className="flex flex-wrap gap-2">
-        {['AVAILABLE','INTERVIEWING','PLACED','ON_HOLD'].map(s => (
-          <button
-            key={s}
-            onClick={() => { setSelectedStatus(s); setPage(0); }}
-            className={`px-3 py-1 rounded-full border text-xs ${selectedStatus === s ? 'bg-primary-500/20 text-primary-400 border-primary-500/30' : 'bg-dark-100 text-dark-600 border-dark-200'}`}
-          >
-            {s.replace('_',' ')}
-          </button>
-        ))}
-        {selectedStatus && (
-          <button onClick={() => setSelectedStatus('')} className="px-3 py-1 rounded-full border text-xs bg-dark-100 text-dark-600 border-dark-200">Clear</button>
-        )}
-      </div>
+      {!isLoading && error && (
+        <div className="card border-red-400/40 bg-red-500/5 text-red-300">
+          Error loading candidates: {error instanceof Error ? error.message : 'Unknown error'}
+        </div>
+      )}
 
-      {isLoading ? (
-        <div className="card">
-          <p className="text-center py-12">Loading candidates...</p>
+      {!isLoading && !error && candidates.length === 0 && (
+        <div className="card flex flex-col items-center justify-center gap-4 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full border border-dashed border-[rgba(var(--app-border-subtle))] text-muted">
+            <Users size={28} />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-lg font-semibold">No candidates found</h3>
+            <p className="max-w-sm text-sm text-muted">Try adjusting your filters or import fresh talent from a recent campaign.</p>
+          </div>
+          <button onClick={handleAddNew} type="button" className="btn-primary">
+            <Plus size={16} />
+            Add your first candidate
+          </button>
         </div>
-      ) : error ? (
-        <div className="card">
-          <p className="text-center py-12 text-red-500">
-            Error loading candidates: {error instanceof Error ? error.message : 'Unknown error'}
-          </p>
-        </div>
-      ) : (
+      )}
+
+      {!isLoading && !error && candidates.length > 0 && (
         <>
           {selectedIds.size > 0 && (
-            <div className="card flex items-center justify-between mb-2">
-              <div className="text-sm text-dark-600">{selectedIds.size} selected</div>
-              <div className="flex gap-2">
-                <button onClick={exportCSV} className="px-3 py-2 bg-dark-100 hover:bg-dark-200 rounded">Export CSV</button>
-                <button onClick={bulkDelete} className="px-3 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded">Delete Selected</button>
+            <div className="card mb-2 flex flex-wrap items-center justify-between gap-3 border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))]">
+              <div className="flex items-center gap-2 text-sm text-muted">
+                <span className="chip surface-muted text-xs font-semibold uppercase tracking-[0.18em] text-[rgb(var(--app-text-primary))]">Bulk edit</span>
+                <span>{selectedIds.size} selected</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <button onClick={exportCSV} type="button" className="btn-muted px-3 py-2 text-sm">
+                  <Download size={16} />
+                  Export CSV
+                </button>
+                <button
+                  onClick={bulkDelete}
+                  type="button"
+                  className="btn-muted px-3 py-2 text-sm text-red-400 hover:border-red-400 hover:text-red-300"
+                >
+                  Delete selected
+                </button>
               </div>
             </div>
           )}
@@ -504,17 +736,19 @@ export default function Candidates() {
               <button
                 onClick={() => setPage(Math.max(0, page - 1))}
                 disabled={page === 0}
-                className="px-4 py-2 bg-dark-100 hover:bg-dark-200 rounded-lg disabled:opacity-50"
+                type="button"
+                className="btn-muted px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Previous
               </button>
-              <span className="px-4 py-2">
+              <span className="text-sm text-muted">
                 Page {page + 1} of {totalPages}
               </span>
               <button
                 onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
                 disabled={page >= totalPages - 1}
-                className="px-4 py-2 bg-dark-100 hover:bg-dark-200 rounded-lg disabled:opacity-50"
+                type="button"
+                className="btn-muted px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Next
               </button>

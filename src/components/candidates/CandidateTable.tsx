@@ -19,27 +19,29 @@ interface Props {
 export default function CandidateTable({ candidates, onEdit, onDelete, selectedIds, onToggleOne, onToggleAll, visibleColumns, columnWidths, onColumnResize }: Props) {
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      AVAILABLE: 'bg-green-500/20 text-green-400 border-green-500/30',
-      PLACED: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-      INTERVIEWING: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-      INACTIVE: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
+      AVAILABLE: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+      PLACED: 'bg-sky-500/20 text-sky-300 border-sky-500/30',
+      INTERVIEWING: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+      ON_HOLD: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+      INACTIVE: 'bg-slate-500/30 text-slate-300 border-slate-500/30',
     };
     return colors[status] || colors.INACTIVE;
   };
 
   // For large datasets, render a virtualized list to keep scrolling smooth
-  if (candidates.length > 100) {
-    const parentRef = useRef<HTMLDivElement | null>(null);
-    const rowVirtualizer = useVirtualizer({
-      count: candidates.length,
-      getScrollElement: () => parentRef.current,
-      estimateSize: () => 88, // approximate row height
-      overscan: 8,
-    });
+  const parentRef = useRef<HTMLDivElement | null>(null);
+  const shouldVirtualize = candidates.length > 100;
+  const rowVirtualizer = useVirtualizer({
+    count: shouldVirtualize ? candidates.length : 0,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 88,
+    overscan: 8,
+  });
 
+  if (shouldVirtualize) {
     return (
-      <div className="card">
-        <div className="px-4 py-3 border-b border-dark-200 flex text-sm font-semibold sticky top-0 bg-dark-100 z-10">
+      <div className="card overflow-hidden p-0">
+        <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] px-5 py-4 text-xs font-semibold uppercase tracking-wider text-muted">
           <div className="w-10 pr-2">
             <input
               type="checkbox"
@@ -63,7 +65,7 @@ export default function CandidateTable({ candidates, onEdit, onDelete, selectedI
               return (
                 <div
                   key={candidate.id}
-                  className="flex items-start border-b border-dark-200 hover:bg-dark-50 transition-colors px-4"
+                  className="group flex items-start border-b border-[rgba(var(--app-border-subtle))] px-5 transition-colors hover:bg-[rgb(var(--app-surface-muted))]"
                   style={{
                     position: 'absolute',
                     top: 0,
@@ -81,22 +83,22 @@ export default function CandidateTable({ candidates, onEdit, onDelete, selectedI
                     />
                   </div>
                   {visibleColumns.has('name') && (
-                    <div className="w-1/4 py-4 pr-2">
-                      <Link to={`/candidates/${candidate.id}`} className="font-medium text-primary-400 hover:underline">
+                    <div className="w-1/4 py-4 pr-3">
+                      <Link to={`/candidates/${candidate.id}`} className="font-medium text-[rgb(var(--app-text-primary))] transition hover:text-[rgb(var(--app-primary-from))]">
                         {candidate.fullName}
                       </Link>
-                      <p className="text-sm text-dark-600">{candidate.visaStatus}</p>
+                      <p className="text-xs text-muted uppercase tracking-wide">{candidate.visaStatus}</p>
                     </div>
                   )}
                   {visibleColumns.has('contact') && (
                     <div className="w-1/4 py-4 pr-2">
                       <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Mail size={14} className="text-dark-600" />
+                        <div className="flex items-center gap-2 text-[13px] text-[rgb(var(--app-text-secondary))]">
+                          <Mail size={14} className="text-muted" />
                           <span>{candidate.email}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Phone size={14} className="text-dark-600" />
+                        <div className="flex items-center gap-2 text-[13px] text-[rgb(var(--app-text-secondary))]">
+                          <Phone size={14} className="text-muted" />
                           <span>{candidate.phone}</span>
                         </div>
                       </div>
@@ -104,18 +106,18 @@ export default function CandidateTable({ candidates, onEdit, onDelete, selectedI
                   )}
                   {visibleColumns.has('skills') && (
                     <div className="w-1/4 py-4 pr-2">
-                      <div className="flex flex-wrap gap-1">
-                        {candidate.primarySkills.slice(0, 3).map((skill) => (
+                      <div className="flex flex-wrap gap-1.5">
+                        {(candidate.primarySkills ?? []).slice(0, 3).map((skill) => (
                           <span
                             key={skill}
-                            className="px-2 py-1 bg-primary-500/20 text-primary-400 text-xs rounded-full"
+                            className="chip chip-active"
                           >
                             {skill}
                           </span>
                         ))}
-                        {candidate.primarySkills.length > 3 && (
-                          <span className="px-2 py-1 bg-dark-200 text-dark-600 text-xs rounded-full">
-                            +{candidate.primarySkills.length - 3}
+                        {(candidate.primarySkills ?? []).length > 3 && (
+                          <span className="chip">
+                            +{(candidate.primarySkills ?? []).length - 3}
                           </span>
                         )}
                       </div>
@@ -123,31 +125,31 @@ export default function CandidateTable({ candidates, onEdit, onDelete, selectedI
                   )}
                   {visibleColumns.has('experience') && (
                     <div className="w-1/6 py-4 pr-2">
-                      <span className="font-medium">{candidate.totalExperience} years</span>
+                      <span className="text-sm font-semibold text-[rgb(var(--app-text-primary))]">{candidate.totalExperience} years</span>
                     </div>
                   )}
                   {visibleColumns.has('status') && (
                     <div className="w-1/6 py-4 pr-2">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(candidate.status)}`}>
+                      <span className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${getStatusColor(candidate.status)}`}>
                         {candidate.status}
                       </span>
                     </div>
                   )}
                   {visibleColumns.has('actions') && (
-                    <div className="w-[100px] py-4 flex gap-2">
+                    <div className="flex w-[100px] gap-2 py-4">
                       <button
                         onClick={() => onEdit(candidate)}
-                        className="p-2 hover:bg-primary-500/20 rounded-lg transition-colors"
+                        className="rounded-lg border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] p-2 text-[rgb(var(--app-primary-from))] transition hover:border-[rgba(var(--app-primary-from),0.5)]"
                         title="Edit"
                       >
-                        <Edit size={16} className="text-primary-500" />
+                        <Edit size={16} />
                       </button>
                       <button
                         onClick={() => onDelete(candidate.id)}
-                        className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
+                        className="rounded-lg border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] p-2 text-red-400 transition hover:border-red-400/50"
                         title="Delete"
                       >
-                        <Trash2 size={16} className="text-red-500" />
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   )}
@@ -157,8 +159,8 @@ export default function CandidateTable({ candidates, onEdit, onDelete, selectedI
           </div>
         </div>
         {candidates.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-dark-600">No candidates found</p>
+          <div className="py-12 text-center text-sm text-muted">
+            <p>No candidates found</p>
           </div>
         )}
       </div>
@@ -190,8 +192,8 @@ export default function CandidateTable({ candidates, onEdit, onDelete, selectedI
   };
 
   return (
-    <div className="card overflow-x-auto">
-      <table className="w-full">
+    <div className="card overflow-hidden p-0">
+      <table className="w-full min-w-[960px]">
         <colgroup>
           <col style={{ width: selectionW }} />
           {visibleColumns.has('name') && <col style={{ width: wName }} />}
@@ -201,9 +203,9 @@ export default function CandidateTable({ candidates, onEdit, onDelete, selectedI
           {visibleColumns.has('status') && <col style={{ width: wStatus }} />}
           {visibleColumns.has('actions') && <col />}
         </colgroup>
-        <thead className="sticky top-0 bg-dark-100 z-10">
-          <tr className="border-b border-dark-200">
-            <th className="text-left py-4 px-4 font-semibold w-10 sticky left-0 bg-dark-100 z-20">
+        <thead className="sticky top-0 z-10 bg-[rgb(var(--app-surface-muted))] backdrop-blur">
+          <tr className="border-b border-[rgba(var(--app-border-subtle))] text-left text-xs font-semibold uppercase tracking-wider text-muted">
+            <th className="sticky left-0 w-12 px-4 py-4">
               <input
                 type="checkbox"
                 aria-label="Select all"
@@ -212,55 +214,58 @@ export default function CandidateTable({ candidates, onEdit, onDelete, selectedI
               />
             </th>
             {visibleColumns.has('name') && (
-              <th className="text-left py-4 px-4 font-semibold sticky bg-dark-100 z-10" style={{ left: selectionW }}>
-                <div className="relative">
-                  Name
+              <th className="sticky left-12 bg-[rgb(var(--app-surface-muted))] px-4 py-4" style={{ left: selectionW }}>
+                <div className="relative flex items-center justify-between gap-3">
+                  <span>Name</span>
                   <span
-                    className="absolute right-0 top-0 h-full w-1 cursor-col-resize"
+                    className="h-7 w-[3px] rounded-full bg-transparent transition hover:bg-[rgb(var(--app-primary-from))]"
                     onMouseDown={(e) => startResize('name', e.clientX, wName)}
                   />
                 </div>
               </th>
             )}
             {visibleColumns.has('contact') && (
-              <th className="text-left py-4 px-4 font-semibold">
-                <div className="relative">
-                  Contact
-                  <span className="absolute right-0 top-0 h-full w-1 cursor-col-resize" onMouseDown={(e) => startResize('contact', e.clientX, wContact)} />
+              <th className="px-4 py-4">
+                <div className="relative flex items-center justify-between gap-3">
+                  <span>Contact</span>
+                  <span className="h-7 w-[3px] rounded-full bg-transparent transition hover:bg-[rgb(var(--app-primary-from))]" onMouseDown={(e) => startResize('contact', e.clientX, wContact)} />
                 </div>
               </th>
             )}
             {visibleColumns.has('skills') && (
-              <th className="text-left py-4 px-4 font-semibold">
-                <div className="relative">
-                  Skills
-                  <span className="absolute right-0 top-0 h-full w-1 cursor-col-resize" onMouseDown={(e) => startResize('skills', e.clientX, wSkills)} />
+              <th className="px-4 py-4">
+                <div className="relative flex items-center justify-between gap-3">
+                  <span>Skills</span>
+                  <span className="h-7 w-[3px] rounded-full bg-transparent transition hover:bg-[rgb(var(--app-primary-from))]" onMouseDown={(e) => startResize('skills', e.clientX, wSkills)} />
                 </div>
               </th>
             )}
             {visibleColumns.has('experience') && (
-              <th className="text-left py-4 px-4 font-semibold">
-                <div className="relative">
-                  Experience
-                  <span className="absolute right-0 top-0 h-full w-1 cursor-col-resize" onMouseDown={(e) => startResize('experience', e.clientX, wExp)} />
+              <th className="px-4 py-4">
+                <div className="relative flex items-center justify-between gap-3">
+                  <span>Experience</span>
+                  <span className="h-7 w-[3px] rounded-full bg-transparent transition hover:bg-[rgb(var(--app-primary-from))]" onMouseDown={(e) => startResize('experience', e.clientX, wExp)} />
                 </div>
               </th>
             )}
             {visibleColumns.has('status') && (
-              <th className="text-left py-4 px-4 font-semibold">
-                <div className="relative">
-                  Status
-                  <span className="absolute right-0 top-0 h-full w-1 cursor-col-resize" onMouseDown={(e) => startResize('status', e.clientX, wStatus)} />
+              <th className="px-4 py-4">
+                <div className="relative flex items-center justify-between gap-3">
+                  <span>Status</span>
+                  <span className="h-7 w-[3px] rounded-full bg-transparent transition hover:bg-[rgb(var(--app-primary-from))]" onMouseDown={(e) => startResize('status', e.clientX, wStatus)} />
                 </div>
               </th>
             )}
-            {visibleColumns.has('actions') && <th className="text-left py-4 px-4 font-semibold">Actions</th>}
+            {visibleColumns.has('actions') && <th className="px-4 py-4">Actions</th>}
           </tr>
         </thead>
-        <tbody>
+        <tbody className="divide-y divide-[rgba(var(--app-border-subtle))] text-[rgb(var(--app-text-secondary))]">
           {candidates.map((candidate) => (
-            <tr key={candidate.id} className="border-b border-dark-200 hover:bg-dark-50 transition-colors">
-              <td className="py-4 px-4 sticky left-0 bg-dark-100 z-10">
+            <tr
+              key={candidate.id}
+              className="group transition hover:bg-[rgb(var(--app-surface-muted))]"
+            >
+              <td className="sticky left-0 z-10 bg-[rgb(var(--app-surface-muted))] px-4 py-4 backdrop-blur">
                 <input
                   type="checkbox"
                   aria-label={`Select ${candidate.fullName}`}
@@ -269,76 +274,76 @@ export default function CandidateTable({ candidates, onEdit, onDelete, selectedI
                 />
               </td>
               {visibleColumns.has('name') && (
-                <td className="py-4 px-4 sticky bg-dark-50" style={{ left: selectionW }}>
-                  <div>
-                    <Link to={`/candidates/${candidate.id}`} className="font-medium text-primary-400 hover:underline">
+                <td className="sticky bg-[rgb(var(--app-surface-muted))] px-4 py-4 backdrop-blur" style={{ left: selectionW }}>
+                  <div className="space-y-1">
+                    <Link to={`/candidates/${candidate.id}`} className="font-medium text-[rgb(var(--app-text-primary))] transition hover:text-[rgb(var(--app-primary-from))]">
                       {candidate.fullName}
                     </Link>
-                    <p className="text-sm text-dark-600">{candidate.visaStatus}</p>
+                    <p className="text-xs uppercase tracking-wide text-muted">{candidate.visaStatus}</p>
                   </div>
                 </td>
               )}
               {visibleColumns.has('contact') && (
-                <td className="py-4 px-4">
+                <td className="px-4 py-4">
                   <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Mail size={14} className="text-dark-600" />
+                    <div className="flex items-center gap-2 text-[13px] text-[rgb(var(--app-text-secondary))]">
+                      <Mail size={14} className="text-muted" />
                       <span>{candidate.email}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Phone size={14} className="text-dark-600" />
+                    <div className="flex items-center gap-2 text-[13px] text-[rgb(var(--app-text-secondary))]">
+                      <Phone size={14} className="text-muted" />
                       <span>{candidate.phone}</span>
                     </div>
                   </div>
                 </td>
               )}
               {visibleColumns.has('skills') && (
-                <td className="py-4 px-4">
-                  <div className="flex flex-wrap gap-1">
-                    {candidate.primarySkills.slice(0, 3).map((skill) => (
+                <td className="px-4 py-4">
+                  <div className="flex flex-wrap gap-1.5">
+                    {(candidate.primarySkills ?? []).slice(0, 3).map((skill) => (
                       <span
                         key={skill}
-                        className="px-2 py-1 bg-primary-500/20 text-primary-400 text-xs rounded-full"
+                        className="chip chip-active"
                       >
                         {skill}
                       </span>
                     ))}
-                    {candidate.primarySkills.length > 3 && (
-                      <span className="px-2 py-1 bg-dark-200 text-dark-600 text-xs rounded-full">
-                        +{candidate.primarySkills.length - 3}
+                    {(candidate.primarySkills ?? []).length > 3 && (
+                      <span className="chip">
+                        +{(candidate.primarySkills ?? []).length - 3}
                       </span>
                     )}
                   </div>
                 </td>
               )}
               {visibleColumns.has('experience') && (
-                <td className="py-4 px-4">
-                  <span className="font-medium">{candidate.totalExperience} years</span>
+                <td className="px-4 py-4">
+                  <span className="text-sm font-semibold text-[rgb(var(--app-text-primary))]">{candidate.totalExperience} years</span>
                 </td>
               )}
               {visibleColumns.has('status') && (
-                <td className="py-4 px-4">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(candidate.status)}`}>
+                <td className="px-4 py-4">
+                  <span className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${getStatusColor(candidate.status)}`}>
                     {candidate.status}
                   </span>
                 </td>
               )}
               {visibleColumns.has('actions') && (
-                <td className="py-4 px-4">
+                <td className="px-4 py-4">
                   <div className="flex gap-2">
                     <button
                       onClick={() => onEdit(candidate)}
-                      className="p-2 hover:bg-primary-500/20 rounded-lg transition-colors"
+                      className="rounded-lg border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] p-2 text-[rgb(var(--app-primary-from))] transition hover:border-[rgba(var(--app-primary-from),0.5)]"
                       title="Edit"
                     >
-                      <Edit size={16} className="text-primary-500" />
+                      <Edit size={16} />
                     </button>
                     <button
                       onClick={() => onDelete(candidate.id)}
-                      className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
+                      className="rounded-lg border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] p-2 text-red-400 transition hover:border-red-400/50"
                       title="Delete"
                     >
-                      <Trash2 size={16} className="text-red-500" />
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 </td>
@@ -347,10 +352,9 @@ export default function CandidateTable({ candidates, onEdit, onDelete, selectedI
           ))}
         </tbody>
       </table>
-      
       {candidates.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-dark-600">No candidates found</p>
+        <div className="py-12 text-center text-sm text-muted">
+          <p>No candidates found</p>
         </div>
       )}
     </div>

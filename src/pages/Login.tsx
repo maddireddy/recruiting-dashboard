@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LogIn } from 'lucide-react';
+import { LogIn, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { authService } from '../services/auth.service';
 import { useAuthStore } from '../store/authStore';
@@ -31,56 +31,71 @@ export default function Login() {
   };
   
   return (
-    <div className="w-full max-w-md">
+    <div className="relative flex min-h-screen items-center justify-center bg-[rgb(var(--app-surface))] px-4 py-12">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(var(--app-primary-from),0.12),transparent_55%)]" aria-hidden />
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass-effect p-8 rounded-2xl"
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+        className="card relative z-10 w-full max-w-md space-y-6"
       >
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-primary-500">BenchSales</h1>
-          <p className="text-dark-600 mt-2">Sign in to your account</p>
+        <div className="space-y-2 text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--app-border-subtle))] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted">
+            <ShieldCheck size={14} />
+            BenchSales Portal
+          </div>
+          <h1 className="text-3xl font-semibold text-[rgb(var(--app-text-primary))]">Sign in</h1>
+          <p className="text-sm text-muted">Access the recruiting control center for jobs, submissions, and client insights.</p>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-2">Email</label>
+          <Field label="Email address">
             <input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(event) => setEmail(event.target.value)}
               className="input"
               placeholder="admin@example.com"
               required
+              autoComplete="email"
             />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium mb-2">Tenant ID</label>
+          </Field>
+
+          <Field label="Tenant ID">
             <input
               type="text"
               value={tenantId}
-              onChange={(e) => setTenantId(e.target.value)}
+              onChange={(event) => setTenantId(event.target.value)}
               className="input"
               placeholder="Enter your tenant ID"
               required
+              autoComplete="organization"
             />
-          </div>
-          
+          </Field>
+
           <button
             type="submit"
             disabled={loading}
-            className="btn-primary w-full flex items-center justify-center gap-2"
+            className="btn-primary inline-flex w-full justify-center"
           >
-            {loading ? 'Signing in...' : (
-              <>
+            {loading ? 'Signing in…' : (
+              <span className="inline-flex items-center gap-2">
                 <LogIn size={20} />
-                Sign In
-              </>
+                Sign in
+              </span>
             )}
           </button>
         </form>
       </motion.div>
     </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <label className="flex flex-col gap-2 text-sm">
+      <span className="font-semibold text-[rgb(var(--app-text-primary))]">{label}</span>
+      {children}
+    </label>
   );
 }

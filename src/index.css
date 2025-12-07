@@ -3,25 +3,184 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    color-scheme: light;
+    --app-bg: 248 250 252;
+    --app-surface: 255 255 255;
+    --app-surface-muted: 241 245 249;
+    --app-surface-elevated: 255 255 255 / 0.9;
+    --app-border-subtle: 209 213 219 / 0.7;
+    --app-text-primary: 15 23 42;
+    --app-text-secondary: 71 85 105;
+    --app-header-bg: 255 255 255 / 0.85;
+    --app-sidebar-bg: 255 255 255;
+    --app-sidebar-border: 226 232 240 / 0.9;
+    --app-card-shadow: 0 26px 60px -35px rgba(15, 23, 42, 0.35);
+    --app-backdrop: blur(18px);
+    --app-gradient: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.08), transparent 55%),
+      radial-gradient(circle at 80% 10%, rgba(16, 185, 129, 0.08), transparent 60%),
+      radial-gradient(circle at 50% 80%, rgba(124, 58, 237, 0.06), transparent 55%);
+    --app-primary-from: 16 185 129;
+    --app-primary-to: 34 197 94;
+    --app-primary-text: 15 23 42;
+  }
+
+  .dark {
+    color-scheme: dark;
+    --app-bg: 9 13 32;
+    --app-surface: 17 24 39;
+    --app-surface-muted: 22 33 55;
+    --app-surface-elevated: 15 23 42 / 0.85;
+    --app-border-subtle: 71 85 105 / 0.4;
+    --app-text-primary: 226 232 240;
+    --app-text-secondary: 148 163 184;
+    --app-header-bg: 15 23 42 / 0.7;
+    --app-sidebar-bg: 13 20 37;
+    --app-sidebar-border: 39 55 89 / 0.6;
+    --app-card-shadow: 0 26px 60px -32px rgba(8, 47, 73, 0.65);
+    --app-backdrop: blur(24px);
+    --app-gradient: radial-gradient(circle at 15% 20%, rgba(96, 165, 250, 0.16), transparent 55%),
+      radial-gradient(circle at 85% 10%, rgba(16, 185, 129, 0.16), transparent 60%),
+      radial-gradient(circle at 50% 85%, rgba(129, 140, 248, 0.12), transparent 55%);
+    --app-primary-from: 34 197 94;
+    --app-primary-to: 16 185 129;
+    --app-primary-text: 15 23 42;
+  }
+
   body {
-    @apply bg-dark-50 text-dark-900;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    transition: color 0.3s ease, background-color 0.3s ease;
+    background-color: rgb(var(--app-bg) / 1);
+    color: rgb(var(--app-text-primary) / 1);
+    background-image: var(--app-gradient);
+    background-attachment: fixed;
   }
 }
 
 @layer components {
   .glass-effect {
-    @apply bg-white/5 backdrop-blur-lg border border-white/10;
+    border-radius: 1.25rem;
+    border-width: 1px;
+    padding: 1.5rem;
+    transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    background-color: rgba(var(--app-surface-elevated));
+    border-color: rgba(var(--app-border-subtle));
+    color: rgb(var(--app-text-primary));
+    backdrop-filter: var(--app-backdrop);
+    box-shadow: var(--app-card-shadow);
   }
-  
-  .btn-primary {
-    @apply px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white font-medium rounded-lg transition-all duration-200;
-  }
-  
+
   .card {
-    @apply bg-dark-100 rounded-xl border border-dark-200 p-6 transition-all duration-200;
+    border-radius: 1.25rem;
+    border-width: 1px;
+    padding: 1.5rem;
+    transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    background-color: rgba(var(--app-surface-elevated));
+    border-color: rgba(var(--app-border-subtle));
+    color: rgb(var(--app-text-primary));
+    backdrop-filter: var(--app-backdrop);
+    box-shadow: var(--app-card-shadow);
   }
-  
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.75rem;
+    padding: 0.65rem 1.25rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: filter 0.2s ease, box-shadow 0.2s ease;
+    background-image: linear-gradient(
+      135deg,
+      rgb(var(--app-primary-from)) 0%,
+      rgb(var(--app-primary-to)) 100%
+    );
+    color: rgb(var(--app-primary-text));
+    box-shadow: 0 18px 40px -20px rgba(var(--app-primary-to) / 0.7);
+  }
+
+  .btn-muted {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.85rem;
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+    background-color: rgb(var(--app-surface-muted));
+    color: rgb(var(--app-text-primary));
+    border: 1px solid rgba(var(--app-border-subtle));
+  }
+
   .input {
-    @apply w-full px-4 py-3 bg-dark-100 border border-dark-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all;
+    width: 100%;
+    border-radius: 0.85rem;
+    border-width: 1px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+    outline: none;
+    background-color: rgb(var(--app-surface-muted));
+    border-color: rgba(var(--app-border-subtle));
+    color: rgb(var(--app-text-primary));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    caret-color: rgb(var(--app-primary-from));
+  }
+
+  .input:focus {
+    border-color: rgba(var(--app-primary-from), 0.6);
+    box-shadow: 0 0 0 4px rgba(var(--app-primary-from), 0.15);
+  }
+
+  .text-muted {
+    color: rgb(var(--app-text-secondary));
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    border-radius: 9999px;
+    border-width: 1px;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    background-color: rgb(var(--app-surface-muted));
+    border-color: rgba(var(--app-border-subtle));
+    color: rgb(var(--app-text-secondary));
+  }
+
+  .chip-active {
+    background-image: linear-gradient(135deg, rgb(var(--app-primary-from)), rgb(var(--app-primary-to)));
+    color: rgb(var(--app-primary-text));
+    border-color: transparent;
+    box-shadow: 0 12px 24px -18px rgba(var(--app-primary-to) / 0.85);
+  }
+
+  .surface-muted {
+    background-color: rgb(var(--app-surface-muted));
+    color: rgb(var(--app-text-secondary));
+  }
+
+  .header-shell {
+    background-color: rgba(var(--app-header-bg));
+    border-color: rgba(var(--app-border-subtle));
+    backdrop-filter: var(--app-backdrop);
+  }
+
+  .sidebar-shell {
+    background-color: rgb(var(--app-sidebar-bg));
+    border-color: rgba(var(--app-sidebar-border));
+    color: rgb(var(--app-text-primary));
+    backdrop-filter: var(--app-backdrop);
   }
 }

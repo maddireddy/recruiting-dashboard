@@ -64,203 +64,240 @@ export default function JobModal({ job, onSave, onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="bg-dark-100 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-dark-100 border-b border-dark-200 px-6 py-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold">{job ? 'Edit Job' : 'Create Job'}</h2>
-          <button onClick={onClose} className="p-2 hover:bg-dark-200 rounded">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6">
+      <div className="card w-full max-w-3xl max-h-[90vh] overflow-hidden p-0">
+        <div className="sticky top-0 flex items-center justify-between border-b border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface))] px-6 py-4">
+          <h2 className="text-xl font-semibold text-[rgb(var(--app-text-primary))]">{job ? 'Edit Job' : 'Create Job'}</h2>
+          <button onClick={onClose} type="button" className="rounded-lg border border-transparent p-2 text-muted transition hover:border-[rgba(var(--app-border-subtle))]">
             <X size={20} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Job Title</label>
-              <input
-                type="text"
-                value={formData.title}
-                onChange={e => setFormData({ ...formData, title: e.target.value })}
-                className="w-full px-3 py-2 bg-dark-200 border border-dark-300 rounded focus:border-primary-500 focus:outline-none"
-                required
-              />
-            </div>
+  <form onSubmit={handleSubmit} className="space-y-6 overflow-y-auto px-6 py-6 max-h-[calc(90vh-72px)]">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <Field
+              label="Job Title"
+              required
+              value={formData.title}
+              onChange={(value) => setFormData({ ...formData, title: value })}
+            />
+            <Field
+              label="Client"
+              required
+              value={formData.client}
+              onChange={(value) => setFormData({ ...formData, client: value })}
+            />
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Client</label>
-              <input
-                type="text"
-                value={formData.client}
-                onChange={e => setFormData({ ...formData, client: e.target.value })}
-                className="w-full px-3 py-2 bg-dark-200 border border-dark-300 rounded focus:border-primary-500 focus:outline-none"
-                required
-              />
-            </div>
+            <Field
+              label="Location"
+              required
+              value={formData.location}
+              onChange={(value) => setFormData({ ...formData, location: value })}
+            />
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Location</label>
-              <input
-                type="text"
-                value={formData.location}
-                onChange={e => setFormData({ ...formData, location: e.target.value })}
-                className="w-full px-3 py-2 bg-dark-200 border border-dark-300 rounded focus:border-primary-500 focus:outline-none"
-                required
-              />
-            </div>
+            <SelectField
+              label="Job Type"
+              value={formData.jobType}
+              onChange={(value) => setFormData({ ...formData, jobType: value as Job['jobType'] })}
+              options={JOB_TYPES}
+            />
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Job Type</label>
-              <select
-                value={formData.jobType}
-                onChange={e => setFormData({ ...formData, jobType: e.target.value as Job['jobType'] })}
-                className="w-full px-3 py-2 bg-dark-200 border border-dark-300 rounded focus:border-primary-500 focus:outline-none"
-              >
-                {JOB_TYPES.map(type => (
-                  <option key={type} value={type}>{type.replace('_', ' ')}</option>
-                ))}
-              </select>
-            </div>
+            <SelectField
+              label="Status"
+              value={formData.status}
+              onChange={(value) => setFormData({ ...formData, status: value as Job['status'] })}
+              options={STATUSES}
+            />
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Status</label>
-              <select
-                value={formData.status}
-                onChange={e => setFormData({ ...formData, status: e.target.value as Job['status'] })}
-                className="w-full px-3 py-2 bg-dark-200 border border-dark-300 rounded focus:border-primary-500 focus:outline-none"
-              >
-                {STATUSES.map(status => (
-                  <option key={status} value={status}>{status.replace('_', ' ')}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Openings</label>
-              <input
-                type="number"
-                value={formData.openings}
-                onChange={e => setFormData({ ...formData, openings: parseInt(e.target.value) || 1 })}
-                className="w-full px-3 py-2 bg-dark-200 border border-dark-300 rounded focus:border-primary-500 focus:outline-none"
-                min="1"
-              />
-            </div>
+            <NumberField
+              label="Openings"
+              value={formData.openings}
+              min={1}
+              onChange={(value) => setFormData({ ...formData, openings: value || 1 })}
+            />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Description</label>
+            <label className="mb-2 block text-sm font-semibold uppercase tracking-wide text-[rgb(var(--app-text-primary))]">Description</label>
             <textarea
               value={formData.description}
               onChange={e => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 bg-dark-200 border border-dark-300 rounded focus:border-primary-500 focus:outline-none"
+              className="input min-h-[120px]"
               rows={3}
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Required Skills (comma-separated)</label>
-              <input
-                type="text"
-                value={formData.requiredSkills}
-                onChange={e => setFormData({ ...formData, requiredSkills: e.target.value })}
-                className="w-full px-3 py-2 bg-dark-200 border border-dark-300 rounded focus:border-primary-500 focus:outline-none"
-                placeholder="Java, Spring Boot, React"
-              />
-            </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <Field
+              label="Required Skills (comma-separated)"
+              placeholder="Java, Spring Boot, React"
+              value={formData.requiredSkills}
+              onChange={(value) => setFormData({ ...formData, requiredSkills: value })}
+            />
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Preferred Skills (comma-separated)</label>
-              <input
-                type="text"
-                value={formData.preferredSkills}
-                onChange={e => setFormData({ ...formData, preferredSkills: e.target.value })}
-                className="w-full px-3 py-2 bg-dark-200 border border-dark-300 rounded focus:border-primary-500 focus:outline-none"
-                placeholder="AWS, Kubernetes"
-              />
-            </div>
+            <Field
+              label="Preferred Skills (comma-separated)"
+              placeholder="AWS, Kubernetes"
+              value={formData.preferredSkills}
+              onChange={(value) => setFormData({ ...formData, preferredSkills: value })}
+            />
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Min Experience (years)</label>
-              <input
-                type="number"
-                value={formData.minExperience}
-                onChange={e => setFormData({ ...formData, minExperience: parseInt(e.target.value) || 0 })}
-                className="w-full px-3 py-2 bg-dark-200 border border-dark-300 rounded focus:border-primary-500 focus:outline-none"
-                min="0"
-              />
-            </div>
+            <NumberField
+              label="Min Experience (years)"
+              value={formData.minExperience}
+              onChange={(value) => setFormData({ ...formData, minExperience: value ?? 0 })}
+            />
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Max Experience (years)</label>
-              <input
-                type="number"
-                value={formData.maxExperience}
-                onChange={e => setFormData({ ...formData, maxExperience: parseInt(e.target.value) || 0 })}
-                className="w-full px-3 py-2 bg-dark-200 border border-dark-300 rounded focus:border-primary-500 focus:outline-none"
-                min="0"
-              />
-            </div>
+            <NumberField
+              label="Max Experience (years)"
+              value={formData.maxExperience}
+              onChange={(value) => setFormData({ ...formData, maxExperience: value ?? 0 })}
+            />
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Rate Min ($)</label>
-              <input
-                type="number"
-                value={formData.rateMin}
-                onChange={e => setFormData({ ...formData, rateMin: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 bg-dark-200 border border-dark-300 rounded focus:border-primary-500 focus:outline-none"
-                min="0"
-              />
-            </div>
+            <NumberField
+              label="Rate Min ($)"
+              value={formData.rateMin}
+              onChange={(value) => setFormData({ ...formData, rateMin: value ?? 0 })}
+              step="0.01"
+            />
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Rate Max ($)</label>
-              <input
-                type="number"
-                value={formData.rateMax}
-                onChange={e => setFormData({ ...formData, rateMax: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 bg-dark-200 border border-dark-300 rounded focus:border-primary-500 focus:outline-none"
-                min="0"
-              />
-            </div>
+            <NumberField
+              label="Rate Max ($)"
+              value={formData.rateMax}
+              onChange={(value) => setFormData({ ...formData, rateMax: value ?? 0 })}
+              step="0.01"
+            />
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Start Date</label>
-              <input
-                type="date"
-                value={formData.startDate}
-                onChange={e => setFormData({ ...formData, startDate: e.target.value })}
-                className="w-full px-3 py-2 bg-dark-200 border border-dark-300 rounded focus:border-primary-500 focus:outline-none"
-              />
-            </div>
+            <DateField
+              label="Start Date"
+              value={formData.startDate}
+              onChange={(value) => setFormData({ ...formData, startDate: value })}
+            />
 
-            <div>
-              <label className="block text-sm font-medium mb-2">End Date</label>
-              <input
-                type="date"
-                value={formData.endDate}
-                onChange={e => setFormData({ ...formData, endDate: e.target.value })}
-                className="w-full px-3 py-2 bg-dark-200 border border-dark-300 rounded focus:border-primary-500 focus:outline-none"
-              />
-            </div>
+            <DateField
+              label="End Date"
+              value={formData.endDate}
+              onChange={(value) => setFormData({ ...formData, endDate: value })}
+            />
           </div>
 
-          <div className="flex justify-end gap-3 pt-4">
+          <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-dark-200 hover:bg-dark-300 rounded transition"
+              className="btn-muted"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-primary-500 hover:bg-primary-600 rounded transition"
+              className="btn-primary"
             >
               {job ? 'Update' : 'Create'}
             </button>
           </div>
         </form>
       </div>
+    </div>
+  );
+}
+
+type FieldProps = {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  required?: boolean;
+};
+
+function Field({ label, value, onChange, placeholder, required }: FieldProps) {
+  return (
+    <div className="space-y-2">
+      <label className="block text-sm font-semibold uppercase tracking-wide text-[rgb(var(--app-text-primary))]">
+        {label}
+        {required && <span className="ml-1 text-red-400">*</span>}
+      </label>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="input"
+        placeholder={placeholder}
+        required={required}
+      />
+    </div>
+  );
+}
+
+type SelectFieldProps = {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+};
+
+function SelectField({ label, value, onChange, options }: SelectFieldProps) {
+  return (
+    <div className="space-y-2">
+      <label className="block text-sm font-semibold uppercase tracking-wide text-[rgb(var(--app-text-primary))]">{label}</label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="input"
+      >
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option.replace('_', ' ')}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+type NumberFieldProps = {
+  label: string;
+  value: number;
+  onChange: (value: number | undefined) => void;
+  min?: number;
+  step?: string;
+};
+
+function NumberField({ label, value, onChange, min = 0, step }: NumberFieldProps) {
+  return (
+    <div className="space-y-2">
+      <label className="block text-sm font-semibold uppercase tracking-wide text-[rgb(var(--app-text-primary))]">{label}</label>
+      <input
+        type="number"
+        value={Number.isFinite(value) ? value : ''}
+        onChange={(e) => {
+          const next = e.target.value;
+          onChange(next === '' ? undefined : Number(next));
+        }}
+        min={min}
+        step={step}
+        className="input"
+      />
+    </div>
+  );
+}
+
+type DateFieldProps = {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+};
+
+function DateField({ label, value, onChange }: DateFieldProps) {
+  return (
+    <div className="space-y-2">
+      <label className="block text-sm font-semibold uppercase tracking-wide text-[rgb(var(--app-text-primary))]">{label}</label>
+      <input
+        type="date"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="input"
+      />
     </div>
   );
 }

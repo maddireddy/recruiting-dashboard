@@ -22,8 +22,9 @@ export default function DocumentPreview({ id, fileType, fileName, onClose }: Pro
         if (!active) return;
         const objectUrl = URL.createObjectURL(blob);
         setUrl(objectUrl);
-      } catch (err: any) {
-        setError(err?.message || 'Failed to load preview');
+      } catch (err: unknown) {
+        const error = err instanceof Error ? err.message : String(err);
+        setError(error || 'Failed to load preview');
       } finally {
         setLoading(false);
       }

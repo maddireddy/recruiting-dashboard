@@ -1,12 +1,18 @@
-import { useState, useEffect } from 'react';
-import type { Client } from '../../types/client';
-import { X, Plus } from 'lucide-react';
+import { useEffect, useState, type ChangeEvent, type ReactNode } from 'react';
+import { Plus, Trash2, X } from 'lucide-react';
+import type { Client, ClientContact } from '../../types/client';
 
 interface ClientModalProps {
   client: Client | null;
   onSave: (client: Partial<Client>) => void;
   onClose: () => void;
 }
+
+const STATUS_OPTIONS = [
+  { value: 'ACTIVE', label: 'Active' },
+  { value: 'PROSPECT', label: 'Prospect' },
+  { value: 'INACTIVE', label: 'Inactive' },
+];
 
 export default function ClientModal({ client, onSave, onClose }: ClientModalProps) {
   const [form, setForm] = useState<Client>({
@@ -25,73 +31,192 @@ export default function ClientModal({ client, onSave, onClose }: ClientModalProp
   });
 
   useEffect(() => {
-    if (client) setForm({ ...client, contacts: client.contacts || [] });
+    if (client) {
+      setForm({
+        ...client,
+        contacts: client.contacts || [],
+        status: client.status || 'ACTIVE',
+      });
+    }
   }, [client]);
 
-  const handleInput = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setForm(v => ({ ...v, [e.target.name]: e.target.value }));
+  const updateField = (field: keyof Client) => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { value } = event.target;
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
 
-  const handleContactChange = (idx: number, field: string, value: string | boolean) => {
-    setForm(v => ({
-      ...v,
-      contacts: v.contacts.map((c, i) => i === idx ? { ...c, [field]: value } : c),
+  const handleContactChange = (index: number, field: keyof ClientContact, value: string | boolean) => {
+    setForm((prev) => ({
+      ...prev,
+      contacts: prev.contacts.map((contact, i) => (
+        i === index ? { ...contact, [field]: value } : contact
+      )),
     }));
   };
 
-  const handleAddContact = () => setForm(v => ({ ...v, contacts: [...v.contacts, { name: '', title: '', email: '', phone: '', isPrimary: false }] }));
-  const handleRemoveContact = (idx: number) =>
-    setForm(v => ({ ...v, contacts: v.contacts.filter((_, i) => i !== idx) }));
+  const handleAddContact = () => {
+    setForm((prev) => ({
+      ...prev,
+      contacts: [...prev.contacts, { name: '', title: '', email: '', phone: '', isPrimary: false }],
+    }));
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleRemoveContact = (index: number) => {
+    setForm((prev) => ({
+      ...prev,
+      contacts: prev.contacts.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
     onSave(form as Partial<Client>);
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="bg-dark-100 rounded-lg p-6 max-w-2xl w-full max-h-[95vh] overflow-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">{client ? 'Edit Client' : 'Add Client'}</h2>
-          <button onClick={onClose}><X /></button>
-        </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input name="companyName" value={form.companyName} onChange={handleInput} required placeholder="Company Name" className="input w-full" />
-          <input name="industry" value={form.industry} onChange={handleInput} placeholder="Industry" className="input w-full" />
-          <input name="website" value={form.website} onChange={handleInput} placeholder="Website" className="input w-full" />
-          <input name="accountManager" value={form.accountManager} onChange={handleInput} placeholder="Account Manager" className="input w-full" />
-          <div className="grid grid-cols-2 gap-3">
-            <input name="address" value={form.address} onChange={handleInput} placeholder="Address" className="input" />
-            <input name="city" value={form.city} onChange={handleInput} placeholder="City" className="input" />
-            <input name="state" value={form.state} onChange={handleInput} placeholder="State" className="input" />
-            <input name="zipCode" value={form.zipCode} onChange={handleInput} placeholder="ZIP Code" className="input" />
-            <input name="country" value={form.country} onChange={handleInput} placeholder="Country" className="input" />
-          </div>
-          <textarea name="notes" value={form.notes} onChange={handleInput} placeholder="Notes" className="input w-full" rows={2} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6">
+      <div className="card w-full max-w-3xl max-h-[90vh] overflow-hidden p-0">
+        <div className="sticky top-0 flex items-center justify-between border-b border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface))] px-6 py-4">
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-semibold">Contacts</span>
-              <button type="button" onClick={handleAddContact} className="text-primary-500 flex items-center"><Plus size={16}/> Add Contact</button>
-            </div>
-            {form.contacts.map((ct, idx) => (
-              <div key={idx} className="flex gap-2 items-end mb-2">
-                <input value={ct.name} onChange={e => handleContactChange(idx, 'name', e.target.value)} placeholder="Name" className="input flex-1" />
-                <input value={ct.title} onChange={e => handleContactChange(idx, 'title', e.target.value)} placeholder="Title" className="input flex-1" />
-                <input value={ct.email} onChange={e => handleContactChange(idx, 'email', e.target.value)} placeholder="Email" className="input flex-1" />
-                <input value={ct.phone} onChange={e => handleContactChange(idx, 'phone', e.target.value)} placeholder="Phone" className="input flex-1" />
-                <label className="flex items-center text-xs gap-1">
-                  <input type="checkbox" checked={!!ct.isPrimary} onChange={e => handleContactChange(idx, 'isPrimary', e.target.checked)} />
-                  Primary
-                </label>
-                <button type="button" className="text-red-600" onClick={() => handleRemoveContact(idx)}>Remove</button>
-              </div>
-            ))}
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">{client ? 'Edit client' : 'Add client'}</p>
+            <h2 className="text-xl font-semibold text-[rgb(var(--app-text-primary))]">Client profile</h2>
           </div>
-          <div className="flex justify-end gap-2 pt-3">
-            <button type="button" onClick={onClose} className="btn">Cancel</button>
-            <button type="submit" className="btn btn-primary">{client ? 'Update' : 'Create'}</button>
+          <button onClick={onClose} type="button" className="rounded-lg border border-transparent p-2 text-muted transition hover:border-[rgba(var(--app-border-subtle))]">
+            <X size={20} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6 overflow-y-auto px-6 py-6 max-h-[calc(90vh-72px)]">
+          <section className="grid gap-4 md:grid-cols-2">
+            <Field label="Company name" required>
+              <input value={form.companyName} onChange={updateField('companyName')} className="input" required placeholder="Acme Corp" />
+            </Field>
+            <Field label="Industry">
+              <input value={form.industry ?? ''} onChange={updateField('industry')} className="input" placeholder="Staffing" />
+            </Field>
+            <Field label="Website">
+              <input value={form.website ?? ''} onChange={updateField('website')} className="input" placeholder="https://example.com" />
+            </Field>
+            <Field label="Account manager">
+              <input value={form.accountManager ?? ''} onChange={updateField('accountManager')} className="input" placeholder="Assigned recruiter" />
+            </Field>
+            <Field label="Status">
+              <select value={form.status ?? 'ACTIVE'} onChange={updateField('status')} className="input">
+                {STATUS_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </section>
+
+          <section className="grid gap-4 md:grid-cols-2">
+            <Field label="Address">
+              <input value={form.address ?? ''} onChange={updateField('address')} className="input" placeholder="123 Market St" />
+            </Field>
+            <Field label="City">
+              <input value={form.city ?? ''} onChange={updateField('city')} className="input" placeholder="San Francisco" />
+            </Field>
+            <Field label="State">
+              <input value={form.state ?? ''} onChange={updateField('state')} className="input" placeholder="CA" />
+            </Field>
+            <Field label="ZIP code">
+              <input value={form.zipCode ?? ''} onChange={updateField('zipCode')} className="input" placeholder="94105" />
+            </Field>
+            <Field label="Country">
+              <input value={form.country ?? ''} onChange={updateField('country')} className="input" placeholder="United States" />
+            </Field>
+          </section>
+
+          <Field label="Notes">
+            <textarea value={form.notes ?? ''} onChange={updateField('notes')} className="input" rows={3} placeholder="Share context about this client, procurement details, or billing preferences." />
+          </Field>
+
+          <section className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">Contacts</p>
+                <p className="text-sm text-muted">Add stakeholders and mark the primary decision maker.</p>
+              </div>
+              <button type="button" onClick={handleAddContact} className="btn-muted">
+                <Plus size={16} />
+                Add contact
+              </button>
+            </div>
+
+            {form.contacts.length === 0 && (
+              <div className="rounded-2xl border border-dashed border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] p-4 text-sm text-muted">
+                No contacts added yet. Capture the hiring manager, procurement partner, or other stakeholders here.
+              </div>
+            )}
+
+            <div className="space-y-4">
+              {form.contacts.map((contact, index) => (
+                <div key={index} className="rounded-2xl border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] p-4">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                    <div className="grid flex-1 gap-3 md:grid-cols-2">
+                      <Field label="Name">
+                        <input value={contact.name ?? ''} onChange={(event) => handleContactChange(index, 'name', event.target.value)} className="input" placeholder="Jane Smith" />
+                      </Field>
+                      <Field label="Title">
+                        <input value={contact.title ?? ''} onChange={(event) => handleContactChange(index, 'title', event.target.value)} className="input" placeholder="Director of TA" />
+                      </Field>
+                      <Field label="Email">
+                        <input value={contact.email ?? ''} onChange={(event) => handleContactChange(index, 'email', event.target.value)} className="input" placeholder="jane@example.com" />
+                      </Field>
+                      <Field label="Phone">
+                        <input value={contact.phone ?? ''} onChange={(event) => handleContactChange(index, 'phone', event.target.value)} className="input" placeholder="(555) 123-4567" />
+                      </Field>
+                    </div>
+                    <div className="flex flex-col gap-3 md:w-40">
+                      <label className="inline-flex items-center gap-2 text-sm text-muted">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(contact.isPrimary)}
+                          onChange={(event) => handleContactChange(index, 'isPrimary', event.target.checked)}
+                        />
+                        Primary contact
+                      </label>
+                      <button type="button" onClick={() => handleRemoveContact(index)} className="btn-muted text-red-400 hover:border-red-400 hover:text-red-300">
+                        <Trash2 size={16} />
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button type="button" onClick={onClose} className="btn-muted">
+              Cancel
+            </button>
+            <button type="submit" className="btn-primary">
+              {client ? 'Update client' : 'Create client'}
+            </button>
           </div>
         </form>
       </div>
     </div>
+  );
+}
+
+type FieldProps = {
+  label: string;
+  children: ReactNode;
+  required?: boolean;
+};
+
+function Field({ label, children, required }: FieldProps) {
+  return (
+    <label className="flex flex-col gap-1 text-sm">
+      <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">
+        {label}
+        {required ? ' *' : ''}
+      </span>
+      {children}
+    </label>
   );
 }

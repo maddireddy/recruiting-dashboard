@@ -4,7 +4,7 @@ export interface Report {
   reportName: string;
   reportType: 'PLACEMENT' | 'REVENUE' | 'PIPELINE' | 'ACTIVITY' | 'CANDIDATE_SUMMARY' | 'CLIENT_SUMMARY' | 'CUSTOM';
   description?: string;
-  filters?: Record<string, any>;
+  filters?: Record<string, string | string[] | number | number[] | boolean>;
   columns?: string[];
   sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';

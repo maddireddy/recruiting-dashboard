@@ -1,5 +1,10 @@
-import axios from 'axios';
-import type { AxiosRequestConfig } from 'axios';
+import axios, {
+  AxiosHeaders,
+  type AxiosHeaderValue,
+  type AxiosRequestConfig,
+  type AxiosResponse,
+  type RawAxiosRequestHeaders,
+} from 'axios';
 
 // Use Vite environment variable if provided, otherwise use relative `/api` so
 // Vite dev server proxy (configured in vite.config.ts) can forward requests
@@ -14,11 +19,41 @@ const api = axios.create({
   withCredentials: true, // Required for cookie-based auth and CORS
 });
 
+const ensureHeaders = (headers?: AxiosRequestConfig['headers']): AxiosHeaders => {
+  if (headers instanceof AxiosHeaders) return headers;
+  if (!headers) return new AxiosHeaders();
+
+  const next = new AxiosHeaders();
+
+  if (typeof headers === 'string') {
+    next.set('Authorization', headers);
+    return next;
+  }
+
+  if (Array.isArray(headers)) {
+    headers.forEach(([key, value]) => {
+      if (key && value !== undefined && value !== null) {
+        next.set(key, value as AxiosHeaderValue);
+      }
+    });
+    return next;
+  }
+
+  const source = headers as RawAxiosRequestHeaders;
+  (Object.entries(source) as Array<[string, AxiosHeaderValue | undefined]>).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      next.set(key, value);
+    }
+  });
+
+  return next;
+};
+
 // --- Auth refresh single-flight + request queue ---
 let isRefreshing = false;
 let refreshPromise: Promise<string> | null = null;
 type Subscriber = (token: string) => void;
-type ErrorSubscriber = (error: any) => void;
+type ErrorSubscriber = (error: Error) => void;
 const successSubscribers: Subscriber[] = [];
 const errorSubscribers: ErrorSubscriber[] = [];
 
@@ -34,7 +69,7 @@ function onTokenRefreshed(token: string) {
   successSubscribers.splice(0).forEach((cb) => cb(token));
 }
 
-function onTokenRefreshError(err: any) {
+function onTokenRefreshError(err: Error) {
   errorSubscribers.splice(0).forEach((cb) => cb(err));
 }
 
@@ -83,9 +118,11 @@ api.interceptors.request.use(
     const tenantId = localStorage.getItem('tenantId') || '';
 
     // Always attach tenant header if present (even for auth endpoints)
+    const headers = ensureHeaders(config.headers);
+
     if (tenantId) {
-      config.headers = config.headers || {};
-      (config.headers as any)['X-Tenant-ID'] = tenantId;
+      headers.set('X-Tenant-Id', tenantId);
+      headers.set('X-Tenant-ID', tenantId);
     }
 
     // Attach Authorization for non-auth endpoints only when token is present
@@ -96,21 +133,23 @@ api.interceptors.request.use(
         return Promise.reject(new Error('Missing access token'));
       }
       const tokenValue = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
-      config.headers = config.headers || {};
-      (config.headers as any).Authorization = tokenValue;
+      headers.set('Authorization', tokenValue);
     }
+
+    config.headers = headers;
 
     if (import.meta.env.DEV) {
       try {
-        const safeHeaders = { ...(config.headers as any) };
-        if (safeHeaders.Authorization) safeHeaders.Authorization = 'Bearer ***';
-        // eslint-disable-next-line no-console
+        const snapshot = headers.toJSON() as Record<string, string>;
+        if (snapshot.Authorization) snapshot.Authorization = 'Bearer ***';
         console.debug('[api][request]', {
           method: config.method,
           url: config.url,
-          headers: safeHeaders,
+          headers: snapshot,
         });
-      } catch {}
+      } catch {
+        // Ignore logging errors
+      }
     }
 
     return config;
@@ -182,7 +221,7 @@ api.interceptors.response.use(
         });
 
         await refreshAccessToken();
-        return retryPromise as unknown as Promise<any>;
+        return retryPromise as unknown as Promise<AxiosResponse>;
       } catch (e) {
         localStorage.clear();
         window.location.href = '/login';

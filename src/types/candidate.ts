@@ -54,7 +54,18 @@ export interface Candidate {
 
 export type CandidateListResponse = {
   content: Candidate[];
-  pageable?: any;
+  pageable?: {
+    pageNumber?: number;
+    pageSize?: number;
+    offset?: number;
+    paged?: boolean;
+    unpaged?: boolean;
+    sort?: {
+      empty?: boolean;
+      sorted?: boolean;
+      unsorted?: boolean;
+    };
+  };
   totalPages?: number;
   totalElements?: number;
   size?: number;

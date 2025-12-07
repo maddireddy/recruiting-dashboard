@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
-import { candidateService } from '../services/candidate.service';
-import { submissionService } from '../services/submission.service';
-import { ArrowLeft, Briefcase, Calendar, DollarSign, User, Mail, Phone } from 'lucide-react';
+import { ArrowLeft, Briefcase, Calendar, DollarSign, User, Mail, Phone, Award, Clock, Sparkles } from 'lucide-react';
 import Timeline, { type TimelineItem } from '../components/common/Timeline';
 import CandidateDocuments from '../components/candidates/CandidateDocuments';
+import { candidateService } from '../services/candidate.service';
+import { submissionService } from '../services/submission.service';
+import type { Candidate as CandidateType } from '../types/candidate';
 
 export default function CandidateDetails() {
   const { id } = useParams<{ id: string }>();
@@ -21,10 +22,27 @@ export default function CandidateDetails() {
     queryFn: () => submissionService.getByCandidate(id!).then(r => r.data),
   });
 
-  if (candidateQuery.isLoading) return <div className="p-6">Loading candidate...</div>;
-  if (candidateQuery.error) return <div className="p-6 text-red-500">Failed to load candidate.</div>;
+  if (candidateQuery.isLoading) {
+    return (
+      <div className="px-6 py-8">
+        <div className="card space-y-3">
+          <div className="h-4 w-40 animate-pulse rounded-full bg-[rgba(var(--app-border-subtle))]" />
+          <div className="h-4 w-5/6 animate-pulse rounded-full bg-[rgba(var(--app-border-subtle))]" />
+          <div className="h-4 w-2/3 animate-pulse rounded-full bg-[rgba(var(--app-border-subtle))]" />
+        </div>
+      </div>
+    );
+  }
 
-  const c = candidateQuery.data!;
+  if (candidateQuery.error) {
+    return (
+      <div className="px-6 py-8">
+        <div className="card border-red-400/40 bg-red-500/5 text-red-300">Failed to load candidate.</div>
+      </div>
+    );
+  }
+
+  const c = candidateQuery.data as CandidateType;
   const timelineItems: TimelineItem[] = (submissionsQuery.data || []).flatMap((s) => {
     const items: TimelineItem[] = [];
     if (s.submittedDate) {
@@ -69,67 +87,141 @@ export default function CandidateDetails() {
     return items;
   });
 
+  const experienceLabel = `${c.totalExperience ?? 0} yrs experience`;
+  const locationLabel = (() => {
+    if (!c.currentLocation) return 'Not provided';
+    if (typeof c.currentLocation === 'string') return c.currentLocation;
+    const { city, state, country } = c.currentLocation as { city?: string; state?: string; country?: string };
+    return [city, state, country].filter(Boolean).join(', ') || 'Not provided';
+  })();
+  const notes = (c as { notes?: string | null }).notes;
+  const submissions = submissionsQuery.data || [];
+
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link to="/candidates" className="p-2 hover:bg-dark-200 rounded">
-            <ArrowLeft size={18} />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold">{c.fullName}</h1>
-            <p className="text-dark-600">{c.visaStatus} • {c.totalExperience} yrs exp</p>
+    <div className="space-y-8 px-6 py-8">
+      <header className="flex flex-col gap-4">
+        <Link to="/candidates" className="btn-muted w-fit">
+          <ArrowLeft size={16} />
+          Back to candidates
+        </Link>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-semibold text-[rgb(var(--app-text-primary))]">{c.fullName}</h1>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-muted">
+              <span className="chip surface-muted text-xs">{c.visaStatus || 'Visa unknown'}</span>
+              <span className="chip surface-muted text-xs">{experienceLabel}</span>
+              <span className="chip chip-active text-xs">{c.status || 'Active'}</span>
+            </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      <div className="card grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm"><Mail size={14} /><span>{c.email}</span></div>
-          <div className="flex items-center gap-2 text-sm"><Phone size={14} /><span>{c.phone}</span></div>
-          <div className="text-sm"><span className="font-medium">Availability:</span> {c.availability}</div>
-          <div className="text-sm"><span className="font-medium">Status:</span> {c.status}</div>
-        </div>
-        <div className="md:col-span-2">
-          <div className="text-sm"><span className="font-medium">Primary Skills:</span> {(c.primarySkills || []).join(', ')}</div>
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <Timeline title="Timeline" items={timelineItems} />
-      </div>
-
-      <div className="space-y-3">
-        <h2 className="text-xl font-semibold">Submissions</h2>
-        {submissionsQuery.isLoading && <div className="card p-4">Loading submissions...</div>}
-        {submissionsQuery.error && <div className="card p-4 text-red-500">Failed to load submissions.</div>}
-        {!submissionsQuery.isLoading && (submissionsQuery.data?.length ?? 0) === 0 && (
-          <div className="card p-6 text-dark-600">No submissions yet.</div>
-        )}
-        <div className="grid gap-3">
-          {submissionsQuery.data?.map(s => (
-            <div key={s.id} className="card p-4 flex items-center justify-between">
-              <div className="flex flex-wrap items-center gap-4 text-sm text-dark-600">
-                <div className="flex items-center gap-2"><Briefcase size={14} /><span>{s.jobTitle}</span></div>
-                <div className="flex items-center gap-2"><User size={14} /><span>{s.client}</span></div>
-                {s.proposedRate ? (
-                  <div className="flex items-center gap-2"><DollarSign size={14} /><span>${s.proposedRate}/hr</span></div>
-                ) : null}
-                {s.submittedDate && (
-                  <div className="flex items-center gap-2"><Calendar size={14} /><span>{new Date(s.submittedDate).toLocaleDateString()}</span></div>
-                )}
-                <span className="px-2 py-1 text-xs rounded-full bg-dark-200 border border-dark-300">{s.status.replace('_',' ')}</span>
-              </div>
-              <Link to={`/jobs/${s.jobId}`} className="text-primary-400 hover:underline">View Job</Link>
+      <section className="card grid gap-6 md:grid-cols-3">
+        <div className="space-y-3 text-sm text-muted">
+          <div className="flex items-center gap-2 text-[rgb(var(--app-text-primary))]">
+            <Mail size={14} />
+            <a href={`mailto:${c.email}`} className="underline-offset-2 hover:underline">{c.email}</a>
+          </div>
+          {c.phone && (
+            <div className="flex items-center gap-2 text-[rgb(var(--app-text-primary))]">
+              <Phone size={14} />
+              <a href={`tel:${c.phone}`} className="underline-offset-2 hover:underline">{c.phone}</a>
             </div>
-          ))}
+          )}
+          <div>
+            <span className="font-semibold text-[rgb(var(--app-text-primary))]">Availability:</span>
+            <span className="ml-1 text-muted">{c.availability || 'Unknown'}</span>
+          </div>
+          <div>
+            <span className="font-semibold text-[rgb(var(--app-text-primary))]">Location:</span>
+            <span className="ml-1 text-muted">{locationLabel}</span>
+          </div>
         </div>
-      </div>
+        <div className="md:col-span-2 space-y-3 text-sm text-muted">
+          <div>
+            <span className="font-semibold text-[rgb(var(--app-text-primary))]">Primary skills:</span>
+            <span className="ml-1">{(c.primarySkills || []).join(', ') || '—'}</span>
+          </div>
+          {c.secondarySkills && c.secondarySkills.length > 0 && (
+            <div>
+              <span className="font-semibold text-[rgb(var(--app-text-primary))]">Secondary skills:</span>
+              <span className="ml-1">{c.secondarySkills.join(', ')}</span>
+            </div>
+          )}
+          {notes && (
+            <div className="rounded-2xl border border-dashed border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] p-3 text-sm text-muted">
+              {notes}
+            </div>
+          )}
+        </div>
+      </section>
 
-      {/* Candidate-specific documents section */}
-      <div className="space-y-3">
+      <section className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Sparkles size={18} className="text-primary-400" />
+          <h2 className="text-xl font-semibold text-[rgb(var(--app-text-primary))]">Timeline</h2>
+        </div>
+        <Timeline title="" items={timelineItems} />
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <Calendar size={18} className="text-primary-400" />
+          <h2 className="text-xl font-semibold text-[rgb(var(--app-text-primary))]">Submissions</h2>
+        </div>
+        {submissionsQuery.isLoading && <div className="card">Loading submissions...</div>}
+        {submissionsQuery.error && (
+          <div className="card border-red-400/40 bg-red-500/5 text-red-300">Failed to load submissions.</div>
+        )}
+        {!submissionsQuery.isLoading && !submissionsQuery.error && submissions.length === 0 && (
+          <div className="card flex items-center gap-3 text-sm text-muted">
+            <Clock size={16} />
+            No submissions yet.
+          </div>
+        )}
+        {submissions.length > 0 && (
+          <div className="grid gap-3">
+            {submissions.map((submission) => (
+              <div key={submission.id} className="card flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-wrap items-center gap-3 text-sm text-muted">
+                  <span className="inline-flex items-center gap-2">
+                    <Briefcase size={14} />
+                    {submission.jobTitle}
+                  </span>
+                  <span className="inline-flex items-center gap-2">
+                    <User size={14} />
+                    {submission.client}
+                  </span>
+                  {submission.proposedRate && (
+                    <span className="inline-flex items-center gap-2">
+                      <DollarSign size={14} />
+                      ${submission.proposedRate}/hr
+                    </span>
+                  )}
+                  {submission.submittedDate && (
+                    <span className="inline-flex items-center gap-2">
+                      <Calendar size={14} />
+                      {new Date(submission.submittedDate).toLocaleDateString()}
+                    </span>
+                  )}
+                  <span className="chip surface-muted text-xs">{submission.status.replace('_', ' ')}</span>
+                </div>
+                <Link to={`/jobs/${submission.jobId}`} className="btn-muted px-3 py-2 text-sm">
+                  View job
+                </Link>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Award size={18} className="text-primary-400" />
+          <h2 className="text-xl font-semibold text-[rgb(var(--app-text-primary))]">Documents</h2>
+        </div>
         <CandidateDocuments candidateId={id!} />
-      </div>
+      </section>
     </div>
   );
 }
