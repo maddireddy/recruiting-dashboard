@@ -10,6 +10,10 @@ import EmailTemplatesPage from './pages/EmailTemplates';
 import EmailLogsPage from './pages/EmailLogs';
 import ReportsPage from './pages/Reports';
 const DocumentsPage = lazy(() => import('./pages/Documents'));
+// Scheduling module
+import SchedulingDashboard from './components/scheduling/SchedulingDashboard';
+import AvailabilityLinkCreator from './components/scheduling/AvailabilityLinkCreator';
+import SlotSelector from './components/scheduling/SlotSelector';
 
 // Layouts
 import MainLayout from './layouts/MainLayout';
@@ -95,6 +99,9 @@ function App() {
               <Route path="/email-templates" element={<EmailTemplatesPage />} />
               <Route path="/email-logs" element={<EmailLogsPage />}/>
               <Route path="/reports" element={<ReportsPage />} />
+              {/* Scheduling (authenticated) */}
+              <Route path="/scheduling" element={<SchedulingDashboard />} />
+              <Route path="/scheduling/create" element={<AvailabilityLinkCreator />} />
             </Route>
 
             {/* Fallback */}
@@ -104,6 +111,8 @@ function App() {
             <Route element={<PublicLayout />}>
               <Route path="/careers/:tenantSlug" element={<CareerPage />} />
               <Route path="/careers/:tenantSlug/jobs/:jobId" element={<JobDetailPage />} />
+              {/* Public booking route for self-scheduling */}
+              <Route path="/schedule/:linkId" element={<SlotSelector />} />
             </Route>
             </Routes>
           </Suspense>
