@@ -1,13 +1,40 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { emailService } from '../../services/email.service';
+
+interface EmailTemplateOption {
+  id: string;
+  name: string;
+  subject?: string;
+  body?: string;
+}
 
 interface BulkEmailModalProps {
   onClose: () => void;
-  onSend: (subject: string, body: string) => void;
+  onSend: (subject: string, body: string, options?: { sendIndividually?: boolean; templateId?: string }) => void;
 }
 
 export const BulkEmailModal: React.FC<BulkEmailModalProps> = ({ onClose, onSend }) => {
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
+  const [templates, setTemplates] = useState<EmailTemplateOption[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
+  const [sendIndividually, setSendIndividually] = useState<boolean>(true);
+
+  useEffect(() => {
+    const loadTemplates = async () => {
+      try {
+        const resp = await emailService.getAllTemplates();
+        const data = resp.data || [];
+        setTemplates(data.map((t: any) => ({ id: t.id, name: t.name, subject: t.subject, body: t.body })));
+      } catch (err) {
+        console.error('Failed to fetch templates', err);
+      }
+    };
+    loadTemplates();
+  }, []);
+
+  // Keep memoized selection for future extension (e.g., preview sidebar)
+  // const selectedTemplate = useMemo(() => templates.find(t => t.id === selectedTemplateId), [templates, selectedTemplateId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -15,13 +42,36 @@ export const BulkEmailModal: React.FC<BulkEmailModalProps> = ({ onClose, onSend 
       alert('Please fill in all fields');
       return;
     }
-    onSend(subject, body);
+    onSend(subject, body, { sendIndividually, templateId: selectedTemplateId || undefined });
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-8 max-w-2xl w-full">
         <h2 className="text-2xl font-bold mb-6">Send Bulk Email</h2>
+
+        {/* Template picker */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2">Template</label>
+          <select
+            value={selectedTemplateId}
+            onChange={(e) => {
+              const id = e.target.value;
+              setSelectedTemplateId(id);
+              const tmpl = templates.find(t => t.id === id);
+              if (tmpl) {
+                setSubject(tmpl.subject || '');
+                setBody(tmpl.body || '');
+              }
+            }}
+            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">— No template —</option>
+            {templates.map((t) => (
+              <option key={t.id} value={t.id}>{t.name}</option>
+            ))}
+          </select>
+        </div>
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
@@ -37,13 +87,25 @@ export const BulkEmailModal: React.FC<BulkEmailModalProps> = ({ onClose, onSend 
 
           <div className="mb-6">
             <label className="block text-sm font-medium mb-2">Message</label>
-            <textarea
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              rows={10}
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-              placeholder="Email body..."
+            {/* Minimal rich text editor using contenteditable */}
+            <div
+              contentEditable
+              onInput={(e) => setBody((e.target as HTMLElement).innerHTML)}
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 min-h-[180px] prose max-w-none"
+              dangerouslySetInnerHTML={{ __html: body }}
             />
+          </div>
+
+          <div className="mb-6">
+            <label className="inline-flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={sendIndividually}
+                onChange={(e) => setSendIndividually(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              Send individually (allows per-recipient personalization and improves deliverability)
+            </label>
           </div>
 
           <div className="flex justify-end gap-3">

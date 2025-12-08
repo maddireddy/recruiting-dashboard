@@ -6,12 +6,12 @@ interface BulkStatusModalProps {
 }
 
 const STATUS_OPTIONS = [
-  { value: 'APPLIED', label: 'Applied' },
-  { value: 'SCREENING', label: 'Screening' },
-  { value: 'INTERVIEW', label: 'Interview' },
-  { value: 'OFFER', label: 'Offer' },
-  { value: 'HIRED', label: 'Hired' },
-  { value: 'REJECTED', label: 'Rejected' },
+  { value: 'APPLIED', label: 'Applied', color: 'bg-gray-100', tooltip: 'New applicant received' },
+  { value: 'SCREENING', label: 'Screening', color: 'bg-blue-100', tooltip: 'Phone/intro screening stage' },
+  { value: 'INTERVIEW', label: 'Interview', color: 'bg-yellow-100', tooltip: 'Interview(s) scheduled or ongoing' },
+  { value: 'OFFER', label: 'Offer', color: 'bg-purple-100', tooltip: 'Offer extended to candidate' },
+  { value: 'HIRED', label: 'Hired', color: 'bg-green-100', tooltip: 'Candidate accepted and onboarded' },
+  { value: 'REJECTED', label: 'Rejected', color: 'bg-red-100', tooltip: 'Declined or not moving forward' },
 ];
 
 export const BulkStatusModal: React.FC<BulkStatusModalProps> = ({ onClose, onUpdate }) => {
@@ -35,11 +35,13 @@ export const BulkStatusModal: React.FC<BulkStatusModalProps> = ({ onClose, onUpd
             <button
               key={option.value}
               onClick={() => setSelectedStatus(option.value)}
-              className={`w-full p-4 rounded-lg border-2 transition ${
+              title={option.tooltip}
+              className={`w-full p-4 rounded-lg border-2 transition flex items-center justify-between ${
                 selectedStatus === option.value ? 'border-blue-600 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
               }`}
             >
               <span className="font-medium">{option.label}</span>
+              <span className={`px-2 py-1 rounded text-xs ${option.color}`}>{option.tooltip}</span>
             </button>
           ))}
         </div>

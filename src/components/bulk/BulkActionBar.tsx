@@ -3,6 +3,7 @@ import { BulkEmailModal } from './BulkEmailModal';
 import { BulkStatusModal } from './BulkStatusModal';
 import { ProgressModal } from './ProgressModal';
 import { bulkApi } from '../../api/bulkApi';
+import { ExportFieldsModal } from './ExportFieldsModal';
 
 interface BulkActionBarProps {
   selectedCount: number;
@@ -20,13 +21,23 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [progressOperationId, setProgressOperationId] = useState<string | null>(null);
+  const [showExportFields, setShowExportFields] = useState<{
+    visible: boolean;
+    format: 'CSV' | 'EXCEL';
+  }>({ visible: false, format: 'CSV' });
 
-  const handleExport = async (format: 'CSV' | 'EXCEL') => {
+  const handleExport = (format: 'CSV' | 'EXCEL') => {
+    setShowExportFields({ visible: true, format });
+  };
+
+  const runExportWithFields = async (fields: string[]) => {
     try {
       const response = await bulkApi.exportData({
         candidateIds: selectedIds,
-        format,
+        format: showExportFields.format,
+        fields,
       });
+      setShowExportFields({ visible: false, format: 'CSV' });
       setProgressOperationId(response.id);
     } catch (err) {
       alert('Export failed');
@@ -46,12 +57,14 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
     }
   };
 
-  const handleEmailSend = async (subject: string, body: string) => {
+  const handleEmailSend = async (subject: string, body: string, options?: { sendIndividually?: boolean; templateId?: string }) => {
     try {
       const response = await bulkApi.sendEmail({
         candidateIds: selectedIds,
         subject,
         body,
+        sendIndividually: options?.sendIndividually,
+        templateId: options?.templateId,
       });
       setShowEmailModal(false);
       setProgressOperationId(response.id);
@@ -119,6 +132,13 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
             onClearSelection();
             onActionComplete();
           }}
+        />
+      )}
+
+      {showExportFields.visible && (
+        <ExportFieldsModal
+          onClose={() => setShowExportFields({ visible: false, format: 'CSV' })}
+          onExport={runExportWithFields}
         />
       )}
     </>
