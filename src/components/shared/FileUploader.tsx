@@ -7,7 +7,8 @@ import api from '../../services/api';
 
 interface FileUploaderProps {
   candidateId: string;
-  onUploadSuccess: (url: string) => void;
+  /** Callback receives either a public URL or an S3 object key if provided by backend. */
+  onUploadSuccess: (payload: { fileUrl?: string; s3Key?: string }) => void;
 }
 
 export const FileUploader = ({ candidateId, onUploadSuccess }: FileUploaderProps) => {
@@ -33,10 +34,11 @@ export const FileUploader = ({ candidateId, onUploadSuccess }: FileUploaderProps
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      const data = response.data as { fileUrl?: string };
-      const fileUrl = data?.fileUrl || '';
-      if (fileUrl) {
-        onUploadSuccess(fileUrl);
+      const data = response.data as { fileUrl?: string; s3Key?: string };
+      const fileUrl = data?.fileUrl;
+      const s3Key = data?.s3Key;
+      if (fileUrl || s3Key) {
+        onUploadSuccess({ fileUrl, s3Key });
         toast.success('Resume uploaded successfully');
       } else {
         toast.error('Upload succeeded but no file URL returned');

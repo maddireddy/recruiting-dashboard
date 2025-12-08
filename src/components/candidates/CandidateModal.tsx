@@ -1,10 +1,12 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { X } from 'lucide-react';
+import { Sparkles, X } from 'lucide-react';
 import type { Candidate } from '../../types';
 import { FormField } from '../common/FormField';
+import { FileUploader } from '../shared/FileUploader';
+import { toast } from 'react-hot-toast';
 
 interface Props {
   isOpen: boolean;
@@ -28,7 +30,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export default function CandidateModal({ isOpen, onClose, onSave, candidate }: Props) {
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FormValues>({
+  const { register, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       firstName: '',
@@ -42,6 +44,36 @@ export default function CandidateModal({ isOpen, onClose, onSave, candidate }: P
       status: 'AVAILABLE',
     },
   });
+
+  // Parsing review state
+  // Keep a snapshot visible under the form for human verification
+  const [parsedData, setParsedData] = useState<any>(null);
+  const [isParsing, setIsParsing] = useState(false);
+
+  const handleParse = async (s3Key?: string, fileUrl?: string) => {
+    if (!s3Key && !fileUrl) return;
+    setIsParsing(true);
+    try {
+      const qs = s3Key ? `?s3Key=${encodeURIComponent(s3Key)}` : fileUrl ? `?fileUrl=${encodeURIComponent(fileUrl)}` : '';
+      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/documents/parse${qs}`, { method: 'POST' });
+      const data = await response.json();
+      setParsedData(data);
+
+      // Auto-fill form fields where available
+      if (data.firstName) setValue('firstName', data.firstName);
+      if (data.lastName) setValue('lastName', data.lastName);
+      if (data.email) setValue('email', data.email);
+      if (Array.isArray(data.skills)) setValue('primarySkills', (data.skills as string[]).join(', '));
+      if (data.summary) {
+        // No summary field in schema, optionally map to notes or ignore; skipping for now
+      }
+      toast.success('Resume parsed successfully!');
+    } catch (error) {
+      toast.error('Failed to parse resume automatically.');
+    } finally {
+      setIsParsing(false);
+    }
+  };
 
   useEffect(() => {
     if (candidate) {
@@ -105,6 +137,20 @@ export default function CandidateModal({ isOpen, onClose, onSave, candidate }: P
           onSubmit={handleSubmit(onSubmit)}
           className="max-h-[calc(90vh-72px)] space-y-6 overflow-y-auto px-6 py-6"
         >
+          {/* Resume upload + parse */}
+          <section className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">Resume</p>
+            <FileUploader
+              candidateId={candidate?.id || ''}
+              onUploadSuccess={({ s3Key, fileUrl }) => handleParse(s3Key, fileUrl)}
+            />
+            {isParsing && (
+              <div className="flex items-center justify-center rounded-lg border border-blue-100 bg-blue-50 p-4 animate-pulse">
+                <Sparkles className="mr-2 h-5 w-5 text-blue-600" />
+                <span className="font-medium text-blue-700">AI is reading the resume...</span>
+              </div>
+            )}
+          </section>
           <section className="grid gap-4 md:grid-cols-2">
             <FormField label="First name" required error={errors.firstName?.message}>
               <input type="text" {...register('firstName')} className="input" placeholder="Jane" />
@@ -131,6 +177,32 @@ export default function CandidateModal({ isOpen, onClose, onSave, candidate }: P
           >
             <input type="text" {...register('primarySkills')} className="input" placeholder="Java, React, Spring Boot" />
           </FormField>
+
+          {parsedData && (
+            <section className="space-y-2 rounded-2xl border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">Parsed Preview</p>
+              <div className="grid gap-3 md:grid-cols-2 text-sm">
+                <div>
+                  <p className="text-muted">First name</p>
+                  <p className="font-semibold text-[rgb(var(--app-text-primary))]">{parsedData.firstName || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-muted">Last name</p>
+                  <p className="font-semibold text-[rgb(var(--app-text-primary))]">{parsedData.lastName || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-muted">Email</p>
+                  <p className="font-semibold text-[rgb(var(--app-text-primary))]">{parsedData.email || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-muted">Skills</p>
+                  <p className="font-semibold text-[rgb(var(--app-text-primary))]">
+                    {Array.isArray(parsedData.skills) ? parsedData.skills.join(', ') : parsedData.skills || '-'}
+                  </p>
+                </div>
+              </div>
+            </section>
+          )}
 
           <section className="grid gap-4 md:grid-cols-2">
             <FormField label="Visa status" required>

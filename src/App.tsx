@@ -13,6 +13,7 @@ const DocumentsPage = lazy(() => import('./pages/Documents'));
 
 // Layouts
 import MainLayout from './layouts/MainLayout';
+import PublicLayout from './layouts/PublicLayout';
 import AuthLayout from './layouts/AuthLayout';
 
 // Pages (lazy)
@@ -23,6 +24,8 @@ const CandidateDetails = lazy(() => import('./pages/CandidateDetails'));
 const Jobs = lazy(() => import('./pages/Jobs'));
 const JobDetails = lazy(() => import('./pages/JobDetails'));
 const SubmissionsPage = lazy(() => import('./pages/Submissions'));
+const CareerPage = lazy(() => import('./pages/public/CareerPage'));
+const JobDetailPage = lazy(() => import('./pages/public/JobDetailPage'));
 
 
 const queryClient = new QueryClient({
@@ -96,6 +99,12 @@ function App() {
 
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
+            
+            {/* Public Career Routes */}
+            <Route element={<PublicLayout />}>
+              <Route path="/careers/:tenantSlug" element={<CareerPage />} />
+              <Route path="/careers/:tenantSlug/jobs/:jobId" element={<JobDetailPage />} />
+            </Route>
             </Routes>
           </Suspense>
         </ErrorBoundary>
