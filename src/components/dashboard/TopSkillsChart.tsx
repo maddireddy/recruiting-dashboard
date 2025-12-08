@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from 'react';
+import { useMemo } from 'react';
 import type { TooltipProps } from 'recharts';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, LabelList, CartesianGrid } from 'recharts';
 import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
@@ -62,15 +62,15 @@ export default function TopSkillsChart({ data, className }: { data: SkillDatum[]
             <LabelList
               dataKey="count"
               position="right"
-              formatter={(value: ReactNode) =>
-                typeof value === 'number'
-                  ? value.toLocaleString()
-                  : typeof value === 'string'
-                  ? Number.isFinite(Number(value))
-                    ? Number(value).toLocaleString()
-                    : value
-                  : value
-              }
+              formatter={(value: unknown) => {
+                if (typeof value === 'number') return value.toLocaleString();
+                if (typeof value === 'string') {
+                  const parsed = Number(value);
+                  if (Number.isFinite(parsed)) return parsed.toLocaleString();
+                  return value;
+                }
+                return value != null ? String(value) : '';
+              }}
               fill="rgb(var(--app-text-primary))"
             />
           </Bar>

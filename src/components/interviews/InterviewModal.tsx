@@ -22,6 +22,7 @@ export default function InterviewModal({ interview, onSave, onClose }: Props) {
     submissionId: '',
     scheduledAt: '',
     mode: 'REMOTE',
+    meetingLink: '',
     panel: [],
     feedback: '',
     status: 'SCHEDULED'
@@ -56,7 +57,8 @@ export default function InterviewModal({ interview, onSave, onClose }: Props) {
       setFormData({
         ...interview,
         scheduledAt: interview.scheduledAt ? new Date(interview.scheduledAt).toISOString().slice(0, 16) : '',
-        panel: interview.panel || []
+        panel: interview.panel || [],
+        meetingLink: interview.meetingLink ?? ''
       });
     }
   }, [interview]);
@@ -91,8 +93,15 @@ export default function InterviewModal({ interview, onSave, onClose }: Props) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const isRemoteMode = formData.mode === 'REMOTE' || formData.mode === 'VIDEO';
+    const meetingLinkValue = isRemoteMode
+      ? (formData.meetingLink?.trim() || '')
+      : 'On-site';
+
     onSave({
       ...formData,
+      meetingLink: meetingLinkValue,
       scheduledAt: formData.scheduledAt ? new Date(formData.scheduledAt).toISOString() : ''
     });
   };
@@ -171,6 +180,18 @@ export default function InterviewModal({ interview, onSave, onClose }: Props) {
               onChange={handleInputChange}
               options={STATUSES.map((status) => ({ value: status, label: status }))}
             />
+
+            {(formData.mode === 'REMOTE' || formData.mode === 'VIDEO') && (
+              <Field
+                label="Meeting Link"
+                name="meetingLink"
+                type="url"
+                value={formData.meetingLink ?? ''}
+                onChange={handleInputChange}
+                placeholder="https://meet.example.com/your-room"
+                required
+              />
+            )}
           </div>
 
           <div className="space-y-4">
@@ -274,9 +295,10 @@ type FieldProps = {
   onChange: (event: ChangeEvent<HTMLInputElement>) => void;
   required?: boolean;
   disabled?: boolean;
+  placeholder?: string;
 };
 
-function Field({ label, name, type = 'text', value, onChange, required, disabled }: FieldProps) {
+function Field({ label, name, type = 'text', value, onChange, required, disabled, placeholder }: FieldProps) {
   return (
     <div className="space-y-2">
       <label className="text-sm font-semibold uppercase tracking-[0.18em] text-[rgb(var(--app-text-primary))]">
@@ -290,6 +312,7 @@ function Field({ label, name, type = 'text', value, onChange, required, disabled
         onChange={onChange}
         required={required}
         disabled={disabled}
+        placeholder={placeholder}
         className="input"
       />
     </div>

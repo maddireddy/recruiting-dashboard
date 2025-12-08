@@ -13,6 +13,7 @@ export interface Interview {
   submissionId?: string;
   scheduledAt: string;
   mode: 'ONSITE' | 'REMOTE' | 'PHONE' | 'VIDEO';
+  meetingLink?: string;
   panel: PanelMember[];
   feedback?: string;
   status?: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED' | 'RESCHEDULED';
