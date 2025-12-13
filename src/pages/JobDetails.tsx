@@ -1,30 +1,40 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
 import { jobService } from '../services/job.service';
 import { submissionService } from '../services/submission.service';
 import { ArrowLeft, MapPin, Briefcase, DollarSign, Users, Calendar, User } from 'lucide-react';
 import Timeline, { type TimelineItem } from '../components/common/Timeline';
+import { useState } from 'react';
+import JDAssistantModal from '../components/jobs/JDAssistantModal';
 
 export default function JobDetails() {
+  const [aiOpen, setAiOpen] = useState(false);
   const { id } = useParams<{ id: string }>();
+  const qc = useQueryClient();
 
   const jobQuery = useQuery({
     queryKey: ['job', id],
     enabled: !!id,
-    queryFn: () => jobService.getById(id!).then(r => r.data),
+    queryFn: () => jobService.getById(id!),
   });
 
   const submissionsQuery = useQuery({
     queryKey: ['submissions', 'job', id],
     enabled: !!id,
-    queryFn: () => submissionService.getByJob(id!).then(r => r.data),
+    queryFn: () => submissionService.getByJob(id!),
   });
 
   if (jobQuery.isLoading) return <div className="p-6">Loading job...</div>;
   if (jobQuery.error) return <div className="p-6 text-red-500">Failed to load job.</div>;
 
   const j = jobQuery.data!;
-  const timelineItems: TimelineItem[] = (submissionsQuery.data || []).flatMap((s) => {
+  const updateJob = useMutation({
+    mutationFn: (description: string) => jobService.update(id!, { description }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['job', id] });
+    },
+  });
+  const timelineItems: TimelineItem[] = (submissionsQuery.data || []).flatMap((s: any) => {
     const items: TimelineItem[] = [];
     if (s.submittedDate) {
       items.push({
@@ -77,6 +87,9 @@ export default function JobDetails() {
             <p className="text-dark-600">{j.client} • {j.jobType?.replace('_',' ')} • {j.status?.replace('_',' ')}</p>
           </div>
         </div>
+        <div>
+          <button className="px-3 py-2 rounded border" onClick={() => setAiOpen(true)}>AI JD Assistant</button>
+        </div>
       </div>
 
       <div className="card grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -105,7 +118,7 @@ export default function JobDetails() {
           <div className="card p-6 text-dark-600">No submissions yet.</div>
         )}
         <div className="grid gap-3">
-          {submissionsQuery.data?.map(s => (
+          {submissionsQuery.data?.map((s: any) => (
             <div key={s.id} className="card p-4 flex items-center justify-between">
               <div className="flex flex-wrap items-center gap-4 text-sm text-dark-600">
                 <div className="flex items-center gap-2"><User size={14} /><span>{s.candidateName}</span></div>
@@ -122,6 +135,16 @@ export default function JobDetails() {
           ))}
         </div>
       </div>
+
+      <JDAssistantModal
+        open={aiOpen}
+        jobId={j.id}
+        initialJD={j.description}
+        onInsert={(newContent) => {
+          updateJob.mutate(newContent);
+        }}
+        onClose={() => setAiOpen(false)}
+      />
     </div>
   );
 }

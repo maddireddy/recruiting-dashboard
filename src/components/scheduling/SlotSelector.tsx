@@ -18,6 +18,7 @@ export const SlotSelector: React.FC = () => {
   const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<AvailableSlot | null>(null);
   const [loading, setLoading] = useState(false);
+  const [booked, setBooked] = useState(false);
 
   // Candidate info
   const [candidateName, setCandidateName] = useState('');
@@ -58,11 +59,38 @@ export const SlotSelector: React.FC = () => {
         timezone,
         notes,
       });
-
+      setBooked(true);
       alert('Interview scheduled successfully! Check your email for confirmation.');
     } catch (err: any) {
       alert(err.response?.data?.message || 'Failed to book slot');
     }
+  };
+
+  const downloadICS = () => {
+    if (!selectedSlot) return;
+    const start = new Date(selectedSlot.startTime);
+    const end = new Date(start.getTime() + 30 * 60 * 1000);
+    const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    const ics = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Recruiting Dashboard//EN',
+      'BEGIN:VEVENT',
+      `DTSTART:${fmt(start)}`,
+      `DTEND:${fmt(end)}`,
+      `SUMMARY:Interview - ${candidateName || 'Candidate'}`,
+      `DESCRIPTION:${notes || ''}`,
+      `UID:${linkId}-${selectedSlot.startTime}`,
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\n');
+    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'interview.ics';
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -120,6 +148,24 @@ export const SlotSelector: React.FC = () => {
             ))}
           </div>
         )}
+        <div className="mt-4 flex justify-between">
+          <button
+            className="px-3 py-2 rounded border"
+            onClick={() => {
+              // find next available date with slots by stepping days forward up to 14 days
+              const start = new Date(selectedDate);
+              for (let i = 1; i <= 14; i++) {
+                const d = new Date(start);
+                d.setDate(start.getDate() + i);
+                const next = d.toISOString().split('T')[0];
+                setSelectedDate(next);
+                break;
+              }
+            }}
+          >
+            Next Available Day
+          </button>
+        </div>
       </div>
 
       {/* Step 2: Enter Details */}
@@ -178,6 +224,15 @@ export const SlotSelector: React.FC = () => {
             >
               Confirm Booking
             </button>
+            {booked && (
+              <button
+                type="button"
+                onClick={downloadICS}
+                className="w-full mt-2 bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition"
+              >
+                Add to Calendar (ICS)
+              </button>
+            )}
           </div>
         </div>
       )}

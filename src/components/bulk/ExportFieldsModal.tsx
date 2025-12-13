@@ -17,7 +17,17 @@ const DEFAULT_FIELDS: Array<{ key: string; label: string }> = [
 ];
 
 export const ExportFieldsModal: React.FC<ExportFieldsModalProps> = ({ onClose, onExport }) => {
-  const [selected, setSelected] = useState<string[]>(DEFAULT_FIELDS.map(f => f.key));
+  const userId = localStorage.getItem('userId') || 'anonymous';
+  const storageKey = `exportFields:${userId}`;
+  const initial = (() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      return saved ? JSON.parse(saved) as string[] : DEFAULT_FIELDS.map(f => f.key);
+    } catch {
+      return DEFAULT_FIELDS.map(f => f.key);
+    }
+  })();
+  const [selected, setSelected] = useState<string[]>(initial);
 
   const toggleField = (key: string) => {
     setSelected(prev => (prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]));
@@ -29,6 +39,9 @@ export const ExportFieldsModal: React.FC<ExportFieldsModalProps> = ({ onClose, o
       alert('Select at least one field');
       return;
     }
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(selected));
+    } catch {}
     onExport(selected);
   };
 

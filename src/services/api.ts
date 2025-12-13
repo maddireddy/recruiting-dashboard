@@ -131,13 +131,11 @@ api.interceptors.request.use(
       headers.set('X-User-ID', userId);
     }
 
-    // Attach Authorization for non-auth endpoints only when token is present
+    // Attach Authorization when token is present; do not hard-reject if absent.
+    // This avoids client-side failures for public or pre-auth endpoints and lets
+    // the backend decide (401/403) when auth is required.
     const isAuthEndpoint = Boolean(config.url && config.url.includes('/auth/'));
-    if (!isAuthEndpoint) {
-      if (!token) {
-        // Avoid sending requests with undefined Bearer; redirect to login by rejecting
-        return Promise.reject(new Error('Missing access token'));
-      }
+    if (!isAuthEndpoint && token) {
       const tokenValue = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
       headers.set('Authorization', tokenValue);
     }

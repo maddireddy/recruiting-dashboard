@@ -2,22 +2,90 @@ import api from './api';
 import type { Document } from '../types/document';
 
 export const documentService = {
-  getAll: (page = 0, size = 50) => 
-    api.get<{ content: Document[] }>(`/documents?page=${page}&size=${size}`),
+  getAll: async (page = 0, size = 50, tenantId?: string) => {
+    const headers: Record<string, string> = {};
+    if (tenantId) headers['X-Tenant-ID'] = tenantId;
+    try {
+      const resp = await api.get<{ content: Document[] }>(`/documents?page=${page}&size=${size}`, { headers });
+      if (import.meta.env.DEV) {
+        console.debug('[documentService.getAll] response', resp.data);
+      }
+      return resp.data.content || [];
+    } catch (error: any) {
+      if (import.meta.env.DEV) {
+        console.debug('[documentService.getAll] error', error?.response?.status, error?.message);
+      }
+      return [];
+    }
+  },
 
-  getById: (id: string) => 
-    api.get<Document>(`/documents/${id}`),
+  getById: async (id: string, tenantId?: string) => {
+    const headers: Record<string, string> = {};
+    if (tenantId) headers['X-Tenant-ID'] = tenantId;
+    try {
+      const resp = await api.get<Document>(`/documents/${id}`, { headers });
+      if (import.meta.env.DEV) {
+        console.debug('[documentService.getById] response', resp.data);
+      }
+      return resp.data;
+    } catch (error: any) {
+      if (import.meta.env.DEV) {
+        console.debug('[documentService.getById] error', error?.response?.status, error?.message);
+      }
+      throw error;
+    }
+  },
 
-  getByEntity: (entityId: string) => 
-    api.get<Document[]>(`/documents/entity/${entityId}`),
+  getByEntity: async (entityId: string, tenantId?: string) => {
+    const headers: Record<string, string> = {};
+    if (tenantId) headers['X-Tenant-ID'] = tenantId;
+    try {
+      const resp = await api.get<Document[]>(`/documents/entity/${entityId}`, { headers });
+      if (import.meta.env.DEV) {
+        console.debug('[documentService.getByEntity] response', resp.data);
+      }
+      return resp.data || [];
+    } catch (error: any) {
+      if (import.meta.env.DEV) {
+        console.debug('[documentService.getByEntity] error', error?.response?.status, error?.message);
+      }
+      return [];
+    }
+  },
 
-  getByEntityType: (entityType: string, entityId: string) => 
-    api.get<Document[]>(`/documents/entity/${entityType}/${entityId}`),
+  getByEntityType: async (entityType: string, entityId: string, tenantId?: string) => {
+    const headers: Record<string, string> = {};
+    if (tenantId) headers['X-Tenant-ID'] = tenantId;
+    try {
+      const resp = await api.get<Document[]>(`/documents/entity/${entityType}/${entityId}`, { headers });
+      if (import.meta.env.DEV) {
+        console.debug('[documentService.getByEntityType] response', resp.data);
+      }
+      return resp.data || [];
+    } catch (error: any) {
+      if (import.meta.env.DEV) {
+        console.debug('[documentService.getByEntityType] error', error?.response?.status, error?.message);
+      }
+      return [];
+    }
+  },
 
-  upload: (formData: FormData) => 
-    api.post<Document>('/documents', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    }),
+  upload: async (formData: FormData, tenantId?: string) => {
+    const headers: Record<string, string> = { 'Content-Type': 'multipart/form-data' };
+    if (tenantId) headers['X-Tenant-ID'] = tenantId;
+    try {
+      const resp = await api.post<Document>('/documents', formData, { headers });
+      if (import.meta.env.DEV) {
+        console.debug('[documentService.upload] response', resp.data);
+      }
+      return resp.data;
+    } catch (error: any) {
+      if (import.meta.env.DEV) {
+        console.debug('[documentService.upload] error', error?.response?.status, error?.message);
+      }
+      throw error;
+    }
+  },
 
   download: async (id: string) => {
     const token = localStorage.getItem('accessToken');
@@ -100,6 +168,20 @@ export const documentService = {
     return { blob, filename: filename || 'document', contentType };
   },
 
-  delete: (id: string) => 
-    api.delete(`/documents/${id}`)
+  delete: async (id: string, tenantId?: string) => {
+    const headers: Record<string, string> = {};
+    if (tenantId) headers['X-Tenant-ID'] = tenantId;
+    try {
+      await api.delete(`/documents/${id}`, { headers });
+      if (import.meta.env.DEV) {
+        console.debug('[documentService.delete] deleted', id);
+      }
+      return id;
+    } catch (error: any) {
+      if (import.meta.env.DEV) {
+        console.debug('[documentService.delete] error', error?.response?.status, error?.message);
+      }
+      throw error;
+    }
+  }
 };

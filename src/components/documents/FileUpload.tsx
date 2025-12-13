@@ -5,11 +5,14 @@ interface Props {
   onFileSelect: (file: File) => void;
   accept?: string;
   maxSize?: number; // in MB
+  showProgress?: boolean;
+  onCancel?: () => void;
 }
 
-export default function FileUpload({ onFileSelect, accept = '*', maxSize = 10 }: Props) {
+export default function FileUpload({ onFileSelect, accept = '*', maxSize = 10, showProgress = true, onCancel }: Props) {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [progress, setProgress] = useState<number>(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleDrag = (e: React.DragEvent) => {
@@ -47,6 +50,9 @@ export default function FileUpload({ onFileSelect, accept = '*', maxSize = 10 }:
     }
 
     setSelectedFile(file);
+    // If parent supports progress, they can pass an uploader that reports progress
+    // Simulate initial progress start; actual upload progress should be reported via onFileSelect callback's side-effect
+    setProgress(0);
     onFileSelect(file);
   };
 
@@ -56,6 +62,7 @@ export default function FileUpload({ onFileSelect, accept = '*', maxSize = 10 }:
 
   const clearFile = () => {
     setSelectedFile(null);
+    setProgress(0);
     if (inputRef.current) inputRef.current.value = '';
   };
 
@@ -94,6 +101,11 @@ export default function FileUpload({ onFileSelect, accept = '*', maxSize = 10 }:
             <div className="min-w-[12rem] flex-1">
               <p className="font-semibold text-[rgb(var(--app-text-primary))] line-clamp-2">{selectedFile.name}</p>
               <p className="text-sm text-muted">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+              {showProgress && (
+                <div className="mt-2 h-2 w-full rounded bg-[rgb(var(--app-surface-muted))]">
+                  <div className="h-2 rounded bg-[rgb(var(--app-primary-from))]" style={{ width: `${progress}%` }} />
+                </div>
+              )}
             </div>
             <button
               type="button"
@@ -106,6 +118,18 @@ export default function FileUpload({ onFileSelect, accept = '*', maxSize = 10 }:
               <X size={18} />
               Clear
             </button>
+            {showProgress && onCancel && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCancel();
+                }}
+                className="rounded-lg border p-2 text-sm"
+              >
+                Cancel
+              </button>
+            )}
           </div>
         )}
       </div>

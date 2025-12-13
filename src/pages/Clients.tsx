@@ -1,6 +1,4 @@
 import { useMemo, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
 import {
   Plus,
   Building2,
@@ -14,6 +12,7 @@ import ClientModal from '../components/clients/ClientModal';
 import StatsCard from '../components/dashboard/StatsCard';
 import { clientService } from '../services/client.service';
 import type { Client } from '../types/client';
+import { useList, useCreate, useUpdate, useDelete } from '../services/hooks';
 
 const STATUS_META: Record<string, { label: string; tone: string }> = {
   ACTIVE: { label: 'Active', tone: 'chip-active' },
@@ -27,41 +26,22 @@ const formatLocation = (client: Client) => {
 };
 
 export default function ClientsPage() {
-  const queryClient = useQueryClient();
   const [modal, setModal] = useState<{mode: 'create' | 'edit' | 'none', client: Client | null}>({mode: 'none', client: null});
 
-  const clientsQ = useQuery({
-    queryKey: ['clients'],
-    queryFn: () => clientService.getAll(0, 100).then(r => r.data.content || []),
-  });
+  // Get tenant ID from localStorage
+  const tenantId = localStorage.getItem('tenantId') || undefined;
 
-  const createM = useMutation({
-    mutationFn: (client: Partial<Client>) => clientService.create(client),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['clients'] });
-      setModal({ mode: 'none', client: null });
-      toast.success('Client created');
-    }
-  });
-  const updateM = useMutation({
-    mutationFn: (client: Partial<Client>) => clientService.update(modal.client!.id!, client),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['clients'] });
-      setModal({ mode: 'none', client: null });
-      toast.success('Client updated');
-    }
-  });
-  const deleteM = useMutation({
-    mutationFn: (id: string) => clientService.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['clients'] });
-      toast.success('Client removed');
-    }
-  });
+  const clientsQ = useList<Client[]>('clients', (tid) => clientService.getAll(0, 100, tid), tenantId);
+  const createM = useCreate('clients', clientService.create, tenantId);
+  const updateM = useUpdate<Partial<Client>, Client>('clients', (id, data, tid) => clientService.update(id, data, tid), tenantId);
+  const deleteM = useDelete('clients', clientService.delete, tenantId);
 
   const handleSave = (data: Partial<Client>) => {
-    if (modal.mode === 'edit' && modal.client) updateM.mutate(data);
-    else createM.mutate(data);
+    if (modal.mode === 'edit' && modal.client) {
+      updateM.mutate({ id: modal.client.id!, data });
+    } else {
+      createM.mutate(data);
+    }
   };
   const handleCloseModal = () => setModal({mode:'none', client:null});
 

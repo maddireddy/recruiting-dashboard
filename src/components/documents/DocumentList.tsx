@@ -37,7 +37,7 @@ export default function DocumentList({ entityType, entityId }: Props) {
 
   const documentsQuery = useQuery({
     queryKey: ['documents', entityType, entityId],
-    queryFn: () => documentService.getByEntityType(entityType, entityId).then((r: { data: Document[] }) => r.data)
+    queryFn: () => documentService.getByEntityType(entityType, entityId)
   });
 
   const deleteDocument = useMutation({

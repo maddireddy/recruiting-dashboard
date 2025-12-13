@@ -15,7 +15,7 @@ export const CandidateList: React.FC = () => {
   const fetchCandidates = async () => {
     try {
       const resp = await candidateService.getAll(0, 50);
-      setCandidates(resp.data.content || []);
+      setCandidates(resp || []);
     } catch (err) {
       console.error('Failed to fetch candidates', err);
     }

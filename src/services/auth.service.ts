@@ -1,8 +1,8 @@
 import api from './api';
 
 export const authService = {
-  login: async (email: string, tenantId: string) => {
-    const response = await api.post('/auth/login', { email, tenantId });
+  login: async (email: string, password: string, tenantId: string) => {
+    const response = await api.post('/auth/login', { email, password, tenantId });
     const { accessToken, refreshToken, userId, role } = response.data;
     
     localStorage.setItem('accessToken', accessToken);

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { bulkApi } from '../../api/bulkApi';
 import type { BulkOperationResponse } from '../../api/bulkApi';
+import { toast } from 'react-hot-toast';
 
 interface ProgressModalProps {
   operationId: string;
@@ -16,6 +17,8 @@ export const ProgressModal: React.FC<ProgressModalProps> = ({ operationId, onClo
       try {
         const status = await bulkApi.getOperationStatus(operationId);
         setOperation(status);
+        toast.dismiss();
+        toast(`Bulk ${status.operationType.toLowerCase()} ${status.percentComplete}%`, { id: 'bulk-progress', duration: 1000 });
 
         if (
           status.status === 'COMPLETED' ||
@@ -23,9 +26,17 @@ export const ProgressModal: React.FC<ProgressModalProps> = ({ operationId, onClo
           status.status === 'PARTIAL_SUCCESS'
         ) {
           setPolling(false);
+          if (status.status === 'COMPLETED') {
+            toast.success('Bulk operation completed', { duration: 3000 });
+          } else if (status.status === 'FAILED') {
+            toast.error('Bulk operation failed', { duration: 3000 });
+          } else {
+            toast('Bulk operation completed with partial success', { duration: 3000 });
+          }
         }
       } catch (err) {
         console.error('Failed to fetch operation status', err);
+        toast.error('Failed to fetch operation status');
       }
     };
 

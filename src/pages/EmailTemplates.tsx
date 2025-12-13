@@ -1,5 +1,5 @@
 import { useMemo, useState, Suspense, lazy } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useList, useDelete } from '../services/hooks';
 import { Plus, Edit, Trash2, Mail, Sparkles } from 'lucide-react';
 import { emailService } from '../services/email.service';
 import type { EmailTemplate } from '../types/email';
@@ -7,26 +7,13 @@ import type { EmailTemplate } from '../types/email';
 const EmailTemplateModal = lazy(() => import('../components/email/EmailTemplateModal'));
 
 export default function EmailTemplatesPage() {
-  const queryClient = useQueryClient();
   const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const tenantId = useMemo(() => localStorage.getItem('tenantId') || undefined, []);
 
-  const templatesQuery = useQuery({
-    queryKey: ['email-templates'],
-    queryFn: () => emailService.getAllTemplates().then(r => r.data)
-  });
+  const templatesQuery = useList<EmailTemplate[]>('email-templates', () => emailService.getAllTemplates(), tenantId);
 
-  const deleteTemplate = useMutation({
-    mutationFn: (id: string) => emailService.deleteTemplate(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['email-templates'] });
-    },
-    onError: (err: Error) => {
-      // show toast on error
-      // import react-hot-toast dynamically to avoid adding top-level import here
-      import('react-hot-toast').then(mod => mod.default.error(err?.message || 'Failed to delete template'));
-    }
-  });
+  const { mutateAsync: remove } = useDelete('email-templates', (id: string) => emailService.deleteTemplate(id), tenantId);
 
   const templates = useMemo(() => templatesQuery.data || [], [templatesQuery.data]);
 
@@ -130,7 +117,7 @@ export default function EmailTemplatesPage() {
                   <button
                     onClick={() => {
                       if (window.confirm('Delete this template?')) {
-                        deleteTemplate.mutate(template.id!);
+                        remove(template.id!);
                       }
                     }}
                     type="button"

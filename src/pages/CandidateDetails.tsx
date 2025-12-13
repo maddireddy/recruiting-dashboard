@@ -183,7 +183,7 @@ const CandidateDetails = () => {
     queryFn: async (): Promise<Candidate> => {
       if (!id) throw new Error('Candidate id missing');
       const response = await candidateService.getById(id);
-      return response.data as unknown as Candidate;
+      return response as unknown as Candidate;
     },
     enabled: Boolean(id),
   });
@@ -193,7 +193,7 @@ const CandidateDetails = () => {
     queryFn: async (): Promise<Submission[]> => {
       if (!id) return [] as Submission[];
       const response = await submissionService.getByCandidate(id);
-      return response.data ?? [];
+      return response ?? [];
     },
     enabled: Boolean(id),
   });

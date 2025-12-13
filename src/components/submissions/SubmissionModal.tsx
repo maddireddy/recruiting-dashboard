@@ -39,12 +39,12 @@ export default function SubmissionModal({ submission, onSave, onClose }: Props) 
 
   const candidatesQuery = useQuery({
     queryKey: ['candidates'],
-    queryFn: () => candidateService.getAll(0, 1000).then(r => r.data.content || [])
+    queryFn: () => candidateService.getAll(0, 1000)
   });
 
   const jobsQuery = useQuery({
     queryKey: ['jobs'],
-    queryFn: () => jobService.getAll(0, 1000).then(r => r.data.content || [])
+    queryFn: () => jobService.getAll(0, 1000)
   });
 
   useEffect(() => {
@@ -65,8 +65,8 @@ export default function SubmissionModal({ submission, onSave, onClose }: Props) 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const selectedCandidate = candidatesQuery.data?.find(c => c.id === formData.candidateId);
-    const selectedJob = jobsQuery.data?.find(j => j.id === formData.jobId);
+    const selectedCandidate = candidatesQuery.data?.find((c: any) => c.id === formData.candidateId);
+    const selectedJob = jobsQuery.data?.find((j: any) => j.id === formData.jobId);
 
     const candidateDisplayName = selectedCandidate
       ? (selectedCandidate.fullName || `${selectedCandidate.firstName || ''} ${selectedCandidate.lastName || ''}`.trim() || selectedCandidate.email || '')
@@ -106,7 +106,7 @@ export default function SubmissionModal({ submission, onSave, onClose }: Props) 
                 disabled={!!submission}
               >
                 <option value="">Select candidate</option>
-                {candidatesQuery.data?.map((candidate) => (
+                {candidatesQuery.data?.map((candidate: any) => (
                   <option key={candidate.id} value={candidate.id}>
                     {candidate.fullName || `${candidate.firstName || ''} ${candidate.lastName || ''}`.trim() || candidate.email}
                   </option>
@@ -123,7 +123,7 @@ export default function SubmissionModal({ submission, onSave, onClose }: Props) 
                 disabled={!!submission}
               >
                 <option value="">Select job</option>
-                {jobsQuery.data?.map((job) => (
+                {jobsQuery.data?.map((job: any) => (
                   <option key={job.id} value={job.id}>
                     {job.title} • {job.client}
                   </option>

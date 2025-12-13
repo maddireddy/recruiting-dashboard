@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { BulkEmailModal } from './BulkEmailModal';
 import { BulkStatusModal } from './BulkStatusModal';
 import { ProgressModal } from './ProgressModal';
 import { bulkApi } from '../../api/bulkApi';
+import { useAuthStore } from '../../store/authStore';
 import { ExportFieldsModal } from './ExportFieldsModal';
 
 interface BulkActionBarProps {
@@ -18,6 +19,10 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
   onClearSelection,
   onActionComplete,
 }) => {
+  const userRole = useAuthStore((s) => s.user?.role ?? 'RECRUITER');
+  const canBulkEmail = useMemo(() => ['ADMIN','RECRUITER'].includes(userRole), [userRole]);
+  const canBulkStatus = useMemo(() => ['ADMIN','RECRUITER'].includes(userRole), [userRole]);
+  const canBulkExport = useMemo(() => ['ADMIN','RECRUITER'].includes(userRole), [userRole]);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [progressOperationId, setProgressOperationId] = useState<string | null>(null);
@@ -88,33 +93,39 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
             </div>
 
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => setShowStatusModal(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-              >
-                Update Status
-              </button>
-
-              <button
-                onClick={() => setShowEmailModal(true)}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-              >
-                Send Email
-              </button>
-
-              <div className="relative group">
-                <button className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
-                  Export ▾
+              {canBulkStatus && (
+                <button
+                  onClick={() => setShowStatusModal(true)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                >
+                  Update Status
                 </button>
-                <div className="absolute bottom-full mb-2 right-0 bg-white border rounded-lg shadow-lg hidden group-hover:block">
-                  <button onClick={() => handleExport('CSV')} className="block w-full text-left px-4 py-2 hover:bg-gray-50">
-                    Export as CSV
+              )}
+
+              {canBulkEmail && (
+                <button
+                  onClick={() => setShowEmailModal(true)}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                >
+                  Send Email
+                </button>
+              )}
+
+              {canBulkExport && (
+                <div className="relative group">
+                  <button className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
+                    Export ▾
                   </button>
-                  <button onClick={() => handleExport('EXCEL')} className="block w-full text-left px-4 py-2 hover:bg-gray-50">
-                    Export as Excel
-                  </button>
+                  <div className="absolute bottom-full mb-2 right-0 bg-white border rounded-lg shadow-lg hidden group-hover:block">
+                    <button onClick={() => handleExport('CSV')} className="block w-full text-left px-4 py-2 hover:bg-gray-50">
+                      Export as CSV
+                    </button>
+                    <button onClick={() => handleExport('EXCEL')} className="block w-full text-left px-4 py-2 hover:bg-gray-50">
+                      Export as Excel
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

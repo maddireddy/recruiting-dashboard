@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useList, useCreate, useUpdate, useDelete } from '../services/hooks';
 import { jobService } from '../services/job.service';
 import { Suspense, lazy, useMemo, useState, useEffect } from 'react';
 const KanbanBoard = lazy(() => import('../components/jobs/KanbanBoard'));
@@ -6,16 +6,17 @@ const JobModal = lazy(() => import('../components/jobs/JobModal'));
 import type { Job, JobStatus } from '../types/job';
 import { Plus, Filter, Download } from 'lucide-react';
 import { reportService } from '../services/report.service';
-import toast from 'react-hot-toast';
 import { useSearchParams } from 'react-router-dom';
 import JobFiltersSidebar, { type JobFilters } from '../components/jobs/JobFiltersSidebar';
 
 export default function JobsPage() {
-  const queryClient = useQueryClient();
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Get tenant ID from localStorage
+  const tenantId = localStorage.getItem('tenantId') || undefined;
 
   // Saved views
   const [savedViews, setSavedViews] = useState<{ name: string; params: Record<string, string | string[]> }[]>(() => {
@@ -47,171 +48,34 @@ export default function JobsPage() {
     startDateTo: paramsObject.startDateTo || undefined,
   }), [paramsObject]);
 
-  const jobsQuery = useQuery({
-    queryKey: ['jobs', paramsObject],
-    queryFn: () =>
-      jobService
-        .search({ page: 0, size: 100, ...paramsObject })
-        .then((r) => (r.data.content || []))
-  });
+  // Use standardized hooks
+  const jobsQ = useList<Job[]>('jobs', (tid) => {
+    return jobService.search({ page: 0, size: 100, ...paramsObject }, tid);
+  }, tenantId);
 
-  const updateStatus = useMutation({
-    mutationFn: ({ jobId, newStatus }: { jobId: string; newStatus: JobStatus }) =>
-      jobService.update(jobId, { status: newStatus }),
-    // Optimistic update: move the job to the new status immediately
-    onMutate: async ({ jobId, newStatus }) => {
-      await queryClient.cancelQueries({ queryKey: ['jobs'] });
+  const createM = useCreate('jobs', jobService.create, tenantId);
+  const updateM = useUpdate<Partial<Job>, Job>('jobs', (id, data, tid) => jobService.update(id, data, tid), tenantId);
+  const deleteM = useDelete('jobs', jobService.delete, tenantId);
 
-      const previousEntries = queryClient.getQueriesData<Job[]>({ queryKey: ['jobs'] });
 
-      queryClient.setQueriesData<Job[]>({ queryKey: ['jobs'] }, (prev) =>
-        (prev ?? []).map((j) => (j.id === jobId ? { ...j, status: newStatus } : j))
-      );
 
-      return { previousEntries } as { previousEntries: Array<[unknown, Job[] | undefined]> };
-    },
-    onError: (_err, _vars, context) => {
-      if (context?.previousEntries) {
-        for (const [key, data] of context.previousEntries) {
-          queryClient.setQueryData(key as string[], data);
-        }
+
+
+
+
+
+
+  const handleSave = async (job: Partial<Job>) => {
+    try {
+      if (selectedJob) {
+        await updateM.mutateAsync({ id: selectedJob.id, data: job });
+      } else {
+        await createM.mutateAsync(job);
       }
-      toast.error('Failed to move job. Reverting change.');
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['jobs'] });
-      toast.success('Job status updated');
-    },
-  });
-
-  const createJob = useMutation({
-    mutationFn: (job: Partial<Job>) => jobService.create(job),
-    onMutate: async (newJob) => {
-      await queryClient.cancelQueries({ queryKey: ['jobs'] });
-      const previousEntries = queryClient.getQueriesData<Job[]>({ queryKey: ['jobs'] });
-      const tempId = `temp-${Date.now()}`;
-
-      // Insert a temporary job so the board feels snappy
-      queryClient.setQueriesData<Job[]>({ queryKey: ['jobs'] }, (prev = []) => [
-        {
-          id: tempId,
-          tenantId: '',
-          title: newJob.title || 'New Job',
-          client: newJob.client || '',
-          location: newJob.location || '',
-          jobType: (newJob.jobType as Job['jobType']) || 'FULL_TIME',
-          status: (newJob.status as JobStatus) || 'OPEN',
-          description: newJob.description || '',
-          requiredSkills: newJob.requiredSkills || [],
-          preferredSkills: newJob.preferredSkills || [],
-          minExperience: newJob.minExperience || 0,
-          maxExperience: newJob.maxExperience || 0,
-          rateMin: newJob.rateMin || 0,
-          rateMax: newJob.rateMax || 0,
-          rateCurrency: newJob.rateCurrency || 'USD',
-          startDate: newJob.startDate || new Date().toISOString(),
-          endDate: newJob.endDate || new Date().toISOString(),
-          openings: newJob.openings || 1,
-          submissionsCount: 0,
-          interviewsCount: 0,
-          createdBy: '',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-        ...prev,
-      ]);
-
-      return { previousEntries, tempId } as { previousEntries: Array<[unknown, Job[] | undefined]>; tempId: string };
-    },
-    onSuccess: (res, _vars, context) => {
-      const created = res.data;
-      // Replace temp with created job
-      if (context?.tempId) {
-        queryClient.setQueriesData<Job[]>({ queryKey: ['jobs'] }, (prev = []) =>
-          prev.map((j) => (j.id === context.tempId ? created : j))
-        );
-      }
-      toast.success('Job created');
-    },
-    onError: (_err, _vars, context) => {
-      if (context?.previousEntries) {
-        for (const [key, data] of context.previousEntries) {
-          queryClient.setQueryData(key as string[], data);
-        }
-      }
-      toast.error('Failed to create job');
-    },
-    onSettled: () => {
-      // Ensure server-truth
-      queryClient.invalidateQueries({ queryKey: ['jobs'] });
-      setShowModal(false);
-    },
-  });
-
-  const updateJob = useMutation({
-    mutationFn: (job: Partial<Job>) => {
-      if (!selectedJob?.id) throw new Error('No job selected');
-      return jobService.update(selectedJob.id, job);
-    },
-    onMutate: async (patch) => {
-      await queryClient.cancelQueries({ queryKey: ['jobs'] });
-      const previousEntries = queryClient.getQueriesData<Job[]>({ queryKey: ['jobs'] });
-      if (selectedJob?.id) {
-        queryClient.setQueriesData<Job[]>({ queryKey: ['jobs'] }, (prev = []) =>
-          prev.map((j) => (j.id === selectedJob.id ? ({ ...j, ...patch, updatedAt: new Date().toISOString() } as Job) : j))
-        );
-      }
-      return { previousEntries } as { previousEntries: Array<[unknown, Job[] | undefined]> };
-    },
-    onSuccess: (res) => {
-      const updated = res.data;
-      queryClient.setQueriesData<Job[]>({ queryKey: ['jobs'] }, (prev = []) => prev.map((j) => (j.id === updated.id ? updated : j)));
-      toast.success('Job updated');
-    },
-    onError: (_err, _vars, context) => {
-      if (context?.previousEntries) {
-        for (const [key, data] of context.previousEntries) {
-          queryClient.setQueryData(key as string[], data);
-        }
-      }
-      toast.error('Failed to update job');
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['jobs'] });
       setShowModal(false);
       setSelectedJob(null);
-    },
-  });
-
-  const deleteJob = useMutation({
-    mutationFn: (id: string) => jobService.delete(id),
-    onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: ['jobs'] });
-      const previousEntries = queryClient.getQueriesData<Job[]>({ queryKey: ['jobs'] });
-      queryClient.setQueriesData<Job[]>({ queryKey: ['jobs'] }, (prev = []) => prev.filter((j) => j.id !== id));
-      return { previousEntries } as { previousEntries: Array<[unknown, Job[] | undefined]> };
-    },
-    onSuccess: () => {
-      toast.success('Job deleted');
-    },
-    onError: (_err, _vars, context) => {
-      if (context?.previousEntries) {
-        for (const [key, data] of context.previousEntries) {
-          queryClient.setQueryData(key as string[], data);
-        }
-      }
-      toast.error('Failed to delete job');
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['jobs'] });
-    },
-  });
-
-  const handleSave = (job: Partial<Job>) => {
-    if (selectedJob) {
-      updateJob.mutate(job);
-    } else {
-      createJob.mutate(job);
+    } catch (error) {
+      console.error('Failed to save job:', error);
     }
   };
 
@@ -253,20 +117,32 @@ export default function JobsPage() {
         </div>
       </div>
 
-      {jobsQuery.isLoading && <div className="card">Loading jobs...</div>}
-      {jobsQuery.error && <div className="card text-sm text-red-500">Error loading jobs</div>}
+      {jobsQ.isLoading && <div className="card">Loading jobs...</div>}
+      {jobsQ.error && <div className="card text-sm text-red-500">Error loading jobs</div>}
 
-      {jobsQuery.data && (
+      {jobsQ.data && (
         <Suspense fallback={<div className="card">Loading jobs board...</div>}>
           <KanbanBoard
-            jobs={jobsQuery.data}
-            onUpdateStatus={(jobId, newStatus) => updateStatus.mutate({ jobId, newStatus })}
+            jobs={jobsQ.data}
+            onUpdateStatus={async (jobId, newStatus) => {
+              try {
+                await updateM.mutateAsync({ id: jobId, data: { status: newStatus } });
+              } catch (error) {
+                console.error('Failed to update job status:', error);
+              }
+            }}
             onEdit={job => {
               setSelectedJob(job);
               setShowModal(true);
             }}
-            onDelete={id => {
-              if (confirm('Delete this job?')) deleteJob.mutate(id);
+            onDelete={async (id) => {
+              if (confirm('Delete this job?')) {
+                try {
+                  await deleteM.mutateAsync(id);
+                } catch (error) {
+                  console.error('Failed to delete job:', error);
+                }
+              }
             }}
           />
         </Suspense>

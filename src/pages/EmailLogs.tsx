@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useList } from '../services/hooks';
 import { Mail, CheckCircle, XCircle, Clock, BarChart3 } from 'lucide-react';
 import EmailLogModal from '../components/email/EmailLogModal';
 import StatsCard from '../components/dashboard/StatsCard';
@@ -23,20 +23,13 @@ const STATUS_ICONS = {
 };
 
 export default function EmailLogsPage() {
-  const logsQuery = useQuery({
-    queryKey: ['email-logs'],
-    queryFn: () => emailService.getEmailLogs(0, 100).then(r => r.data.content || [])
-  });
-
-  const statsQuery = useQuery({
-    queryKey: ['email-stats'],
-    queryFn: () => emailService.getEmailStats().then(r => r.data)
-  });
+  const tenantId = localStorage.getItem('tenantId') || undefined;
+  const logsQuery = useList<EmailLog[]>('email-logs', () => emailService.getEmailLogs(0, 100), tenantId);
+  const statsQuery = useList<{ sent: number; failed: number; pending: number }>('email-stats', () => emailService.getEmailStats(), tenantId);
 
   const [selectedLog, setSelectedLog] = useState<EmailLog | null>(null);
 
   const logs = useMemo(() => logsQuery.data || [], [logsQuery.data]);
-  const stats = statsQuery.data;
 
   return (
     <div className="space-y-8 px-6 py-8">
@@ -51,11 +44,11 @@ export default function EmailLogsPage() {
         </p>
       </header>
 
-      {stats && (
+      {statsQuery.data && (
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <StatsCard title="Sent successfully" value={stats.sent} icon={<CheckCircle size={18} className="text-green-400" />} />
-          <StatsCard title="Failed deliveries" value={stats.failed} icon={<XCircle size={18} className="text-red-400" />} />
-          <StatsCard title="Pending queue" value={stats.pending} icon={<Clock size={18} className="text-amber-400" />} />
+          <StatsCard title="Sent successfully" value={statsQuery.data.sent} icon={<CheckCircle size={18} className="text-green-400" />} />
+          <StatsCard title="Failed deliveries" value={statsQuery.data.failed} icon={<XCircle size={18} className="text-red-400" />} />
+          <StatsCard title="Pending queue" value={statsQuery.data.pending} icon={<Clock size={18} className="text-amber-400" />} />
         </section>
       )}
 

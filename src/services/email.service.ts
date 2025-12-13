@@ -3,27 +3,30 @@ import type { EmailTemplate, EmailLog, EmailConfig } from '../types/email';
 
 export const emailService = {
   // Templates
-  getAllTemplates: () => api.get<EmailTemplate[]>('/emails/templates'),
-  getTemplateById: (id: string) => api.get<EmailTemplate>(`/emails/templates/${id}`),
-  createTemplate: (template: Partial<EmailTemplate>) => api.post<EmailTemplate>('/emails/templates', template),
-  updateTemplate: (id: string, template: Partial<EmailTemplate>) => api.put<EmailTemplate>(`/emails/templates/${id}`, template),
-  deleteTemplate: (id: string) => api.delete(`/emails/templates/${id}`),
+  getAllTemplates: async () => (await api.get<EmailTemplate[]>('/emails/templates')).data,
+  getTemplateById: async (id: string) => (await api.get<EmailTemplate>(`/emails/templates/${id}`)).data,
+  createTemplate: async (template: Partial<EmailTemplate>) => (await api.post<EmailTemplate>('/emails/templates', template)).data,
+  updateTemplate: async (id: string, template: Partial<EmailTemplate>) => (await api.put<EmailTemplate>(`/emails/templates/${id}`, template)).data,
+  deleteTemplate: async (id: string) => {
+    await api.delete(`/emails/templates/${id}`);
+    return id;
+  },
   
   // Send Email
-  sendEmail: (to: string, subject: string, body: string) => 
-    api.post('/emails/send', { to, subject, body }),
+  sendEmail: async (to: string, subject: string, body: string) => 
+    (await api.post('/emails/send', { to, subject, body })).data,
   
-  sendTemplateEmail: (to: string, templateName: string, variables: Record<string, string>) => 
-    api.post('/emails/send-template', { to, templateName, variables }),
+  sendTemplateEmail: async (to: string, templateName: string, variables: Record<string, string>) => 
+    (await api.post('/emails/send-template', { to, templateName, variables })).data,
   
   // Logs
-  getEmailLogs: (page = 0, size = 20) => 
-    api.get<{ content: EmailLog[] }>(`/emails/logs?page=${page}&size=${size}`),
+  getEmailLogs: async (page = 0, size = 20) => 
+    (await api.get<{ content: EmailLog[] }>(`/emails/logs?page=${page}&size=${size}`)).data.content ?? [],
   
-  getEmailStats: () => 
-    api.get<{ sent: number; failed: number; pending: number }>('/emails/stats'),
+  getEmailStats: async () => 
+    (await api.get<{ sent: number; failed: number; pending: number }>('/emails/stats')).data,
   
   // Config
-  getEmailConfig: () => api.get<EmailConfig>('/emails/config'),
-  updateEmailConfig: (config: Partial<EmailConfig>) => api.put<EmailConfig>('/emails/config', config),
+  getEmailConfig: async () => (await api.get<EmailConfig>('/emails/config')).data,
+  updateEmailConfig: async (config: Partial<EmailConfig>) => (await api.put<EmailConfig>('/emails/config', config)).data,
 };

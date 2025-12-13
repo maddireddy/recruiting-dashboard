@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation, NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
   Users,
@@ -13,7 +13,7 @@ import {
   Sparkles,
   X,
 } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import clsx from 'clsx';
 import { authService } from '../../services/auth.service';
 
@@ -35,6 +35,18 @@ const navigationSections = [
     ],
   },
   {
+    title: 'AI Lab',
+    items: [
+      { path: '/ai', icon: Sparkles, label: 'AI Lab' },
+      { path: '/ai/semantic-search', icon: Sparkles, label: 'Semantic Search' },
+      { path: '/ai/rediscovery', icon: Sparkles, label: 'Rediscovery' },
+      { path: '/ai/talent-pool-matching', icon: Sparkles, label: 'Pool Matching' },
+      { path: '/ai/interview-intelligence', icon: Sparkles, label: 'Interview Intelligence' },
+      { path: '/ai/resume-parser', icon: Sparkles, label: 'Resume Parser' },
+      { path: '/ai/jd-generator', icon: Sparkles, label: 'JD Generator' },
+    ],
+  },
+  {
     title: 'Talent',
     items: [
       { path: '/candidates', icon: Users, label: 'Candidates' },
@@ -44,27 +56,94 @@ const navigationSections = [
     ],
   },
   {
-    title: 'Relationships',
-    items: [
-      { path: '/clients', icon: ShieldCheck, label: 'Clients' },
-      { path: '/documents', icon: FileText, label: 'Documents' },
-    ],
-  },
-  {
-    title: 'Communications',
+    title: 'Messaging',
     items: [
       { path: '/email-templates', icon: Mail, label: 'Email Templates' },
       { path: '/email-logs', icon: Sparkles, label: 'Email Logs' },
+      { path: '/sms', icon: Mail, label: 'SMS Campaigns' },
+      { path: '/sms/communications', icon: Mail, label: 'SMS Communications' },
+    ],
+  },
+  {
+    title: 'Sourcing',
+    items: [
+      { path: '/advanced-search', icon: Sparkles, label: 'Advanced Search' },
+      { path: '/saved-searches', icon: Sparkles, label: 'Saved Searches' },
+      { path: '/boolean-search-templates', icon: Sparkles, label: 'Boolean Templates' },
+      { path: '/candidate-sourcings', icon: Sparkles, label: 'Candidate Sourcings' },
+      { path: '/rediscovery', icon: Sparkles, label: 'Rediscovery' },
+      { path: '/talent-pools', icon: Users, label: 'Talent Pools' },
+      { path: '/skills-assessments', icon: ShieldCheck, label: 'Skills Assessments' },
+      { path: '/market-intelligence', icon: TrendingUp, label: 'Market Intelligence' },
+      { path: '/diversity-metrics', icon: ShieldCheck, label: 'Diversity Metrics' },
+      { path: '/bookmarklet-captures', icon: Sparkles, label: 'Bookmarklet Captures' },
+      { path: '/silver-medalists', icon: ShieldCheck, label: 'Silver Medalists' },
+      { path: '/eeo-data', icon: ShieldCheck, label: 'EEO Data' },
+      { path: '/custom-reports', icon: TrendingUp, label: 'Custom Reports' },
+    ],
+  },
+  {
+    title: 'Interviews',
+    items: [
+      { path: '/interview-guides', icon: FileText, label: 'Guides' },
+      { path: '/interview-recordings', icon: FileText, label: 'Recordings' },
+    ],
+  },
+  {
+    title: 'Automation',
+    items: [
+      { path: '/workflows', icon: Sparkles, label: 'Workflows' },
+      { path: '/calendar-sync', icon: Calendar, label: 'Calendar Sync' },
+      { path: '/interview-intelligence', icon: Sparkles, label: 'Interview Intelligence' },
+      { path: '/scheduling', icon: Calendar, label: 'Scheduling' },
+    ],
+  },
+  {
+    title: 'Admin',
+    items: [
+      { path: '/clients', icon: ShieldCheck, label: 'Clients' },
+      { path: '/documents', icon: FileText, label: 'Documents' },
+      { path: '/vendors', icon: ShieldCheck, label: 'Vendors' },
+      { path: '/billing', icon: TrendingUp, label: 'Billing' },
+      { path: '/white-label', icon: FileText, label: 'White Label' },
+      { path: '/api-keys', icon: FileText, label: 'API Keys' },
+      { path: '/compliance', icon: ShieldCheck, label: 'Compliance' },
+      { path: '/offers', icon: Briefcase, label: 'Offers' },
+      { path: '/jd-templates', icon: FileText, label: 'JD Templates' },
+      { path: '/vendor-submittals', icon: FileText, label: 'Vendor Submittals' },
+      { path: '/mobile-app-configs', icon: FileText, label: 'Mobile App Configs' },
+      { path: '/ai/resume-parser', icon: Sparkles, label: 'AI Resume Parser' },
+      { path: '/ai/jd-generator', icon: Sparkles, label: 'AI JD Generator' },
     ],
   },
 ];
 
 export default function Sidebar({ variant = 'desktop', open = false, onClose, onNavigate }: SidebarProps) {
   const location = useLocation();
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    try {
+      const raw = localStorage.getItem('sidebar.openGroups');
+      if (raw) return JSON.parse(raw);
+      // Default: open Overview and AI Lab for discoverability
+      return { Overview: true, 'AI Lab': true };
+    } catch {
+      return { Overview: true, 'AI Lab': true };
+    }
+  });
+  const toggleGroup = (key: string) => {
+    setOpenGroups((s) => ({ ...s, [key]: !s[key] }));
+  };
+
+  // Persist group state
+  useEffect(() => {
+    try {
+      localStorage.setItem('sidebar.openGroups', JSON.stringify(openGroups));
+    } catch {}
+  }, [openGroups]);
 
   const renderNav = useMemo(
     () => (
-      <div className="flex h-full flex-col sidebar-shell">
+      <div className="flex h-full flex-col sidebar-shell bg-[rgb(var(--app-surface-muted))] text-[rgb(var(--app-text-primary))]">
         <div className="relative flex items-center justify-between px-6 py-6 border-b border-[rgba(var(--app-sidebar-border))]">
           <div>
             <p className="text-[10px] uppercase tracking-[0.35em] text-muted">BenchSales</p>
@@ -84,40 +163,35 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose, on
 
         <nav className="flex-1 space-y-6 overflow-y-auto px-4 pb-8">
           {navigationSections.map((section) => (
-            <div key={section.title} className="space-y-3">
-              <p className="px-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-muted">{section.title}</p>
-              <div className="space-y-1.5">
-                {section.items.map((item) => {
-                  const isActive =
-                    location.pathname === item.path ||
-                    (item.path !== '/' && location.pathname.startsWith(item.path));
-                  const Icon = item.icon;
-                  return (
-                    <Link
+            <div key={section.title} className="mt-4">
+              <button
+                type="button"
+                onClick={() => toggleGroup(section.title)}
+                className="w-full flex items-center justify-between px-4 py-2 text-xs uppercase tracking-wider text-[rgb(var(--app-text-muted))] hover:text-[rgb(var(--app-text-primary))]"
+              >
+                <span>{section.title}</span>
+                <span className={`transition-transform ${openGroups[section.title] ? 'rotate-90' : ''}`}>▸</span>
+              </button>
+              {openGroups[section.title] && (
+                <nav className="mt-2">
+                  {section.items.map((item) => (
+                    <NavLink
                       key={item.path}
                       to={item.path}
-                      onClick={() => {
-                        onNavigate?.();
-                        if (variant === 'mobile') {
-                          onClose?.();
-                        }
-                      }}
-                      className={clsx(
-                        'group flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium transition-all',
-                        isActive
-                          ? 'bg-[rgb(var(--app-surface-muted))] text-[rgb(var(--app-text-primary))] shadow-[inset_0_0_0_1px_rgba(var(--app-border-subtle))]'
-                          : 'text-muted hover:bg-[rgb(var(--app-surface-muted))] hover:text-[rgb(var(--app-text-primary))]'
-                      )}
+                      className={({ isActive }) =>
+                        `flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition hover:bg-[rgba(var(--app-primary-from),0.08)] ${
+                          isActive
+                            ? 'bg-[rgba(var(--app-primary-from),0.12)] text-[rgb(var(--app-text-primary))]'
+                            : 'text-[rgb(var(--app-text-muted))]'
+                        }`
+                      }
                     >
-                      <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface))] text-muted transition group-hover:border-[rgba(var(--app-primary-from),0.4)] group-hover:text-[rgb(var(--app-text-primary))]">
-                        <Icon size={18} />
-                      </span>
+                      <item.icon className="h-4 w-4" />
                       <span>{item.label}</span>
-                      {isActive && <span className="ml-auto h-2 w-2 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-500" aria-hidden="true" />}
-                    </Link>
-                  );
-                })}
-              </div>
+                    </NavLink>
+                  ))}
+                </nav>
+              )}
             </div>
           ))}
         </nav>
@@ -164,7 +238,7 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose, on
   }
 
   return (
-    <aside className="hidden h-full w-full lg:flex">
+    <aside className="hidden h-full w-full lg:flex bg-[rgb(var(--app-surface-muted))]">
       {renderNav}
     </aside>
   );

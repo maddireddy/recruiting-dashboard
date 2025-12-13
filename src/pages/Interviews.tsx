@@ -1,5 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
+import { useList, useCreate, useUpdate, useDelete } from '../services/hooks';
 import { Plus, Calendar, Video, Phone, MapPin, Users, Edit, Trash2, Briefcase, Clock } from 'lucide-react';
 import { interviewService } from '../services/interview.service';
 import InterviewModal from '../components/interviews/InterviewModal';
@@ -20,43 +20,29 @@ const STATUS_META: Record<NonNullable<Interview['status']>, { label: string; acc
 };
 
 export default function InterviewsPage() {
-  const queryClient = useQueryClient();
   const [selectedInterview, setSelectedInterview] = useState<Interview | null>(null);
   const [showModal, setShowModal] = useState(false);
 
-  const interviewsQuery = useQuery({
-    queryKey: ['interviews'],
-    queryFn: () => interviewService.getAll(0, 100).then(r => r.data.content || [])
-  });
+  // Get tenant ID from localStorage
+  const tenantId = localStorage.getItem('tenantId') || undefined;
 
-  const createInterview = useMutation({
-    mutationFn: (interview: Partial<Interview>) => interviewService.create(interview),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['interviews'] });
-      setShowModal(false);
-    }
-  });
+  // Use standardized hooks
+  const interviewsQ = useList<Interview[]>('interviews', (tid) => interviewService.getAll(0, 100, tid), tenantId);
+  const createM = useCreate('interviews', interviewService.create, tenantId);
+  const updateM = useUpdate<Partial<Interview>, Interview>('interviews', (id, data, tid) => interviewService.update(id, data, tid), tenantId);
+  const deleteM = useDelete('interviews', interviewService.delete, tenantId);
 
-  const updateInterview = useMutation({
-    mutationFn: (interview: Partial<Interview>) => 
-      interviewService.update(selectedInterview!.id!, interview),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['interviews'] });
+  const handleSave = async (interview: Partial<Interview>) => {
+    try {
+      if (selectedInterview) {
+        await updateM.mutateAsync({ id: selectedInterview.id!, data: interview });
+      } else {
+        await createM.mutateAsync(interview);
+      }
       setShowModal(false);
       setSelectedInterview(null);
-    }
-  });
-
-  const deleteInterview = useMutation({
-    mutationFn: (id: string) => interviewService.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['interviews'] })
-  });
-
-  const handleSave = (interview: Partial<Interview>) => {
-    if (selectedInterview) {
-      updateInterview.mutate(interview);
-    } else {
-      createInterview.mutate(interview);
+    } catch (error) {
+      console.error('Failed to save interview:', error);
     }
   };
 
@@ -84,7 +70,7 @@ export default function InterviewsPage() {
         </button>
       </header>
 
-      {interviewsQuery.isLoading && (
+      {interviewsQ.isLoading && (
         <div className="card space-y-3">
           <div className="h-4 w-40 animate-pulse rounded-full bg-[rgba(var(--app-border-subtle))]" />
           <div className="h-4 w-full animate-pulse rounded-full bg-[rgba(var(--app-border-subtle))]" />
@@ -92,13 +78,13 @@ export default function InterviewsPage() {
         </div>
       )}
 
-      {interviewsQuery.error && (
+      {interviewsQ.error && (
         <div className="card border-red-400/40 bg-red-500/5 text-red-300">
           Unable to load interviews right now. Please try again shortly.
         </div>
       )}
 
-      {interviewsQuery.data && interviewsQuery.data.length === 0 && (
+      {interviewsQ.data && interviewsQ.data.length === 0 && (
         <div className="card flex flex-col items-center justify-center gap-4 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-full border border-dashed border-[rgba(var(--app-border-subtle))] text-muted">
             <Calendar size={28} />
@@ -114,9 +100,9 @@ export default function InterviewsPage() {
         </div>
       )}
 
-      {interviewsQuery.data && interviewsQuery.data.length > 0 && (
+      {interviewsQ.data && interviewsQ.data.length > 0 && (
         <section className="grid gap-4">
-          {interviewsQuery.data.map((interview: Interview) => {
+          {interviewsQ.data.map((interview: Interview) => {
             const statusKey = (interview.status || 'SCHEDULED') as NonNullable<Interview['status']>;
             const statusMeta = STATUS_META[statusKey];
             const modeMeta = interview.mode ? MODE_META[interview.mode] : null;
@@ -169,7 +155,9 @@ export default function InterviewsPage() {
                     <button
                       onClick={() => {
                         if (confirm('Delete this interview?')) {
-                          deleteInterview.mutate(interview.id!);
+                          deleteM.mutateAsync(interview.id!).catch((error) => {
+                            console.error('Failed to delete interview:', error);
+                          });
                         }
                       }}
                       type="button"

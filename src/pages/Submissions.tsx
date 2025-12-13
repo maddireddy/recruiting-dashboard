@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
+import { useList, useCreate, useUpdate, useDelete } from '../services/hooks';
 import { Plus, Briefcase, User, Calendar, DollarSign, Download, KanbanSquare, Award } from 'lucide-react';
 import SubmissionModal from '../components/submissions/SubmissionModal';
 import StatsCard from '../components/dashboard/StatsCard';
@@ -25,54 +24,36 @@ const currencyFormatter = new Intl.NumberFormat(undefined, {
 });
 
 export default function SubmissionsPage() {
-  const queryClient = useQueryClient();
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [showModal, setShowModal] = useState(false);
 
-  const submissionsQuery = useQuery({
-    queryKey: ['submissions'],
-    queryFn: () => submissionService.getAll(0, 100).then(r => r.data.content || [])
-  });
+  // Get tenant ID from localStorage
+  const tenantId = localStorage.getItem('tenantId') || undefined;
 
-  const createSubmission = useMutation({
-    mutationFn: (submission: Partial<Submission>) => submissionService.create(submission),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['submissions'] });
-      setShowModal(false);
-      toast.success('Submission added');
-    }
-  });
+  // Use standardized hooks
+  const submissionsQ = useList<Submission[]>('submissions', (tid) => submissionService.getAll(0, 100, tid), tenantId);
+  const createM = useCreate('submissions', submissionService.create, tenantId);
+  const updateM = useUpdate<Partial<Submission>, Submission>('submissions', (id, data, tid) => submissionService.update(id, data, tid), tenantId);
+  const deleteM = useDelete('submissions', submissionService.delete, tenantId);
 
-  const updateSubmission = useMutation({
-    mutationFn: (submission: Partial<Submission>) => submissionService.update(selectedSubmission!.id, submission),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['submissions'] });
+  const handleSave = async (submission: Partial<Submission>) => {
+    try {
+      if (selectedSubmission) {
+        await updateM.mutateAsync({ id: selectedSubmission.id, data: submission });
+      } else {
+        await createM.mutateAsync(submission);
+      }
       setShowModal(false);
       setSelectedSubmission(null);
-      toast.success('Submission updated');
-    }
-  });
-
-  const deleteSubmission = useMutation({
-    mutationFn: (id: string) => submissionService.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['submissions'] });
-      toast.success('Submission removed');
-    }
-  });
-
-  const handleSave = (submission: Partial<Submission>) => {
-    if (selectedSubmission) {
-      updateSubmission.mutate(submission);
-    } else {
-      createSubmission.mutate(submission);
+    } catch (error) {
+      console.error('Failed to save submission:', error);
     }
   };
 
-  const submissions = useMemo(() => submissionsQuery.data || [], [submissionsQuery.data]);
+  const submissions = useMemo(() => submissionsQ.data || [], [submissionsQ.data]);
   const totalSubmissions = submissions.length;
-  const offers = submissions.filter((sub) => (sub.status || '').toUpperCase() === 'OFFERED').length;
-  const interviews = submissions.filter((sub) => (sub.status || '').toUpperCase().includes('INTERVIEW')).length;
+  const offers = submissions.filter((sub: any) => (sub.status || '').toUpperCase() === 'OFFERED').length;
+  const interviews = submissions.filter((sub: any) => (sub.status || '').toUpperCase().includes('INTERVIEW')).length;
 
   const summaryCards = useMemo(
     () => [
@@ -111,17 +92,6 @@ export default function SubmissionsPage() {
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => {
-              // Prefetch candidates and jobs to speed up modal open
-              queryClient.prefetchQuery({
-                queryKey: ['candidates'],
-                queryFn: () => import('../services/candidate.service').then(m => m.candidateService.getAll(0, 1000)).then(r => r.data.content || []),
-                staleTime: 60_000,
-              });
-              queryClient.prefetchQuery({
-                queryKey: ['jobs'],
-                queryFn: () => import('../services/job.service').then(m => m.jobService.getAll(0, 1000)).then(r => r.data.content || []),
-                staleTime: 60_000,
-              });
               setSelectedSubmission(null);
               setShowModal(true);
             }}
@@ -150,7 +120,7 @@ export default function SubmissionsPage() {
         ))}
       </section>
 
-      {submissionsQuery.isLoading && (
+      {submissionsQ.isLoading && (
         <div className="card space-y-3">
           <div className="h-4 w-48 animate-pulse rounded-full bg-[rgba(var(--app-border-subtle))]" />
           <div className="h-4 w-full animate-pulse rounded-full bg-[rgba(var(--app-border-subtle))]" />
@@ -158,13 +128,13 @@ export default function SubmissionsPage() {
         </div>
       )}
 
-      {!submissionsQuery.isLoading && submissionsQuery.error && (
+      {!submissionsQ.isLoading && submissionsQ.error && (
         <div className="card border-red-400/40 bg-red-500/5 text-red-300">
           Error loading submissions. Please refresh or try again shortly.
         </div>
       )}
 
-      {!submissionsQuery.isLoading && !submissionsQuery.error && submissions.length === 0 && (
+      {!submissionsQ.isLoading && !submissionsQ.error && submissions.length === 0 && (
         <div className="card flex flex-col items-center justify-center gap-4 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-full border border-dashed border-[rgba(var(--app-border-subtle))] text-muted">
             <Briefcase size={28} />
@@ -182,7 +152,7 @@ export default function SubmissionsPage() {
 
       {submissions.length > 0 && (
         <section className="grid gap-4">
-          {submissions.map((submission) => {
+          {submissions.map((submission: any) => {
             const statusKey = (submission.status || 'SUBMITTED').toUpperCase();
             const status = STATUS_META[statusKey] ?? STATUS_META.SUBMITTED;
             return (
@@ -224,16 +194,6 @@ export default function SubmissionsPage() {
                   <div className="flex flex-shrink-0 items-center gap-2">
                     <button
                       onClick={() => {
-                        queryClient.prefetchQuery({
-                          queryKey: ['candidates'],
-                          queryFn: () => import('../services/candidate.service').then((m) => m.candidateService.getAll(0, 1000)).then((r) => r.data.content || []),
-                          staleTime: 60_000,
-                        });
-                        queryClient.prefetchQuery({
-                          queryKey: ['jobs'],
-                          queryFn: () => import('../services/job.service').then((m) => m.jobService.getAll(0, 1000)).then((r) => r.data.content || []),
-                          staleTime: 60_000,
-                        });
                         setSelectedSubmission(submission);
                         setShowModal(true);
                       }}
@@ -245,7 +205,9 @@ export default function SubmissionsPage() {
                     <button
                       onClick={() => {
                         if (window.confirm('Delete this submission?')) {
-                          deleteSubmission.mutate(submission.id);
+                          deleteM.mutateAsync(submission.id).catch((error) => {
+                            console.error('Failed to delete submission:', error);
+                          });
                         }
                       }}
                       type="button"

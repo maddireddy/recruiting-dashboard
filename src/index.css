@@ -2,6 +2,49 @@
 @tailwind components;
 @tailwind utilities;
 
+/* App-wide UI polish for consistent look & feel */
+:root {
+  --app-surface: 17 24 39; /* slate-900 */
+  --app-surface-muted: 15 23 42; /* slate-800 */
+  --app-text-primary: 255 255 255;
+  --app-border-subtle: 255 255 255 / 0.12;
+  --app-primary-from: 16 185 129; /* emerald-500 */
+}
+
+body {
+  background: rgb(var(--app-surface));
+  color: rgb(var(--app-text-primary));
+}
+
+.card {
+  @apply rounded-xl border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] p-4 shadow-sm;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center rounded-lg px-4 py-2 font-medium transition;
+}
+.btn-primary {
+  @apply bg-emerald-600 text-white hover:bg-emerald-500;
+}
+.btn-outline {
+  @apply border border-[rgba(var(--app-border-subtle))] text-white hover:border-emerald-400;
+}
+
+.input {
+  @apply rounded-lg border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface))] px-3 py-2;
+}
+.input-bordered { @apply border; }
+
+.section-title {
+  @apply text-sm font-semibold uppercase tracking-[0.3em] text-gray-400;
+}
+
+/* Page transitions baseline using Motion-friendly classes */
+.page-enter { opacity: 0; transform: translateY(12px); }
+.page-enter-active { opacity: 1; transform: translateY(0); transition: all 220ms ease; }
+.page-exit { opacity: 1; transform: translateY(0); }
+.page-exit-active { opacity: 0; transform: translateY(-8px); transition: all 180ms ease; }
+
 @layer base {
   :root {
     color-scheme: light;

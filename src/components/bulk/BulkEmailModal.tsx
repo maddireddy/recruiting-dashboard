@@ -19,12 +19,13 @@ export const BulkEmailModal: React.FC<BulkEmailModalProps> = ({ onClose, onSend 
   const [templates, setTemplates] = useState<EmailTemplateOption[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
   const [sendIndividually, setSendIndividually] = useState<boolean>(true);
+  const [previewOpen, setPreviewOpen] = useState<boolean>(false);
+  const [variableMenuOpen, setVariableMenuOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const loadTemplates = async () => {
       try {
-        const resp = await emailService.getAllTemplates();
-        const data = resp.data || [];
+        const data = await emailService.getAllTemplates();
         setTemplates(data.map((t: any) => ({ id: t.id, name: t.name, subject: t.subject, body: t.body })));
       } catch (err) {
         console.error('Failed to fetch templates', err);
@@ -46,6 +47,7 @@ export const BulkEmailModal: React.FC<BulkEmailModalProps> = ({ onClose, onSend 
   };
 
   return (
+    <>
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-8 max-w-2xl w-full">
         <h2 className="text-2xl font-bold mb-6">Send Bulk Email</h2>
@@ -94,6 +96,34 @@ export const BulkEmailModal: React.FC<BulkEmailModalProps> = ({ onClose, onSend 
               className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 min-h-[180px] prose max-w-none"
               dangerouslySetInnerHTML={{ __html: body }}
             />
+            {/* Variable insertion helper */}
+            <div className="mt-2 relative inline-block">
+              <button
+                type="button"
+                onClick={() => setVariableMenuOpen((v) => !v)}
+                className="px-3 py-1 text-sm border rounded hover:bg-gray-50"
+              >
+                Insert variable ▾
+              </button>
+              {variableMenuOpen && (
+                <div className="absolute z-10 mt-1 bg-white border rounded shadow text-sm">
+                  {['name','email','phone','jobTitle','company','date'].map((v) => (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => {
+                        // Insert handlebars-like variable into current body
+                        setBody((prev) => `${prev} {{${v}}}`);
+                        setVariableMenuOpen(false);
+                      }}
+                      className="block w-full text-left px-3 py-2 hover:bg-gray-50"
+                    >
+                      {`{{${v}}}`}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="mb-6">
@@ -117,6 +147,13 @@ export const BulkEmailModal: React.FC<BulkEmailModalProps> = ({ onClose, onSend 
               Cancel
             </button>
             <button
+              type="button"
+              onClick={() => setPreviewOpen(true)}
+              className="px-6 py-2 border rounded-lg hover:bg-gray-50 transition"
+            >
+              Preview
+            </button>
+            <button
               type="submit"
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
             >
@@ -125,6 +162,21 @@ export const BulkEmailModal: React.FC<BulkEmailModalProps> = ({ onClose, onSend 
           </div>
         </form>
       </div>
-    </div>
+  </div>
+  {previewOpen ? (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setPreviewOpen(false)}>
+        <div className="bg-white rounded-lg p-6 max-w-2xl w-full" onClick={(e) => e.stopPropagation()}>
+          <h3 className="text-xl font-semibold mb-4">Preview</h3>
+          <div className="mb-2 text-sm text-gray-600">Subject</div>
+          <div className="p-3 border rounded mb-4">{subject}</div>
+          <div className="mb-2 text-sm text-gray-600">Body</div>
+          <div className="p-3 border rounded prose max-w-none" dangerouslySetInnerHTML={{ __html: body }} />
+          <div className="text-right mt-4">
+            <button className="px-6 py-2 border rounded-lg hover:bg-gray-50 transition" onClick={() => setPreviewOpen(false)}>Close</button>
+          </div>
+        </div>
+      </div>
+    ) : null}
+    </>
   );
 }

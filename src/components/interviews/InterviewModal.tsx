@@ -30,26 +30,17 @@ export default function InterviewModal({ interview, onSave, onClose }: Props) {
 
   const candidatesQuery = useQuery({
     queryKey: ['candidates'],
-    queryFn: () => candidateService.getAll(0, 1000).then(r => {
-      if (r.data && 'content' in r.data) return r.data.content || [];
-      return r.data || [];
-    })
+    queryFn: () => candidateService.getAll(0, 1000)
   });
 
   const jobsQuery = useQuery({
     queryKey: ['jobs'],
-    queryFn: () => jobService.getAll(0, 1000).then(r => {
-      if (r.data && 'content' in r.data) return r.data.content || [];
-      return r.data || [];
-    })
+    queryFn: () => jobService.getAll(0, 1000)
   });
 
   const submissionsQuery = useQuery({
     queryKey: ['submissions'],
-    queryFn: () => submissionService.getAll(0, 1000).then(r => {
-      if (r.data && 'content' in r.data) return r.data.content || [];
-      return r.data || [];
-    })
+    queryFn: () => submissionService.getAll(0, 1000)
   });
 
   useEffect(() => {
@@ -125,7 +116,7 @@ export default function InterviewModal({ interview, onSave, onClose }: Props) {
               onChange={handleInputChange}
               disabled={!!interview}
               required
-              options={candidatesQuery.data?.map((candidate) => ({
+              options={candidatesQuery.data?.map((candidate: any) => ({
                 value: candidate.id,
                 label: `${candidate.fullName}${candidate.primarySkills?.[0] ? ` • ${candidate.primarySkills[0]}` : ''}`,
               })) ?? []}
@@ -137,7 +128,7 @@ export default function InterviewModal({ interview, onSave, onClose }: Props) {
               onChange={handleInputChange}
               disabled={!!interview}
               required
-              options={jobsQuery.data?.map((job) => ({
+              options={jobsQuery.data?.map((job: any) => ({
                 value: job.id,
                 label: `${job.title} • ${job.client}`,
               })) ?? []}
@@ -148,7 +139,7 @@ export default function InterviewModal({ interview, onSave, onClose }: Props) {
               name="submissionId"
               value={formData.submissionId ?? ''}
               onChange={handleInputChange}
-              options={submissionsQuery.data?.map((submission) => ({
+              options={submissionsQuery.data?.map((submission: any) => ({
                 value: submission.id,
                 label: `${submission.candidateName} → ${submission.jobTitle}`,
               })) ?? []}

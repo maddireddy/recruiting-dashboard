@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
+import { useList, useCreate, useDelete } from '../services/hooks';
 import { Plus, FileText, Download, Trash2, ShieldCheck } from 'lucide-react';
 import DocumentUploadModal from '../components/documents/DocumentUploadModal';
 import { documentService } from '../services/document.service';
@@ -28,37 +27,26 @@ const formatFileSize = (bytes: number) => {
 };
 
 export default function DocumentsPage() {
-  const queryClient = useQueryClient();
   const [showUploadModal, setShowUploadModal] = useState(false);
 
-  const documentsQuery = useQuery({
-    queryKey: ['documents'],
-    queryFn: () => documentService.getAll(0, 100).then(r => r.data.content || [])
-  });
+  // Get tenant ID from localStorage
+  const tenantId = localStorage.getItem('tenantId') || undefined;
 
-  const uploadDocument = useMutation({
-    mutationFn: (formData: FormData) => documentService.upload(formData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['documents'] });
-      setShowUploadModal(false);
-      toast.success('Document uploaded');
-    }
-  });
-
-  const deleteDocument = useMutation({
-    mutationFn: (id: string) => documentService.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['documents'] })
-  });
+  // Use standardized hooks
+  const documentsQ = useList<Document[]>('documents', (tid) => documentService.getAll(0, 100, tid), tenantId);
+  const createM = useCreate('documents', documentService.upload, tenantId);
+  const deleteM = useDelete('documents', documentService.delete, tenantId);
 
   // notify on delete result
-  const handleDelete = (id: string) => {
-    deleteDocument.mutate(id, {
-      onSuccess: () => toast.success('Document deleted'),
-      onError: (err: Error) => toast.error(err?.message || 'Failed to delete document')
-    });
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteM.mutateAsync(id);
+    } catch (error) {
+      console.error('Failed to delete document:', error);
+    }
   };
 
-  const documents = useMemo(() => documentsQuery.data || [], [documentsQuery.data]);
+  const documents = useMemo(() => documentsQ.data || [], [documentsQ.data]);
   const dateFormatter = useMemo(() => new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' }), []);
 
   return (
@@ -78,7 +66,7 @@ export default function DocumentsPage() {
         </button>
       </header>
 
-      {documentsQuery.isLoading && (
+      {documentsQ.isLoading && (
         <div className="card space-y-3">
           <div className="h-4 w-48 animate-pulse rounded-full bg-[rgba(var(--app-border-subtle))]" />
           <div className="h-4 w-full animate-pulse rounded-full bg-[rgba(var(--app-border-subtle))]" />
@@ -86,13 +74,13 @@ export default function DocumentsPage() {
         </div>
       )}
 
-      {documentsQuery.error && (
+      {documentsQ.error && (
         <div className="card border-red-400/40 bg-red-500/5 text-red-300">
           Unable to load documents right now. Please try again shortly.
         </div>
       )}
 
-      {documentsQuery.data && documents.length === 0 && !documentsQuery.isLoading && (
+      {documentsQ.data && documents.length === 0 && !documentsQ.isLoading && (
         <div className="card flex flex-col items-center justify-center gap-4 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-full border border-dashed border-[rgba(var(--app-border-subtle))] text-muted">
             <FileText size={28} />
@@ -170,7 +158,14 @@ export default function DocumentsPage() {
         <DocumentUploadModal
           entityType="GENERAL"
           entityId="general"
-          onUpload={(formData) => uploadDocument.mutate(formData)}
+          onUpload={async (formData) => {
+            try {
+              await createM.mutateAsync(formData);
+              setShowUploadModal(false);
+            } catch (error) {
+              console.error('Failed to upload document:', error);
+            }
+          }}
           onClose={() => setShowUploadModal(false)}
         />
       )}

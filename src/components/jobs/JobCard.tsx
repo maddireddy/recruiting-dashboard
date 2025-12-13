@@ -40,7 +40,7 @@ export default function JobCard({ job, onEdit, onDelete }: Props) {
         // Prefetch job details so edit modal interactions feel snappier
         queryClient.prefetchQuery({
           queryKey: ['job', job.id],
-          queryFn: () => jobService.getById(job.id).then(r => r.data),
+          queryFn: () => jobService.getById(job.id),
           staleTime: 60_000,
         });
       }}

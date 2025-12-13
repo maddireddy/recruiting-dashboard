@@ -1,16 +1,9 @@
 import { useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import {
-  Search,
-  Bell,
-  Settings,
-  Menu,
-  Sparkles,
-  ChevronRight,
-  Command,
-} from 'lucide-react';
+import { Bell, Settings, Menu, Sparkles, ChevronRight, Command } from 'lucide-react';
 import ExportMenu from './ExportMenu';
 import { ThemeToggle } from './ThemeToggle';
+import GlobalSearchBar from './GlobalSearchBar';
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -101,17 +94,10 @@ export default function Header({ onMenuClick }: HeaderProps) {
 
         <div className="flex flex-1 items-center justify-end gap-3">
           <div className="hidden sm:flex sm:flex-1">
-            <div className="relative w-full max-w-md">
-              <Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[rgb(var(--app-text-secondary))]" size={18} />
-              <input
-                type="text"
-                placeholder="Search across candidates, jobs, clients..."
-                className="input pl-11 pr-12"
-              />
-              <div className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 items-center gap-1 rounded-md border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] px-2 py-1 text-[11px] font-semibold uppercase tracking-widest text-muted sm:flex">
-                <Command size={12} />
-                <span>K</span>
-              </div>
+            <GlobalSearchBar />
+            <div className="ml-2 hidden items-center gap-1 rounded-md border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] px-2 py-1 text-[11px] font-semibold uppercase tracking-widest text-muted sm:flex">
+              <Command size={12} />
+              <span>K</span>
             </div>
           </div>
 

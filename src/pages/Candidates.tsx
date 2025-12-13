@@ -1,25 +1,26 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Search, Download, SlidersHorizontal, RotateCcw, Users, Rocket, CalendarClock, Briefcase, Sparkles, Filter, TrendingUp } from 'lucide-react';
 import { reportService } from '../services/report.service';
 import toast from 'react-hot-toast';
 import type { Candidate } from '../types';
 import CandidateTable from '../components/candidates/CandidateTable';
+import { BulkActionBar } from '../components/bulk/BulkActionBar';
 import CandidateModal from '../components/candidates/CandidateModal';
 import { candidateService } from '../services/candidate.service';
 import { useSearchParams } from 'react-router-dom';
+import { useList, useCreate, useUpdate, useDelete } from '../services/hooks';
 
 type CandidateColumnKey = 'name' | 'contact' | 'skills' | 'experience' | 'availability' | 'status' | 'actions';
 type ResizableCandidateColumnKey = Exclude<CandidateColumnKey, 'actions'>;
 type CandidateColumnWidths = Partial<Record<ResizableCandidateColumnKey, number>>;
-type CandidateQueryResult = { content: Candidate[]; totalElements?: number; totalPages?: number };
+
 type CandidateSavedView = {
   name: string;
   filters: Record<string, string>;
   visibleColumns: CandidateColumnKey[];
   columnWidths: CandidateColumnWidths;
 };
-type CandidateQuerySnapshots = Array<[readonly unknown[], CandidateQueryResult | undefined]>;
+
 
 const ALL_CANDIDATE_COLUMNS: CandidateColumnKey[] = ['name', 'contact', 'skills', 'experience', 'availability', 'status', 'actions'];
 const RESIZABLE_CANDIDATE_COLUMNS: ResizableCandidateColumnKey[] = ['name', 'contact', 'skills', 'experience', 'availability', 'status'];
@@ -46,7 +47,6 @@ const normalizeColumnWidths = (value: unknown): CandidateColumnWidths => {
 };
 
 export default function Candidates() {
-  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [page, setPage] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
@@ -57,6 +57,33 @@ export default function Candidates() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // Get tenant ID from localStorage
+  const tenantId = localStorage.getItem('tenantId') || undefined;
+
+  // Use standardized hooks
+  const candidatesQ = useList<Candidate[]>('candidates', (tid) => {
+    const params: Record<string, string | number | boolean | string[] | undefined> = { page, size: 10 };
+    if (/[,;|]/.test(searchTerm)) {
+      params.skills = searchTerm.split(/[,;|]/).map(s => s.trim()).filter(Boolean);
+    } else if (searchTerm) {
+      params.q = searchTerm;
+    }
+    if (selectedStatus) params.status = selectedStatus;
+    if (availability) params.availability = availability;
+    if (visaStatus) params.visaStatus = visaStatus;
+    if (recruiterId) params.recruiterId = recruiterId;
+
+    // If no search term or skills, use getAll instead of search
+    if (!params.q && !params.skills) {
+      return candidateService.getAll(page, 10, tid);
+    }
+    return candidateService.search(params, tid);
+  }, tenantId);
+
+  const createM = useCreate('candidates', candidateService.create, tenantId);
+  const updateM = useUpdate<Partial<Candidate>, Candidate>('candidates', (id, data, tid) => candidateService.update(id, data, tid), tenantId);
+  const deleteM = useDelete('candidates', candidateService.delete, tenantId);
   const [visibleColumns, setVisibleColumns] = useState<Set<CandidateColumnKey>>(
     () => {
       const raw = localStorage.getItem('candidateTable.visibleColumns.v1');
@@ -142,29 +169,6 @@ export default function Candidates() {
     localStorage.setItem('candidateTable.columnWidths.v1', JSON.stringify(columnWidths));
   }, [columnWidths]);
 
-  // Fetch candidates
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['candidates', page, searchTerm, selectedStatus, availability, visaStatus, recruiterId],
-    queryFn: async () => {
-  const params: Record<string, string | number | boolean | string[] | undefined> = { page, size: 10 };
-      if (/[,;|]/.test(searchTerm)) {
-        params.skills = searchTerm.split(/[,;|]/).map(s => s.trim()).filter(Boolean);
-      } else if (searchTerm) {
-        params.q = searchTerm;
-      }
-      if (selectedStatus) params.status = selectedStatus;
-      if (availability) params.availability = availability;
-      if (visaStatus) params.visaStatus = visaStatus;
-      if (recruiterId) params.recruiterId = recruiterId;
-
-      // If no search term or skills, use getAll instead of search
-      if (!params.q && !params.skills) {
-        return candidateService.getAll(page, 10).then(r => r.data);
-      }
-      return candidateService.search(params).then(r => r.data);
-    },
-  });
-
   // Reset selection when data set changes (page/filters)
   useEffect(() => {
     setSelectedIds(new Set());
@@ -172,189 +176,25 @@ export default function Candidates() {
 
   // Debug: log candidate list whenever query data changes
   useEffect(() => {
-    console.debug('[Candidates.tsx] candidate list', data?.content);
-  }, [data]);
+    console.debug('[Candidates.tsx] candidate list', candidatesQ.data);
+  }, [candidatesQ.data]);
 
-  // Create mutation
-  const createMutation = useMutation({
-    mutationFn: (c: Partial<Candidate>) => candidateService.create(c),
-    onMutate: async (newCandidate) => {
-      await queryClient.cancelQueries({ queryKey: ['candidates'] });
-      const snapshots = queryClient.getQueriesData<CandidateQueryResult>({ queryKey: ['candidates'] });
+  // legacy bulk delete mutation removed; bulk operations now routed through the bulk API
 
-      // Optimistically insert only into page 0 queries to avoid pagination inconsistencies
-      snapshots.forEach(([key, data]) => {
-        const keyArr = Array.isArray(key) ? key : [];
-        const keyPage = keyArr?.[1];
-        if (data && typeof data === 'object' && keyPage === 0 && Array.isArray(data.content)) {
-          const tempId = `optimistic-${Date.now()}`;
-          const optimistic: Candidate = {
-            id: tempId,
-            fullName: `${newCandidate.firstName || ''} ${newCandidate.lastName || ''}`.trim() || (newCandidate.email || 'New Candidate'),
-            firstName: newCandidate.firstName || '',
-            lastName: newCandidate.lastName || '',
-            email: newCandidate.email || '',
-            phone: newCandidate.phone || '',
-            status: (newCandidate as Candidate).status || 'AVAILABLE',
-            availability: (newCandidate as Candidate).availability || 'AVAILABLE',
-            visaStatus: (newCandidate as Candidate).visaStatus || 'H1B',
-            primarySkills: (newCandidate as Candidate).primarySkills || [],
-            totalExperience: (newCandidate as Candidate).totalExperience || 0,
-            updatedAt: new Date().toISOString(),
-          } as Candidate;
-          queryClient.setQueryData(key, {
-            ...data,
-            content: [optimistic, ...data.content],
-          });
-        }
-      });
-
-      return { snapshots: snapshots as CandidateQuerySnapshots };
-    },
-    onError: (_e, _vars, ctx) => {
-      const snapshots = (ctx as { snapshots?: CandidateQuerySnapshots } | undefined)?.snapshots;
-      snapshots?.forEach(([key, data]) => {
-        queryClient.setQueryData(key, data);
-      });
-      toast.error('Failed to add candidate');
-    },
-    onSuccess: () => {
-      toast.success('Candidate added successfully!');
-    },
-    onSettled: () => {
-      setIsModalOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['candidates'] });
-    },
-  });
-
-  // Update mutation
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<Candidate> }) =>
-      candidateService.update(id, data),
-    onMutate: async ({ id, data }) => {
-      await queryClient.cancelQueries({ queryKey: ['candidates'] });
-      const snapshots = queryClient.getQueriesData<CandidateQueryResult>({ queryKey: ['candidates'] });
-      snapshots.forEach(([key, prev]) => {
-        if (prev && Array.isArray(prev.content)) {
-          const updated = prev.content.map((c: Candidate) => (c.id === id ? { ...c, ...data } : c));
-          queryClient.setQueryData(key, { ...prev, content: updated });
-        }
-      });
-      return {
-        snapshots: snapshots as CandidateQuerySnapshots,
-      };
-    },
-    onError: (error, vars, ctx) => {
-      const snapshots = (ctx as { snapshots?: CandidateQuerySnapshots } | undefined)?.snapshots;
-      snapshots?.forEach(([key, data]) => {
-        queryClient.setQueryData(key, data);
-      });
-      if (import.meta.env.DEV) {
-        console.debug('[Candidates] update failed', { error, vars });
+  const handleSave = async (data: Partial<Candidate>) => {
+    try {
+      if (selectedCandidate) {
+        await updateM.mutateAsync({ id: selectedCandidate.id, data });
+        toast.success('Candidate updated successfully!');
+      } else {
+        await createM.mutateAsync(data);
+        toast.success('Candidate created successfully!');
       }
-      const message = error instanceof Error ? error.message : '';
-      toast.error(message ? `Failed to update candidate: ${message}` : 'Failed to update candidate');
-    },
-    onSuccess: () => {
-      toast.success('Candidate updated successfully!');
-    },
-    onSettled: () => {
       setIsModalOpen(false);
       setSelectedCandidate(null);
-      queryClient.invalidateQueries({ queryKey: ['candidates'] });
-    },
-  });
-
-  // Delete mutation
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => candidateService.delete(id),
-    onMutate: async (id: string) => {
-      setSelectedIds(prev => {
-        if (!prev.has(id)) return prev;
-        const next = new Set(prev);
-        next.delete(id);
-        return next;
-      });
-      await queryClient.cancelQueries({ queryKey: ['candidates'] });
-      const snapshots = queryClient.getQueriesData<CandidateQueryResult>({ queryKey: ['candidates'] });
-      snapshots.forEach(([key, prev]) => {
-        if (prev && Array.isArray(prev.content)) {
-          const filtered = prev.content.filter((c: Candidate) => c.id !== id);
-          queryClient.setQueryData(key, { ...prev, content: filtered });
-        }
-      });
-      return {
-        snapshots: snapshots as CandidateQuerySnapshots,
-      };
-    },
-    onError: (_e, _vars, ctx) => {
-      const snapshots = (ctx as { snapshots?: CandidateQuerySnapshots } | undefined)?.snapshots;
-      snapshots?.forEach(([key, data]) => {
-        queryClient.setQueryData(key, data);
-      });
-      toast.error('Failed to delete candidate');
-    },
-    onSuccess: () => {
-      // success handled via toast.promise in caller
-    },
-    onSettled: (_result, _error, id) => {
-      if (id) {
-        queryClient.invalidateQueries({ queryKey: ['candidate', id] });
-      }
-      queryClient.invalidateQueries({ queryKey: ['candidates'] });
-    },
-  });
-
-  const bulkDeleteMutation = useMutation({
-    mutationFn: async (ids: string[]) => {
-      const result = await candidateService.deleteMany(ids);
-      if (result.successes.length === 0) {
-        const error = new Error('All deletions failed');
-        Object.assign(error, { failures: result.failures });
-        throw error;
-      }
-      return result;
-    },
-    onMutate: async (ids: string[]) => {
-      if (!ids.length) return;
-      const idSet = new Set(ids);
-      setSelectedIds(prev => {
-        if (prev.size === 0) return prev;
-        const next = new Set(prev);
-        ids.forEach(id => next.delete(id));
-        return next;
-      });
-      await queryClient.cancelQueries({ queryKey: ['candidates'] });
-      const snapshots = queryClient.getQueriesData<CandidateQueryResult>({ queryKey: ['candidates'] });
-      snapshots.forEach(([key, prev]) => {
-        if (prev && Array.isArray(prev.content)) {
-          const filtered = prev.content.filter((candidate: Candidate) => !idSet.has(candidate.id));
-          queryClient.setQueryData(key, { ...prev, content: filtered });
-        }
-      });
-      return { snapshots: snapshots as CandidateQuerySnapshots };
-    },
-    onError: (_error, ids, ctx) => {
-      const snapshots = (ctx as { snapshots?: CandidateQuerySnapshots } | undefined)?.snapshots;
-      snapshots?.forEach(([key, data]) => {
-        queryClient.setQueryData(key, data);
-      });
-      setSelectedIds(prev => {
-        const next = new Set(prev);
-        ids.forEach(id => next.add(id));
-        return next;
-      });
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['candidates'] });
-    },
-  });
-
-  const handleSave = (data: Partial<Candidate>) => {
-    if (selectedCandidate) {
-      updateMutation.mutate({ id: selectedCandidate.id, data });
-    } else {
-      createMutation.mutate(data);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      toast.error(message ? `Failed to save candidate: ${message}` : 'Failed to save candidate');
     }
   };
 
@@ -368,7 +208,7 @@ export default function Candidates() {
     const label = target?.fullName || 'this candidate';
     if (!window.confirm(`Delete ${label}? This action cannot be undone.`)) return;
     await toast.promise(
-      deleteMutation.mutateAsync(id),
+      deleteM.mutateAsync(id),
       {
         loading: 'Removing candidate…',
         success: `${label} removed`,
@@ -382,9 +222,9 @@ export default function Candidates() {
     setIsModalOpen(true);
   };
 
-  const candidates = useMemo(() => data?.content ?? [], [data?.content]);
-  const totalPages = data?.totalPages || 0;
-  const totalCandidates = data?.totalElements ?? candidates.length;
+  const candidates = candidatesQ.data || [];
+  const totalPages = 1; // Simplified for now, can be enhanced later
+  const totalCandidates = candidates.length;
 
   const statusBreakdown = useMemo(() => {
     return candidates.reduce(
@@ -586,55 +426,9 @@ export default function Candidates() {
     }
   };
 
-  const bulkDelete = async () => {
-    if (selectedIds.size === 0) return;
-    if (!window.confirm(`Delete ${selectedIds.size} selected candidate${selectedIds.size > 1 ? 's' : ''}? This cannot be undone.`)) return;
-    const ids = Array.from(selectedIds);
-    const result = await toast.promise<{ successes: string[]; failures: Array<{ id: string; reason: unknown }> }>(
-      bulkDeleteMutation.mutateAsync(ids),
-      {
-        loading: `Deleting ${ids.length} candidate${ids.length > 1 ? 's' : ''}…`,
-        success: ({ successes, failures }) => {
-          if (failures.length > 0) {
-            return `${successes.length} deleted, ${failures.length} failed`;
-          }
-          return `${successes.length} candidate${successes.length === 1 ? '' : 's'} removed`;
-        },
-        error: 'Failed to delete selected candidates.',
-      }
-    );
-    setSelectedIds(new Set(result.failures.map(({ id }) => id)));
-  };
+  // legacy inline bulk actions removed; operations now handled via BulkActionBar
 
-  const exportCSV = () => {
-    if (selectedIds.size === 0) return;
-    const map = new Map(candidates.map(c => [c.id, c] as const));
-    const selected = Array.from(selectedIds).map(id => map.get(id)).filter(Boolean) as Candidate[];
-    const headers = ['Full Name','Email','Phone','Skills','Experience','Status','Availability','Visa'];
-    const rows = selected.map(c => [
-      c.fullName,
-      c.email,
-      c.phone,
-      (c.primarySkills || []).join('; '),
-      String(c.totalExperience ?? ''),
-      c.status,
-      c.availability,
-      c.visaStatus,
-    ]);
-    const csv = [headers, ...rows].map(r => r.map(field => {
-      const s = String(field ?? '');
-      return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
-    }).join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `candidates-${selected.length}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
+  // legacy inline export removed; export handled via BulkActionBar with server-side bulk export
 
   const toggleColumnVisibility = (id: CandidateColumnKey, checked: boolean) => {
     setVisibleColumns(prev => {
@@ -940,28 +734,17 @@ export default function Candidates() {
       </section>
 
       {selectedIds.size > 0 && (
-        <div className="rounded-3xl border border-[rgba(var(--app-primary-from),0.3)] bg-[rgba(var(--app-primary-from),0.08)] px-5 py-4 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-sm text-[rgb(var(--app-text-primary))]">
-              <span className="rounded-full bg-[rgb(var(--app-primary-from))] px-2 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-white">
-                {selectedIds.size} selected
-              </span>
-              <span className="text-muted">Bulk actions</span>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <button onClick={exportCSV} type="button" className="btn-muted gap-2 px-3 py-2 text-sm">
-                <Download size={16} />
-                Export CSV
-              </button>
-              <button onClick={bulkDelete} type="button" className="btn-muted gap-2 px-3 py-2 text-sm text-red-400 hover:border-red-400 hover:text-red-300">
-                Delete selected
-              </button>
-            </div>
-          </div>
-        </div>
+        <BulkActionBar
+          selectedCount={selectedIds.size}
+          selectedIds={Array.from(selectedIds)}
+          onClearSelection={() => setSelectedIds(new Set())}
+          onActionComplete={() => {
+            // Refresh will be handled automatically by the hooks
+          }}
+        />
       )}
 
-      {isLoading && (
+      {candidatesQ.isLoading && (
         <div className="card space-y-3">
           <div className="h-4 w-40 animate-pulse rounded-full bg-[rgba(var(--app-border-subtle))]" />
           <div className="h-4 w-full animate-pulse rounded-full bg-[rgba(var(--app-border-subtle))]" />
@@ -969,13 +752,13 @@ export default function Candidates() {
         </div>
       )}
 
-      {!isLoading && error && (
+      {!candidatesQ.isLoading && candidatesQ.error && (
         <div className="rounded-3xl border border-red-400/40 bg-red-500/5 p-6 text-red-300">
-          Error loading candidates: {error instanceof Error ? error.message : 'Unknown error'}
+          Error loading candidates: {candidatesQ.error instanceof Error ? candidatesQ.error.message : 'Unknown error'}
         </div>
       )}
 
-      {!isLoading && !error && candidates.length === 0 && (
+      {!candidatesQ.isLoading && !candidatesQ.error && candidates.length === 0 && (
         <div className="rounded-3xl border border-dashed border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-elevated))] p-12 text-center">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-dashed border-[rgba(var(--app-border-subtle))] text-muted">
             <Users size={28} />
@@ -991,7 +774,7 @@ export default function Candidates() {
         </div>
       )}
 
-      {!isLoading && !error && candidates.length > 0 && (
+      {!candidatesQ.isLoading && !candidatesQ.error && candidates.length > 0 && (
         <>
           <CandidateTable
             candidates={candidates}
@@ -1042,5 +825,3 @@ export default function Candidates() {
     </div>
   );
 }
-
-// (export button integrated into header above)

@@ -9,6 +9,7 @@ import { useAuthStore } from '../store/authStore';
 export default function Login() {
   const [email, setEmail] = useState('');
   const [tenantId, setTenantId] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
@@ -18,7 +19,7 @@ export default function Login() {
     setLoading(true);
     
     try {
-      const data = await authService.login(email, tenantId);
+  const data = await authService.login(email, password, tenantId);
       login(data);
       toast.success('Login successful!');
       navigate('/');
@@ -70,6 +71,18 @@ export default function Login() {
               placeholder="Enter your tenant ID"
               required
               autoComplete="organization"
+            />
+          </Field>
+
+          <Field label="Password">
+            <input
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className="input"
+              placeholder="Enter your password"
+              required
+              autoComplete="current-password"
             />
           </Field>
 

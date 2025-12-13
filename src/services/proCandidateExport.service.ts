@@ -200,22 +200,14 @@ const computePipelineStats = (candidates: Candidate[]): PipelineStat[] => {
 const fetchAllCandidates = async () => {
   const pageSize = 200;
   let page = 0;
-  let totalPages = 1;
   const aggregated: Candidate[] = [];
 
-  while (page < totalPages) {
-    const response = await candidateService.getAll(page, pageSize);
-    const { content = [], totalPages: remoteTotalPages, totalElements } = response.data;
-    aggregated.push(...(content as unknown as Candidate[]));
+  while (true) {
+    const content = await candidateService.getAll(page, pageSize);
+    aggregated.push(...(content as any));
 
-    if (remoteTotalPages !== undefined && remoteTotalPages !== null) {
-      totalPages = remoteTotalPages;
-    } else if (content.length < pageSize) {
-      totalPages = page + 1;
-    } else if (totalElements !== undefined && totalElements !== null) {
-      totalPages = Math.ceil(totalElements / pageSize);
-    } else {
-      totalPages += 1;
+    if (content.length < pageSize) {
+      break;
     }
 
     page += 1;
@@ -228,23 +220,14 @@ const fetchAllCandidates = async () => {
 const fetchAllJobs = async () => {
   const pageSize = 150;
   let page = 0;
-  let totalPages = 1;
   const aggregated: Job[] = [];
 
-  while (page < totalPages) {
-  const response = await jobService.getAll(page, pageSize);
-  const data = response.data as { content?: Job[]; totalPages?: number; totalElements?: number };
-  const { content = [], totalPages: remoteTotalPages, totalElements } = data;
-    aggregated.push(...((content ?? []) as Job[]));
+  while (true) {
+    const content = await jobService.getAll(page, pageSize);
+    aggregated.push(...content);
 
-    if (remoteTotalPages !== undefined && remoteTotalPages !== null) {
-      totalPages = remoteTotalPages;
-    } else if ((content ?? []).length < pageSize) {
-      totalPages = page + 1;
-    } else if (totalElements !== undefined && totalElements !== null) {
-      totalPages = Math.ceil(totalElements / pageSize);
-    } else {
-      totalPages += 1;
+    if (content.length < pageSize) {
+      break;
     }
 
     page += 1;
@@ -257,23 +240,14 @@ const fetchAllJobs = async () => {
 const fetchAllSubmissions = async () => {
   const pageSize = 150;
   let page = 0;
-  let totalPages = 1;
   const aggregated: Submission[] = [];
 
-  while (page < totalPages) {
-  const response = await submissionService.getAll(page, pageSize);
-  const data = response.data as { content?: Submission[]; totalPages?: number; totalElements?: number };
-  const { content = [], totalPages: remoteTotalPages, totalElements } = data;
-    aggregated.push(...((content ?? []) as Submission[]));
+  while (true) {
+    const content = await submissionService.getAll(page, pageSize);
+    aggregated.push(...content);
 
-    if (remoteTotalPages !== undefined && remoteTotalPages !== null) {
-      totalPages = remoteTotalPages;
-    } else if ((content ?? []).length < pageSize) {
-      totalPages = page + 1;
-    } else if (totalElements !== undefined && totalElements !== null) {
-      totalPages = Math.ceil(totalElements / pageSize);
-    } else {
-      totalPages += 1;
+    if (content.length < pageSize) {
+      break;
     }
 
     page += 1;

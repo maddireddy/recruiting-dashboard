@@ -1,73 +1,121 @@
-# React + TypeScript + Vite
+# Recruiting Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern React-based recruiting dashboard built with TypeScript, Vite, and Tailwind CSS. Features include candidate management, job tracking, client relationships, document handling, and more.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Frontend**: React 18, TypeScript, Vite
+- **Styling**: Tailwind CSS, Framer Motion
+- **State Management**: React Query (TanStack Query)
+- **Forms & Validation**: React Hook Form, Zod
+- **HTTP Client**: Axios with interceptors
+- **Development Tools**: ESLint, MSW (Mock Service Worker)
+- **Backend Integration**: RESTful APIs with JWT authentication and tenant scoping
 
-## React Compiler
+## Getting Started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Prerequisites
 
-## Expanding the ESLint configuration
+- Node.js 18+ and npm
+- Backend API server running (default: http://localhost:8084)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Installation
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd recruiting-dashboard
+   ```
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+3. Copy environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+
+4. Configure your environment in `.env`:
+   - Set `VITE_API_URL` to your backend API URL
+   - Set `VITE_USE_MOCKS=true` for development with MSW mocks (when backend is not available)
+
+### Running the Application
+
+Start the development server:
+```bash
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The application will be available at `http://localhost:5173`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Build for Production
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run build
 ```
+
+### Preview Production Build
+
+```bash
+npm run preview
+```
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and configure:
+
+- `VITE_API_URL`: Backend API base URL (default: http://localhost:8084/api)
+- `VITE_USE_MOCKS`: Enable MSW mocks for development (default: false)
+
+**Note**: Vite proxy is configured to forward `/api` requests to the backend, avoiding CORS issues in development.
+
+## Development
+
+### Mock Service Worker (MSW)
+
+MSW is used to mock API responses during development. Set `VITE_USE_MOCKS=true` in your `.env` file to enable mocks.
+
+### Project Structure
+
+```
+src/
+├── components/          # Reusable UI components
+│   ├── common/         # Shared components (Table, Header, etc.)
+│   ├── candidates/     # Candidate-specific components
+│   ├── jobs/          # Job-related components
+│   └── ...
+├── pages/              # Page components
+├── services/           # API services and hooks
+├── store/              # State management
+├── types/              # TypeScript type definitions
+└── mocks/              # MSW mock handlers
+```
+
+### Key Features
+
+- **Authentication**: JWT-based login with tenant scoping
+- **Real-time Data**: React Query for caching and optimistic updates
+- **Form Validation**: Zod schemas for type-safe validation
+- **Responsive Design**: Mobile-first with Tailwind CSS
+- **Error Handling**: Toast notifications and graceful error states
+- **File Uploads**: Drag-and-drop file handling with progress
+
+## Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
+
+## Contributing
+
+1. Follow the existing code style and patterns
+2. Use TypeScript for type safety
+3. Add tests for new features
+4. Update documentation as needed
+
+## License
+
+[Add your license here]

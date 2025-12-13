@@ -1,5 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Suspense, lazy } from 'react';
+import SemanticSearch from './pages/SemanticSearch';
+import AiLab from './pages/AiLab';
+import TalentPoolMatching from './pages/TalentPoolMatching';
+const ResumeParser = lazy(() => import('./components/ai/ResumeParser'));
+const JobDescriptionGenerator = lazy(() => import('./components/ai/JobDescriptionGenerator'));
 import ErrorBoundary from './components/common/ErrorBoundary';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
@@ -30,6 +35,39 @@ const JobDetails = lazy(() => import('./pages/JobDetails'));
 const SubmissionsPage = lazy(() => import('./pages/Submissions'));
 const CareerPage = lazy(() => import('./pages/public/CareerPage'));
 const JobDetailPage = lazy(() => import('./pages/public/JobDetailPage'));
+const TalentPools = lazy(() => import('./pages/TalentPools'));
+const TalentPoolDetails = lazy(() => import('./pages/TalentPoolDetails'));
+const Offers = lazy(() => import('./pages/Offers'));
+const OfferDetails = lazy(() => import('./pages/OfferDetails'));
+// New pages (scaffolds)
+const SMSPage = lazy(() => import('./pages/SMS'));
+const SMSCommunicationsPage = lazy(() => import('./pages/SMSCommunications'));
+const CompliancePage = lazy(() => import('./pages/Compliance'));
+const CalendarSyncPage = lazy(() => import('./pages/CalendarSync'));
+const InterviewIntelligencePage = lazy(() => import('./pages/InterviewIntelligence'));
+const VendorsPage = lazy(() => import('./pages/Vendors'));
+const ReferralsPage = lazy(() => import('./pages/Referrals'));
+const WorkflowsPage = lazy(() => import('./pages/Workflows'));
+const BillingPage = lazy(() => import('./pages/Billing'));
+const WhiteLabelPage = lazy(() => import('./pages/WhiteLabel'));
+const ApiKeysPage = lazy(() => import('./pages/ApiKeys'));
+const AdvancedSearchPage = lazy(() => import('./pages/AdvancedSearch'));
+const RediscoveryPage = lazy(() => import('./pages/Rediscovery'));
+const SavedSearchesPage = lazy(() => import('./pages/SavedSearches'));
+const JobDescriptionTemplatesPage = lazy(() => import('./pages/JobDescriptionTemplates'));
+const VendorSubmittalsPage = lazy(() => import('./pages/VendorSubmittals'));
+const SkillsAssessmentsPage = lazy(() => import('./pages/SkillsAssessments'));
+const BooleanSearchTemplatesPage = lazy(() => import('./pages/BooleanSearchTemplates'));
+const CandidateSourcingsPage = lazy(() => import('./pages/CandidateSourcings'));
+const MarketIntelligencePage = lazy(() => import('./pages/MarketIntelligence'));
+const DiversityMetricsPage = lazy(() => import('./pages/DiversityMetrics'));
+const BookmarkletCapturesPage = lazy(() => import('./pages/BookmarkletCaptures'));
+const EeoDatasPage = lazy(() => import('./pages/EeoDatas'));
+const MobileAppConfigsPage = lazy(() => import('./pages/MobileAppConfigs'));
+const SilverMedalistsPage = lazy(() => import('./pages/SilverMedalists'));
+const CustomReportsPage = lazy(() => import('./pages/CustomReports'));
+const InterviewGuidesPage = lazy(() => import('./pages/InterviewGuides'));
+const InterviewRecordingsPage = lazy(() => import('./pages/InterviewRecordings'));
 
 
 const queryClient = new QueryClient({
@@ -102,6 +140,70 @@ function App() {
               {/* Scheduling (authenticated) */}
               <Route path="/scheduling" element={<SchedulingDashboard />} />
               <Route path="/scheduling/create" element={<AvailabilityLinkCreator />} />
+              {/* Talent Pools */}
+              <Route path="/talent-pools" element={<TalentPools />} />
+              <Route path="/talent-pools/:id" element={<TalentPoolDetails />} />
+              {/* Offers */}
+              <Route path="/offers" element={<Offers />} />
+              <Route path="/offers/:id" element={<OfferDetails />} />
+              {/* Enterprise & sourcing scaffolds */}
+              <Route path="/sms" element={<SMSPage />} />
+              <Route path="/sms/communications" element={<SMSCommunicationsPage />} />
+              <Route path="/compliance" element={<CompliancePage />} />
+              <Route path="/calendar-sync" element={<CalendarSyncPage />} />
+              <Route path="/interview-intelligence" element={<InterviewIntelligencePage />} />
+              <Route path="/vendors" element={<VendorsPage />} />
+              <Route path="/referrals" element={<ReferralsPage />} />
+              <Route path="/workflows" element={<WorkflowsPage />} />
+              <Route path="/billing" element={<BillingPage />} />
+              <Route path="/white-label" element={<WhiteLabelPage />} />
+              <Route path="/api-keys" element={<ApiKeysPage />} />
+              <Route path="/advanced-search" element={<AdvancedSearchPage />} />
+              <Route path="/saved-searches" element={<SavedSearchesPage />} />
+              <Route path="/jd-templates" element={<JobDescriptionTemplatesPage />} />
+              <Route path="/vendor-submittals" element={<VendorSubmittalsPage />} />
+              <Route path="/skills-assessments" element={<SkillsAssessmentsPage />} />
+              <Route path="/boolean-search-templates" element={<BooleanSearchTemplatesPage />} />
+              <Route path="/candidate-sourcings" element={<CandidateSourcingsPage />} />
+              <Route path="/market-intelligence" element={<MarketIntelligencePage />} />
+              <Route path="/diversity-metrics" element={<DiversityMetricsPage />} />
+              <Route path="/bookmarklet-captures" element={<BookmarkletCapturesPage />} />
+              <Route path="/eeo-data" element={<EeoDatasPage />} />
+              <Route path="/mobile-app-configs" element={<MobileAppConfigsPage />} />
+              <Route path="/silver-medalists" element={<SilverMedalistsPage />} />
+              <Route path="/custom-reports" element={<CustomReportsPage />} />
+              <Route path="/interview-guides" element={<InterviewGuidesPage />} />
+              <Route path="/interview-recordings" element={<InterviewRecordingsPage />} />
+              <Route path="/rediscovery" element={<RediscoveryPage />} />
+              <Route path="/ai/rediscovery" element={<RediscoveryPage />} />
+              <Route path="/ai/talent-pool-matching" element={<TalentPoolMatching />} />
+              <Route path="/ai/interview-intelligence" element={<InterviewIntelligencePage />} />
+              <Route path="/ai" element={<AiLab />} />
+              {/* AI Lab (protected) */}
+              <Route
+                path="/ai/resume-parser"
+                element={
+                  <Suspense fallback={<div>Loading AI tool...</div>}>
+                    <ResumeParser />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/ai/jd-generator"
+                element={
+                  <Suspense fallback={<div>Loading AI tool...</div>}>
+                    <JobDescriptionGenerator />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/ai/semantic-search"
+                element={
+                  <Suspense fallback={<div>Loading AI tool...</div>}>
+                    <SemanticSearch />
+                  </Suspense>
+                }
+              />
             </Route>
 
             {/* Fallback */}
