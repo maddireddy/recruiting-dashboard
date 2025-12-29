@@ -12,8 +12,11 @@ import {
   ListTodo,
   Mail,
 } from 'lucide-react';
+import { GettingStartedWidget } from '../components/dashboard/GettingStartedWidget';
 import api from '../services/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import Button from '../components/ui/Button';
+import PageHeader from '../components/ui/PageHeader';
 import { PipelineOverview } from '../components/dashboard/PipelineOverview';
 import { QuickActionsCard } from '../components/dashboard/QuickActionsCard';
 import { ActivityFeedCard } from '../components/dashboard/ActivityFeedCard';
@@ -45,14 +48,14 @@ export default function DashboardPage() {
       },
       {
         key: 'benchCandidates',
-        title: 'Bench Candidates',
+        title: 'Bench Ready',
         value: summaryQuery.data?.benchCandidates || 0,
         icon: <Users size={20} className="text-amber-400" />,
         accent: 'hover:border-amber-400/40'
       },
       {
         key: 'placedCandidates',
-        title: 'Placed Candidates',
+        title: 'Placed',
         value: summaryQuery.data?.placedCandidates || 0,
         icon: <CheckCircle size={20} className="text-emerald-400" />,
         accent: 'hover:border-emerald-400/40'
@@ -65,21 +68,23 @@ export default function DashboardPage() {
         accent: 'hover:border-purple-400/40'
       },
       {
-        key: 'closedJobs',
-        title: 'Closed Jobs',
-        value: summaryQuery.data?.closedJobs || 0,
-        icon: <Briefcase size={20} className="text-indigo-300" />,
-        accent: 'hover:border-indigo-300/40'
-      },
-      {
         key: 'totalSubmissions',
-        title: 'Total Submissions',
+        title: 'Submissions',
         value: summaryQuery.data?.totalSubmissions || 0,
         icon: <FileText size={20} className="text-emerald-300" />,
         accent: 'hover:border-emerald-300/40'
       }
     ],
     [summaryQuery.data]
+  );
+
+  const isEmptyState = useMemo(
+    () => !summaryQuery.isLoading && (
+      (summaryQuery.data?.totalCandidates ?? 0) === 0 &&
+      (summaryQuery.data?.openJobs ?? 0) === 0 &&
+      (summaryQuery.data?.totalSubmissions ?? 0) === 0
+    ),
+    [summaryQuery.data, summaryQuery.isLoading]
   );
 
   const funnelData = useMemo(() => {
@@ -219,11 +224,10 @@ export default function DashboardPage() {
   }, [summaryQuery.data, funnelData]);
 
   return (
-    <div className="space-y-8">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-semibold text-[rgb(var(--app-text-primary))]">Dashboard</h1>
-        <p className="text-muted">A command center built for recruiting teams.</p>
-      </div>
+    <div className="space-y-10">
+      <PageHeader title="Dashboard" subtitle="A command center built for recruiting teams." actions={<Button variant="subtle">Quick Action</Button>} />
+
+      {isEmptyState && <GettingStartedWidget />}
 
       {summaryQuery.isLoading || funnelQuery.isLoading ? (
         <div className="card animate-pulse" role="status" aria-live="polite">
@@ -251,18 +255,8 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div className="flex flex-col gap-3 sm:items-end">
-                <button
-                  type="button"
-                  className="btn-primary px-5 py-3 text-sm font-semibold"
-                >
-                  Build hiring plan
-                </button>
-                <button
-                  type="button"
-                  className="btn-muted px-5 py-3 text-sm"
-                >
-                  View weekly briefing
-                </button>
+                <Button variant="primary" size="md">Build hiring plan</Button>
+                <Button variant="subtle" size="md">View weekly briefing</Button>
               </div>
             </CardHeader>
             <CardContent className="relative z-10">

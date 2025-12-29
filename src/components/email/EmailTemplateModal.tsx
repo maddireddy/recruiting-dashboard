@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { emailService } from '../../services/email.service';
 import type { EmailTemplate } from '../../types/email';
 import { FormField } from '../common/FormField';
+import { z } from 'zod';
 
 interface Props {
   template: EmailTemplate | null;
@@ -34,6 +35,14 @@ export default function EmailTemplateModal({ template, onClose }: Props) {
   const [showPreview, setShowPreview] = useState(false);
   const [testEmail, setTestEmail] = useState('');
   const [sendingTest, setSendingTest] = useState(false);
+  const [errors, setErrors] = useState<{ templateName?: string; templateType?: string; subject?: string; body?: string }>({});
+
+  const schema = z.object({
+    templateName: z.string().min(1, 'Template name is required'),
+    templateType: z.enum(['INTERVIEW_INVITE','STATUS_UPDATE','OFFER_LETTER','REMINDER','WELCOME','CUSTOM']),
+    subject: z.string().min(1, 'Subject is required'),
+    body: z.string().min(1, 'Body is required'),
+  });
 
   const createMutation = useMutation({
     mutationFn: (payload: Partial<EmailTemplate>) => emailService.createTemplate(payload),
@@ -62,6 +71,17 @@ export default function EmailTemplateModal({ template, onClose }: Props) {
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
+    setErrors({});
+    const parsed = schema.safeParse({ templateName, templateType, subject, body });
+    if (!parsed.success) {
+      const next: typeof errors = {};
+      for (const issue of parsed.error.issues) {
+        const key = issue.path[0] as keyof typeof errors;
+        next[key] = issue.message;
+      }
+      setErrors(next);
+      return;
+    }
     const payload: Partial<EmailTemplate> = {
       templateName,
       templateType,
@@ -161,16 +181,17 @@ export default function EmailTemplateModal({ template, onClose }: Props) {
         </div>
 
         <form onSubmit={handleSubmit} className="max-h-[calc(90vh-72px)] space-y-6 overflow-y-auto px-6 py-6">
-          <FormField label="Template name" required>
-            <input value={templateName} onChange={(event) => setTemplateName(event.target.value)} className="input" required />
+          <FormField label="Template name" required error={errors.templateName}>
+            <input id="templateName" value={templateName} onChange={(event) => setTemplateName(event.target.value)} className="input" aria-invalid={!!errors.templateName} aria-describedby={errors.templateName ? 'templateName-error' : undefined} />
           </FormField>
 
-          <FormField label="Template type" required>
+          <FormField label="Template type" required error={errors.templateType}>
             <select
               value={templateType}
               onChange={(event) => setTemplateType(event.target.value as EmailTemplate['templateType'])}
               className="input"
-              required
+              aria-invalid={!!errors.templateType}
+              aria-describedby={errors.templateType ? 'templateType-error' : undefined}
             >
               {TEMPLATE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -180,17 +201,19 @@ export default function EmailTemplateModal({ template, onClose }: Props) {
             </select>
           </FormField>
 
-          <FormField label="Subject" required>
-            <input value={subject} onChange={(event) => setSubject(event.target.value)} className="input" required />
+          <FormField label="Subject" required error={errors.subject}>
+            <input id="subject" value={subject} onChange={(event) => setSubject(event.target.value)} className="input" aria-invalid={!!errors.subject} aria-describedby={errors.subject ? 'subject-error' : undefined} />
           </FormField>
 
-          <FormField label="Body" description="Supports HTML and template variables" spacing="sm" required>
+          <FormField label="Body" description="Supports HTML and template variables" spacing="sm" required error={errors.body}>
             <textarea
+              id="body"
               value={body}
               onChange={(event) => setBody(event.target.value)}
               rows={8}
               className="input min-h-[220px]"
-              required
+              aria-invalid={!!errors.body}
+              aria-describedby={errors.body ? 'body-error' : undefined}
             />
           </FormField>
 

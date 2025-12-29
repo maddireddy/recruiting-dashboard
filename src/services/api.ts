@@ -131,6 +131,12 @@ api.interceptors.request.use(
       headers.set('X-User-ID', userId);
     }
 
+    // Attach global AI model header if configured via Vite env
+    const aiModel = (import.meta.env.VITE_AI_MODEL as string) || '';
+    if (aiModel) {
+      headers.set('X-AI-Model', aiModel);
+    }
+
     // Attach Authorization when token is present; do not hard-reject if absent.
     // This avoids client-side failures for public or pre-auth endpoints and lets
     // the backend decide (401/403) when auth is required.
@@ -150,6 +156,7 @@ api.interceptors.request.use(
   if (snapshot['X-Tenant-ID']) snapshot['X-Tenant-ID'] = '***';
         if (snapshot['X-User-Id']) snapshot['X-User-Id'] = '***';
         if (snapshot['X-User-ID']) snapshot['X-User-ID'] = '***';
+        if (snapshot['X-AI-Model']) snapshot['X-AI-Model'] = '***';
         console.debug('[api][request]', {
           method: config.method,
           url: config.url,

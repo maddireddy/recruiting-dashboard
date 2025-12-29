@@ -1,30 +1,51 @@
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { LogIn, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { authService } from '../services/auth.service';
 import { useAuthStore } from '../store/authStore';
+import Field from '../components/ui/Field';
+import Spinner from '../components/ui/Spinner';
+import { z } from 'zod';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [tenantId, setTenantId] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; tenantId?: string; password?: string }>({});
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
+
+  const schema = z.object({
+    email: z.string().email('Enter a valid email').min(1, 'Email is required'),
+    tenantId: z.string().min(1, 'Tenant ID is required'),
+    password: z.string().min(6, 'Password must be at least 6 characters'),
+  });
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFieldErrors({});
+
+    const parsed = schema.safeParse({ email, tenantId, password });
+    if (!parsed.success) {
+      const errs: { email?: string; tenantId?: string; password?: string } = {};
+      for (const issue of parsed.error.issues) {
+        const key = issue.path[0] as 'email' | 'tenantId' | 'password';
+        errs[key] = issue.message;
+      }
+      setFieldErrors(errs);
+      return;
+    }
+
     setLoading(true);
-    
     try {
-  const data = await authService.login(email, password, tenantId);
+      const data = await authService.login(email, password, tenantId);
       login(data);
       toast.success('Login successful!');
       navigate('/');
     } catch {
-      // Show a generic message to avoid `any` usage in the catch clause
       toast.error('Login failed');
     } finally {
       setLoading(false);
@@ -49,49 +70,61 @@ export default function Login() {
           <p className="text-sm text-muted">Access the recruiting control center for jobs, submissions, and client insights.</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Field label="Email address">
+        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+          <Field label="Email address" htmlFor="email" error={fieldErrors.email}>
             <input
+              id="email"
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               className="input"
               placeholder="admin@example.com"
-              required
               autoComplete="email"
+              aria-invalid={!!fieldErrors.email}
+              aria-describedby={fieldErrors.email ? 'email-error' : undefined}
             />
           </Field>
 
-          <Field label="Tenant ID">
+          <Field label="Tenant ID" htmlFor="tenantId" error={fieldErrors.tenantId}>
             <input
+              id="tenantId"
               type="text"
               value={tenantId}
               onChange={(event) => setTenantId(event.target.value)}
               className="input"
               placeholder="Enter your tenant ID"
-              required
               autoComplete="organization"
+              aria-invalid={!!fieldErrors.tenantId}
+              aria-describedby={fieldErrors.tenantId ? 'tenantId-error' : undefined}
             />
           </Field>
 
-          <Field label="Password">
+          <Field label="Password" htmlFor="password" error={fieldErrors.password}>
             <input
+              id="password"
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               className="input"
               placeholder="Enter your password"
-              required
               autoComplete="current-password"
+              aria-invalid={!!fieldErrors.password}
+              aria-describedby={fieldErrors.password ? 'password-error' : undefined}
             />
           </Field>
 
           <button
             type="submit"
             disabled={loading}
+            aria-busy={loading}
             className="btn-primary inline-flex w-full justify-center"
           >
-            {loading ? 'Signing in…' : (
+            {loading ? (
+              <span className="inline-flex items-center gap-2">
+                <Spinner size={16} />
+                <span>Signing in…</span>
+              </span>
+            ) : (
               <span className="inline-flex items-center gap-2">
                 <LogIn size={20} />
                 Sign in
@@ -104,11 +137,4 @@ export default function Login() {
   );
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <label className="flex flex-col gap-2 text-sm">
-      <span className="font-semibold text-[rgb(var(--app-text-primary))]">{label}</span>
-      {children}
-    </label>
-  );
-}
+// Using shared Field component from components/ui/Field

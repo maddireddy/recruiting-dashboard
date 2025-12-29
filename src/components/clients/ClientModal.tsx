@@ -1,6 +1,8 @@
-import { useEffect, useState, type ChangeEvent, type ReactNode } from 'react';
+import { useEffect, useState, type ChangeEvent } from 'react';
 import { Plus, Trash2, X } from 'lucide-react';
 import type { Client, ClientContact } from '../../types/client';
+import Field from '../../components/ui/Field';
+import { z } from 'zod';
 
 interface ClientModalProps {
   client: Client | null;
@@ -28,6 +30,30 @@ export default function ClientModal({ client, onSave, onClose }: ClientModalProp
     accountManager: '',
     status: 'ACTIVE',
     notes: '',
+  });
+  const [errors, setErrors] = useState<{ companyName?: string; contacts?: { email?: string }[] }>({});
+
+  const schema = z.object({
+    companyName: z.string().min(1, 'Company name is required'),
+    industry: z.string().optional(),
+    website: z.string().url('Enter a valid URL').optional().or(z.literal('')),
+    address: z.string().optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
+    zipCode: z.string().optional(),
+    country: z.string().optional(),
+    accountManager: z.string().optional(),
+    status: z.enum(['ACTIVE', 'PROSPECT', 'INACTIVE']).optional(),
+    notes: z.string().optional(),
+    contacts: z.array(
+      z.object({
+        name: z.string().optional(),
+        title: z.string().optional(),
+        email: z.string().email('Invalid email').optional().or(z.literal('')),
+        phone: z.string().optional(),
+        isPrimary: z.boolean().optional(),
+      })
+    ),
   });
 
   useEffect(() => {
@@ -70,6 +96,28 @@ export default function ClientModal({ client, onSave, onClose }: ClientModalProp
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
+    setErrors({});
+    const parsed = schema.safeParse(form);
+    if (!parsed.success) {
+      const nextErrors: { companyName?: string; contacts?: { email?: string }[] } = {};
+      parsed.error.issues.forEach((issue) => {
+        const key = issue.path[0];
+        if (key === 'companyName') {
+          nextErrors.companyName = issue.message;
+        }
+        if (key === 'contacts' && issue.path.length >= 3) {
+          const index = issue.path[1] as number;
+          const field = issue.path[2];
+          nextErrors.contacts = nextErrors.contacts ?? [];
+          nextErrors.contacts[index] = nextErrors.contacts[index] ?? {};
+          if (field === 'email') {
+            nextErrors.contacts[index].email = issue.message;
+          }
+        }
+      });
+      setErrors(nextErrors);
+      return;
+    }
     onSave(form as Partial<Client>);
   };
 
@@ -88,8 +136,8 @@ export default function ClientModal({ client, onSave, onClose }: ClientModalProp
 
         <form onSubmit={handleSubmit} className="space-y-6 overflow-y-auto px-6 py-6 max-h-[calc(90vh-72px)]">
           <section className="grid gap-4 md:grid-cols-2">
-            <Field label="Company name" required>
-              <input value={form.companyName} onChange={updateField('companyName')} className="input" required placeholder="Acme Corp" />
+            <Field label="Company name" htmlFor="companyName" error={errors.companyName}>
+              <input id="companyName" value={form.companyName} onChange={updateField('companyName')} className="input" placeholder="Acme Corp" aria-invalid={!!errors.companyName} aria-describedby={errors.companyName ? 'companyName-error' : undefined} />
             </Field>
             <Field label="Industry">
               <input value={form.industry ?? ''} onChange={updateField('industry')} className="input" placeholder="Staffing" />
@@ -162,8 +210,8 @@ export default function ClientModal({ client, onSave, onClose }: ClientModalProp
                       <Field label="Title">
                         <input value={contact.title ?? ''} onChange={(event) => handleContactChange(index, 'title', event.target.value)} className="input" placeholder="Director of TA" />
                       </Field>
-                      <Field label="Email">
-                        <input value={contact.email ?? ''} onChange={(event) => handleContactChange(index, 'email', event.target.value)} className="input" placeholder="jane@example.com" />
+                      <Field label="Email" htmlFor={`contact-email-${index}`} error={errors.contacts?.[index]?.email}>
+                        <input id={`contact-email-${index}`} value={contact.email ?? ''} onChange={(event) => handleContactChange(index, 'email', event.target.value)} className="input" placeholder="jane@example.com" aria-invalid={!!errors.contacts?.[index]?.email} aria-describedby={errors.contacts?.[index]?.email ? `contact-email-${index}-error` : undefined} />
                       </Field>
                       <Field label="Phone">
                         <input value={contact.phone ?? ''} onChange={(event) => handleContactChange(index, 'phone', event.target.value)} className="input" placeholder="(555) 123-4567" />
@@ -203,20 +251,4 @@ export default function ClientModal({ client, onSave, onClose }: ClientModalProp
   );
 }
 
-type FieldProps = {
-  label: string;
-  children: ReactNode;
-  required?: boolean;
-};
-
-function Field({ label, children, required }: FieldProps) {
-  return (
-    <label className="flex flex-col gap-1 text-sm">
-      <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">
-        {label}
-        {required ? ' *' : ''}
-      </span>
-      {children}
-    </label>
-  );
-}
+// Using shared Field component from components/ui/Field

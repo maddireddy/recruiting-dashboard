@@ -290,4 +290,27 @@ export const handlers = [
     whiteLabelConfig = { ...whiteLabelConfig, ...body }
     return HttpResponse.json(whiteLabelConfig)
   }),
+
+  // Analytics - dashboard widgets
+  http.get('/api/analytics/summary', () => {
+    const payload = {
+      totalCandidates: candidates.length,
+      benchCandidates: 12,
+      placedCandidates: 3,
+      openJobs: jobs.filter(j => j.status === 'OPEN').length,
+      closedJobs: jobs.filter(j => j.status === 'CLOSED').length,
+      totalSubmissions: 42,
+    };
+    return HttpResponse.json(payload);
+  }),
+  http.get('/api/analytics/submission-pipeline', () => {
+    const payload: Record<string, number> = {
+      Submitted: 50,
+      Shortlisted: 28,
+      Interviewed: 12,
+      Offered: 4,
+      Rejected: 10,
+    };
+    return HttpResponse.json(payload);
+  }),
 ]

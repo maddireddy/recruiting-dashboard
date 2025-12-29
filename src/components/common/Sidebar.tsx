@@ -167,26 +167,26 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose, on
               <button
                 type="button"
                 onClick={() => toggleGroup(section.title)}
-                className="w-full flex items-center justify-between px-4 py-2 text-xs uppercase tracking-wider text-[rgb(var(--app-text-muted))] hover:text-[rgb(var(--app-text-primary))]"
+                className="w-full flex items-center justify-between px-4 py-2 text-xs uppercase tracking-wide text-[rgb(var(--app-text-secondary))] hover:text-[rgb(var(--app-text-primary))] transition"
               >
                 <span>{section.title}</span>
                 <span className={`transition-transform ${openGroups[section.title] ? 'rotate-90' : ''}`}>▸</span>
               </button>
               {openGroups[section.title] && (
-                <nav className="mt-2">
+                <nav className="mt-3 space-y-1">
                   {section.items.map((item) => (
                     <NavLink
                       key={item.path}
                       to={item.path}
                       className={({ isActive }) =>
-                        `flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition hover:bg-[rgba(var(--app-primary-from),0.08)] ${
+                        `flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg transition relative ${
                           isActive
-                            ? 'bg-[rgba(var(--app-primary-from),0.12)] text-[rgb(var(--app-text-primary))]'
-                            : 'text-[rgb(var(--app-text-muted))]'
+                            ? 'bg-[rgba(var(--app-primary-from),0.15)] text-[rgb(var(--app-text-primary))] font-medium before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-[rgb(var(--app-primary-from))] before:rounded-r-md'
+                            : 'text-[rgb(var(--app-text-secondary))] hover:text-[rgb(var(--app-text-primary))] hover:bg-[rgba(var(--app-primary-from),0.08)]'
                         }`
                       }
                     >
-                      <item.icon className="h-4 w-4" />
+                      <item.icon className="h-4 w-4 opacity-80" />
                       <span>{item.label}</span>
                     </NavLink>
                   ))}

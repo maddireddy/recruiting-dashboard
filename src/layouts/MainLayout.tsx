@@ -15,16 +15,17 @@ export default function MainLayout() {
   }, []);
 
   return (
-    <div className="relative min-h-screen text-[rgb(var(--app-text-primary))]">
+    <div className="relative min-h-screen text-[rgb(var(--app-text-primary))] overflow-x-hidden">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 btn-muted">Skip to content</a>
       <div className="relative flex min-h-screen">
         <div className="sidebar-shell hidden border-r lg:flex lg:w-[260px] xl:w-[280px]">
           <Sidebar variant="desktop" onNavigate={handleCloseSidebar} />
         </div>
 
-        <div className="flex flex-1 flex-col">
+        <div className="flex flex-1 flex-col min-w-0">
           <Header onMenuClick={handleOpenSidebar} />
-          <main className="relative flex-1 overflow-y-auto">
-            <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+          <main id="main-content" className="relative flex-1 overflow-y-auto">
+            <div className="content-container py-6">
               <Outlet />
             </div>
           </main>

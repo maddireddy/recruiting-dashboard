@@ -131,85 +131,102 @@ export default function ClientsPage() {
       )}
 
       {clients.length > 0 && (
-        <section className="grid gap-4">
+        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {clients.map((cl: Client) => {
             const statusKey = (cl.status || 'ACTIVE').toUpperCase();
             const status = STATUS_META[statusKey] ?? STATUS_META.ACTIVE;
             return (
               <article
                 key={cl.id}
-                className="card flex flex-col gap-4 border-transparent transition hover:border-[rgba(var(--app-primary-from),0.45)]"
+                className="rounded-2xl border border-app-border-subtle bg-app-surface-elevated p-5 transition-all hover:border-app-border-focus hover:shadow-lg"
               >
-                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                  <div className="space-y-3">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <h3 className="text-lg font-semibold text-[rgb(var(--app-text-primary))]">{cl.companyName}</h3>
-                      <span className={`chip ${status.tone}`}>{status.label}</span>
-                      {cl.industry && <span className="chip surface-muted text-xs">{cl.industry}</span>}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted">
-                      {cl.website && (
-                        <span className="inline-flex items-center gap-2">
-                          <Globe2 size={14} />
-                          <a href={cl.website} className="text-[rgb(var(--app-text-primary))] underline-offset-2 hover:underline" target="_blank" rel="noreferrer">
-                            {cl.website.replace(/^https?:\/\//, '')}
-                          </a>
-                        </span>
-                      )}
-                      {formatLocation(cl) && (
-                        <span className="inline-flex items-center gap-2">
-                          <MapPin size={14} />
-                          {formatLocation(cl)}
-                        </span>
-                      )}
-                      {cl.accountManager && (
-                        <span className="inline-flex items-center gap-2">
-                          <UserCheck size={14} />
-                          {cl.accountManager}
-                        </span>
-                      )}
-                    </div>
-                    {cl.notes && <p className="text-sm text-muted">{cl.notes}</p>}
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-app-text-primary truncate">
+                      {cl.companyName}
+                    </h3>
+                    {cl.industry && (
+                      <p className="text-sm text-app-text-secondary truncate">
+                        {cl.industry}
+                      </p>
+                    )}
                   </div>
-                  <div className="flex flex-shrink-0 items-center gap-2">
-                    <button
-                      onClick={() => setModal({ mode: 'edit', client: cl })}
-                      type="button"
-                      className="btn-muted px-3 py-2 text-sm"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (window.confirm('Delete this client?')) {
-                          deleteM.mutate(cl.id!);
-                        }
-                      }}
-                      type="button"
-                      className="btn-muted px-3 py-2 text-sm text-red-400 hover:border-red-400 hover:text-red-300"
-                    >
-                      Delete
-                    </button>
-                  </div>
+                  <span className={`chip ${status.tone} flex-shrink-0`}>{status.label}</span>
                 </div>
+
+                <div className="space-y-3 text-sm">
+                  {formatLocation(cl) && (
+                    <div className="flex items-center gap-2 text-app-text-secondary">
+                      <MapPin size={16} className="flex-shrink-0" />
+                      <span className="truncate">{formatLocation(cl)}</span>
+                    </div>
+                  )}
+                  {cl.website && (
+                    <div className="flex items-center gap-2 text-app-text-secondary hover:text-app-text-primary transition">
+                      <Globe2 size={16} className="flex-shrink-0" />
+                      <a 
+                        href={cl.website} 
+                        className="truncate hover:underline"
+                        target="_blank" 
+                        rel="noreferrer"
+                      >
+                        {cl.website.replace(/^https?:\/\//, '')}
+                      </a>
+                    </div>
+                  )}
+                  {cl.accountManager && (
+                    <div className="flex items-center gap-2 text-app-text-secondary">
+                      <UserCheck size={16} className="flex-shrink-0" />
+                      <span>{cl.accountManager}</span>
+                    </div>
+                  )}
+                </div>
+
                 {cl.contacts && cl.contacts.length > 0 && (
-                  <div className="rounded-2xl border border-dashed border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">Key contacts</p>
-                    <div className="mt-3 grid gap-3 text-sm text-[rgb(var(--app-text-primary))] md:grid-cols-2">
-                      {cl.contacts.map((contact, index) => (
-                        <div key={`${contact.email}-${index}`} className="flex flex-col gap-1">
-                          <span className="font-semibold">{contact.name || 'Unnamed contact'}</span>
-                          <span className="text-muted">{contact.title || '—'}</span>
-                          <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
-                            {contact.email && <span>{contact.email}</span>}
-                            {contact.phone && <span className="inline-flex items-center gap-1"><Phone size={12} />{contact.phone}</span>}
-                            {contact.isPrimary && <span className="chip chip-active text-xs">Primary</span>}
-                          </div>
+                  <div className="mt-4 pt-4 border-t border-app-border-subtle">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-app-text-secondary mb-3">
+                      Key contacts ({cl.contacts.length})
+                    </p>
+                    <div className="space-y-2">
+                      {cl.contacts.slice(0, 2).map((contact, index) => (
+                        <div key={`${contact.email}-${index}`} className="text-xs">
+                          <p className="font-semibold text-app-text-primary truncate">
+                            {contact.name || 'Unnamed contact'}
+                          </p>
+                          {contact.email && (
+                            <p className="text-app-text-secondary truncate">{contact.email}</p>
+                          )}
                         </div>
                       ))}
+                      {cl.contacts.length > 2 && (
+                        <p className="text-xs text-app-text-secondary">
+                          +{cl.contacts.length - 2} more
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}
+
+                <div className="mt-4 pt-4 border-t border-app-border-subtle flex gap-2">
+                  <button
+                    onClick={() => setModal({ mode: 'edit', client: cl })}
+                    type="button"
+                    className="flex-1 btn-muted px-3 py-2 text-sm"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Delete this client?')) {
+                        deleteM.mutate(cl.id!);
+                      }
+                    }}
+                    type="button"
+                    className="btn-muted px-3 py-2 text-sm text-red-400 hover:border-red-400 hover:text-red-300"
+                  >
+                    Delete
+                  </button>
+                </div>
               </article>
             );
           })}

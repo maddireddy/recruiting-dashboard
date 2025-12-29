@@ -9,6 +9,7 @@ import ErrorBoundary from './components/common/ErrorBoundary';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './store/authStore';
+import Loader from './components/ui/Loader';
 import ClientsPage from './pages/Clients';
 import InterviewsPage from './pages/Interviews';
 import EmailTemplatesPage from './pages/EmailTemplates';
@@ -110,7 +111,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <ErrorBoundary>
-          <Suspense fallback={<div className="p-6">Loading...</div>}>
+          <Suspense fallback={<Loader /> }>
             <Routes>
             {/* Public Routes */}
             <Route element={<AuthLayout />}>
@@ -183,7 +184,7 @@ function App() {
               <Route
                 path="/ai/resume-parser"
                 element={
-                  <Suspense fallback={<div>Loading AI tool...</div>}>
+                  <Suspense fallback={<Loader label="Loading AI tool..." /> }>
                     <ResumeParser />
                   </Suspense>
                 }
@@ -191,7 +192,7 @@ function App() {
               <Route
                 path="/ai/jd-generator"
                 element={
-                  <Suspense fallback={<div>Loading AI tool...</div>}>
+                  <Suspense fallback={<Loader label="Loading AI tool..." /> }>
                     <JobDescriptionGenerator />
                   </Suspense>
                 }
@@ -199,7 +200,7 @@ function App() {
               <Route
                 path="/ai/semantic-search"
                 element={
-                  <Suspense fallback={<div>Loading AI tool...</div>}>
+                  <Suspense fallback={<Loader label="Loading AI tool..." /> }>
                     <SemanticSearch />
                   </Suspense>
                 }

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import type { Job } from '../../types/job';
+import Field from '../../components/ui/Field';
+import { z } from 'zod';
 
 interface Props {
   job: Job | null;
@@ -30,6 +32,14 @@ export default function JobModal({ job, onSave, onClose }: Props) {
     endDate: '',
     openings: 1,
   });
+  const [errors, setErrors] = useState<{ title?: string; client?: string; location?: string; openings?: string }>({});
+
+  const schema = z.object({
+    title: z.string().min(1, 'Job title is required'),
+    client: z.string().min(1, 'Client is required'),
+    location: z.string().min(1, 'Location is required'),
+    openings: z.number().min(1, 'At least 1 opening'),
+  });
 
   useEffect(() => {
     if (job) {
@@ -56,6 +66,22 @@ export default function JobModal({ job, onSave, onClose }: Props) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
+    const parsed = schema.safeParse({
+      title: formData.title,
+      client: formData.client,
+      location: formData.location,
+      openings: formData.openings,
+    });
+    if (!parsed.success) {
+      const next: { title?: string; client?: string; location?: string; openings?: string } = {};
+      for (const issue of parsed.error.issues) {
+        const key = issue.path[0] as 'title' | 'client' | 'location' | 'openings';
+        next[key] = issue.message;
+      }
+      setErrors(next);
+      return;
+    }
     onSave({
       ...formData,
       requiredSkills: formData.requiredSkills.split(',').map(s => s.trim()).filter(Boolean),
@@ -75,25 +101,40 @@ export default function JobModal({ job, onSave, onClose }: Props) {
 
   <form onSubmit={handleSubmit} className="space-y-6 overflow-y-auto px-6 py-6 max-h-[calc(90vh-72px)]">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <Field
-              label="Job Title"
-              required
-              value={formData.title}
-              onChange={(value) => setFormData({ ...formData, title: value })}
-            />
-            <Field
-              label="Client"
-              required
-              value={formData.client}
-              onChange={(value) => setFormData({ ...formData, client: value })}
-            />
+            <Field label="Job Title" htmlFor="job-title" error={errors.title}>
+              <input
+                id="job-title"
+                type="text"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                className="input"
+                aria-invalid={!!errors.title}
+                aria-describedby={errors.title ? 'job-title-error' : undefined}
+              />
+            </Field>
+            <Field label="Client" htmlFor="job-client" error={errors.client}>
+              <input
+                id="job-client"
+                type="text"
+                value={formData.client}
+                onChange={(e) => setFormData({ ...formData, client: e.target.value })}
+                className="input"
+                aria-invalid={!!errors.client}
+                aria-describedby={errors.client ? 'job-client-error' : undefined}
+              />
+            </Field>
 
-            <Field
-              label="Location"
-              required
-              value={formData.location}
-              onChange={(value) => setFormData({ ...formData, location: value })}
-            />
+            <Field label="Location" htmlFor="job-location" error={errors.location}>
+              <input
+                id="job-location"
+                type="text"
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                className="input"
+                aria-invalid={!!errors.location}
+                aria-describedby={errors.location ? 'job-location-error' : undefined}
+              />
+            </Field>
 
             <SelectField
               label="Job Type"
@@ -115,6 +156,9 @@ export default function JobModal({ job, onSave, onClose }: Props) {
               min={1}
               onChange={(value) => setFormData({ ...formData, openings: value || 1 })}
             />
+            {errors.openings && (
+              <p id="openings-error" role="alert" className="text-xs text-red-500">{errors.openings}</p>
+            )}
           </div>
 
           <div>
@@ -202,32 +246,7 @@ export default function JobModal({ job, onSave, onClose }: Props) {
   );
 }
 
-type FieldProps = {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  required?: boolean;
-};
-
-function Field({ label, value, onChange, placeholder, required }: FieldProps) {
-  return (
-    <div className="space-y-2">
-      <label className="block text-sm font-semibold uppercase tracking-wide text-[rgb(var(--app-text-primary))]">
-        {label}
-        {required && <span className="ml-1 text-red-400">*</span>}
-      </label>
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="input"
-        placeholder={placeholder}
-        required={required}
-      />
-    </div>
-  );
-}
+// Using shared Field component from components/ui/Field
 
 type SelectFieldProps = {
   label: string;

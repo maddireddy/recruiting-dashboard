@@ -4,6 +4,7 @@ import { candidateService } from "../services/candidate.service";
 import { jobService } from "../services/job.service";
 import type { Candidate } from "../types/candidate";
 import type { Job } from "../types/job";
+import PageHeader from "../components/ui/PageHeader";
 
 type Embedding = number[];
 
@@ -103,7 +104,7 @@ export default function Rediscovery() {
 
   return (
     <div className="p-6">
-      <h1 className="section-title">Rediscovery</h1>
+      <PageHeader title="Rediscovery" subtitle="Find matching candidates for active jobs using semantic embeddings" />
       {!modelReady && <p className="text-sm opacity-70">Loading embedding model…</p>}
       <div className="grid grid-cols-1 gap-4 mt-4">
         {rankedMatches.map(({ candidate, job, score }, idx) => (
@@ -122,9 +123,6 @@ export default function Rediscovery() {
           </div>
         ))}
       </div>
-    </div>
-  );
-}
     </div>
   );
 }

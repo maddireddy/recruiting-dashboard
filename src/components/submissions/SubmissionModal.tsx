@@ -5,6 +5,7 @@ import type { Submission } from '../../types/submission';
 import { candidateService } from '../../services/candidate.service';
 import { jobService } from '../../services/job.service';
 import { FormField } from '../common/FormField';
+import { z } from 'zod';
 
 interface Props {
   submission: Submission | null;
@@ -36,6 +37,20 @@ export default function SubmissionModal({ submission, onSave, onClose }: Props) 
     rejectionReason: '',
     notes: '',
   });
+  const [errors, setErrors] = useState<{ candidateId?: string; jobId?: string; status?: string; proposedRate?: string; interviewDate?: string; rejectionReason?: string }>({});
+
+  const schema = z.object({
+    candidateId: z.string().min(1, 'Candidate is required'),
+    jobId: z.string().min(1, 'Job is required'),
+    status: z.enum(['SUBMITTED','SHORTLISTED','INTERVIEW_SCHEDULED','INTERVIEWED','OFFERED','REJECTED','WITHDRAWN']),
+    proposedRate: z.number().min(0, 'Rate must be >= 0'),
+    rateCurrency: z.enum(['USD','CAD','EUR','GBP','INR']),
+    interviewDate: z.string().optional(),
+    rejectionReason: z.string().optional(),
+  }).refine((values) => values.status !== 'REJECTED' || (values.rejectionReason && values.rejectionReason.trim().length > 0), {
+    message: 'Rejection reason is required when status is REJECTED',
+    path: ['rejectionReason'],
+  });
 
   const candidatesQuery = useQuery({
     queryKey: ['candidates'],
@@ -65,6 +80,17 @@ export default function SubmissionModal({ submission, onSave, onClose }: Props) 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
+    const parsed = schema.safeParse(formData);
+    if (!parsed.success) {
+      const next: typeof errors = {};
+      for (const issue of parsed.error.issues) {
+        const key = issue.path[0] as keyof typeof errors;
+        next[key] = issue.message;
+      }
+      setErrors(next);
+      return;
+    }
     const selectedCandidate = candidatesQuery.data?.find((c: any) => c.id === formData.candidateId);
     const selectedJob = jobsQuery.data?.find((j: any) => j.id === formData.jobId);
 
@@ -97,13 +123,14 @@ export default function SubmissionModal({ submission, onSave, onClose }: Props) 
 
         <form onSubmit={handleSubmit} className="max-h-[calc(90vh-72px)] space-y-6 overflow-y-auto px-6 py-6">
           <section className="grid gap-4 md:grid-cols-2">
-            <FormField label="Candidate" required>
+            <FormField label="Candidate" required error={errors.candidateId}>
               <select
                 value={formData.candidateId}
                 onChange={(event) => setFormData({ ...formData, candidateId: event.target.value })}
                 className="input"
-                required
                 disabled={!!submission}
+                aria-invalid={!!errors.candidateId}
+                aria-describedby={errors.candidateId ? 'candidateId-error' : undefined}
               >
                 <option value="">Select candidate</option>
                 {candidatesQuery.data?.map((candidate: any) => (
@@ -114,13 +141,14 @@ export default function SubmissionModal({ submission, onSave, onClose }: Props) 
               </select>
             </FormField>
 
-            <FormField label="Job" required>
+            <FormField label="Job" required error={errors.jobId}>
               <select
                 value={formData.jobId}
                 onChange={(event) => setFormData({ ...formData, jobId: event.target.value })}
                 className="input"
-                required
                 disabled={!!submission}
+                aria-invalid={!!errors.jobId}
+                aria-describedby={errors.jobId ? 'jobId-error' : undefined}
               >
                 <option value="">Select job</option>
                 {jobsQuery.data?.map((job: any) => (
@@ -131,11 +159,13 @@ export default function SubmissionModal({ submission, onSave, onClose }: Props) 
               </select>
             </FormField>
 
-            <FormField label="Status" required>
+            <FormField label="Status" required error={errors.status}>
               <select
                 value={formData.status}
                 onChange={(event) => setFormData({ ...formData, status: event.target.value as Submission['status'] })}
                 className="input"
+                aria-invalid={!!errors.status}
+                aria-describedby={errors.status ? 'status-error' : undefined}
               >
                 {STATUSES.map((status) => (
                   <option key={status} value={status}>
@@ -145,7 +175,7 @@ export default function SubmissionModal({ submission, onSave, onClose }: Props) 
               </select>
             </FormField>
 
-            <FormField label="Proposed bill rate" description="Hourly" >
+            <FormField label="Proposed bill rate" description="Hourly" error={errors.proposedRate}>
               <div className="grid grid-cols-[1fr_auto] gap-3">
                 <input
                   type="number"
@@ -154,6 +184,8 @@ export default function SubmissionModal({ submission, onSave, onClose }: Props) 
                   className="input"
                   min={0}
                   step={0.01}
+                  aria-invalid={!!errors.proposedRate}
+                  aria-describedby={errors.proposedRate ? 'proposedRate-error' : undefined}
                 />
                 <select
                   value={formData.rateCurrency}
@@ -169,22 +201,26 @@ export default function SubmissionModal({ submission, onSave, onClose }: Props) 
               </div>
             </FormField>
 
-            <FormField label="Interview date">
+            <FormField label="Interview date" error={errors.interviewDate}>
               <input
                 type="date"
                 value={formData.interviewDate}
                 onChange={(event) => setFormData({ ...formData, interviewDate: event.target.value })}
                 className="input"
+                aria-invalid={!!errors.interviewDate}
+                aria-describedby={errors.interviewDate ? 'interviewDate-error' : undefined}
               />
             </FormField>
 
-            <FormField label="Rejection reason" description="Only needed when status is rejected">
+            <FormField label="Rejection reason" description="Only needed when status is rejected" error={errors.rejectionReason}>
               <input
                 type="text"
                 value={formData.rejectionReason}
                 onChange={(event) => setFormData({ ...formData, rejectionReason: event.target.value })}
                 className="input"
                 placeholder="Position on hold, budget, etc."
+                aria-invalid={!!errors.rejectionReason}
+                aria-describedby={errors.rejectionReason ? 'rejectionReason-error' : undefined}
               />
             </FormField>
           </section>

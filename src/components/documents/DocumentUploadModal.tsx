@@ -1,6 +1,8 @@
 import { useState, type ChangeEvent } from 'react';
 import { X } from 'lucide-react';
 import FileUpload from './FileUpload';
+import Field from '../../components/ui/Field';
+import { z } from 'zod';
 
 interface Props {
   entityType: string;
@@ -22,11 +24,25 @@ export default function DocumentUploadModal({ entityType, entityId, onUpload, on
   const [file, setFile] = useState<File | null>(null);
   const [documentType, setDocumentType] = useState('RESUME');
   const [tags, setTags] = useState('');
+  const [errors, setErrors] = useState<{ file?: string; documentType?: string }>({});
+
+  const schema = z.object({
+    file: z.custom<File>((val) => val instanceof File, { message: 'File is required' }),
+    documentType: z.enum(['RESUME','OFFER_LETTER','CONTRACT','JOB_DESCRIPTION','INVOICE','OTHER']),
+    tags: z.string().optional(),
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file) {
-      alert('Please select a file');
+    setErrors({});
+    const parsed = schema.safeParse({ file, documentType, tags });
+    if (!parsed.success) {
+      const next: typeof errors = {};
+      for (const issue of parsed.error.issues) {
+        const key = issue.path[0] as keyof typeof errors;
+        next[key] = issue.message;
+      }
+      setErrors(next);
       return;
     }
 
@@ -56,21 +72,23 @@ export default function DocumentUploadModal({ entityType, entityId, onUpload, on
 
         <form onSubmit={handleSubmit} className="space-y-6 overflow-y-auto px-6 py-6 max-h-[calc(90vh-72px)]">
           <div className="space-y-4">
-            <FileUpload onFileSelect={setFile} accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" maxSize={10} />
+            <div>
+              <label className="text-sm font-semibold uppercase tracking-[0.18em] text-[rgb(var(--app-text-primary))]">File</label>
+              <FileUpload onFileSelect={setFile} accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" maxSize={10} />
+              {errors.file && <p id="file-error" role="alert" className="mt-1 text-xs text-red-500">{errors.file}</p>}
+            </div>
 
-            <SelectField
-              label="Document Type"
-              value={documentType}
-              onChange={(e) => setDocumentType(e.target.value)}
-              options={DOCUMENT_TYPES.map((type) => ({ value: type, label: type.replace('_', ' ') }))}
-            />
+            <Field label="Document Type" htmlFor="documentType" error={errors.documentType}>
+              <select id="documentType" value={documentType} onChange={(e) => setDocumentType(e.target.value)} className="input" aria-invalid={!!errors.documentType} aria-describedby={errors.documentType ? 'documentType-error' : undefined}>
+                {DOCUMENT_TYPES.map((type) => (
+                  <option key={type} value={type}>{type.replace('_', ' ')}</option>
+                ))}
+              </select>
+            </Field>
 
-            <Field
-              label="Tags (comma-separated)"
-              value={tags}
-              placeholder="java, senior, remote"
-              onChange={(e) => setTags(e.target.value)}
-            />
+            <Field label="Tags (comma-separated)" htmlFor="tags">
+              <input id="tags" value={tags} placeholder="java, senior, remote" onChange={(e) => setTags(e.target.value)} className="input" />
+            </Field>
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
@@ -87,40 +105,4 @@ export default function DocumentUploadModal({ entityType, entityId, onUpload, on
   );
 }
 
-type FieldProps = {
-  label: string;
-  value: string;
-  onChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  placeholder?: string;
-};
-
-function Field({ label, value, onChange, placeholder }: FieldProps) {
-  return (
-    <div className="space-y-2">
-      <label className="text-sm font-semibold uppercase tracking-[0.18em] text-[rgb(var(--app-text-primary))]">{label}</label>
-      <input value={value} onChange={onChange} placeholder={placeholder} className="input" />
-    </div>
-  );
-}
-
-type SelectFieldProps = {
-  label: string;
-  value: string;
-  onChange: (event: ChangeEvent<HTMLSelectElement>) => void;
-  options: Array<{ value: string; label: string }>;
-};
-
-function SelectField({ label, value, onChange, options }: SelectFieldProps) {
-  return (
-    <div className="space-y-2">
-      <label className="text-sm font-semibold uppercase tracking-[0.18em] text-[rgb(var(--app-text-primary))]">{label}</label>
-      <select value={value} onChange={onChange} className="input">
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
+// Using shared Field component from components/ui/Field

@@ -5,6 +5,8 @@ const KanbanBoard = lazy(() => import('../components/jobs/KanbanBoard'));
 const JobModal = lazy(() => import('../components/jobs/JobModal'));
 import type { Job, JobStatus } from '../types/job';
 import { Plus, Filter, Download } from 'lucide-react';
+import Button from '../components/ui/Button';
+import PageHeader from '../components/ui/PageHeader';
 import { reportService } from '../services/report.service';
 import { useSearchParams } from 'react-router-dom';
 import JobFiltersSidebar, { type JobFilters } from '../components/jobs/JobFiltersSidebar';
@@ -81,40 +83,21 @@ export default function JobsPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-semibold text-[rgb(var(--app-text-primary))]">Jobs</h1>
-          <p className="text-muted">Manage client requirements & workflow</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            onClick={() => setFiltersOpen(true)}
-            className="btn-muted"
-            type="button"
-          >
-            <Filter size={16} />
-            Filters
-          </button>
-          <button
-            onClick={() => reportService.exportJobsCSV()}
-            className="btn-muted"
-            type="button"
-          >
-            <Download size={16} />
-            Export CSV
-          </button>
-          <button
-            onClick={() => {
-              setSelectedJob(null);
-              setShowModal(true);
-            }}
-            className="btn-primary"
-            type="button"
-          >
+      <div className="flex items-center justify-between gap-4">
+        <PageHeader title="Jobs" subtitle="Manage client requirements & workflow" actions={<div className="flex items-center gap-2">
+          <Button variant="subtle" size="sm" onClick={() => setFiltersOpen(true)}>
+            <Filter size={14} />
+            <span className="ml-2">Filters</span>
+          </Button>
+          <Button variant="subtle" size="sm" onClick={() => reportService.exportJobsCSV()}>
+            <Download size={14} />
+            <span className="ml-2">Export</span>
+          </Button>
+          <Button variant="primary" size="md" onClick={() => { setSelectedJob(null); setShowModal(true); }}>
             <Plus size={16} />
-            New Job
-          </button>
-        </div>
+            <span className="ml-2">New Job</span>
+          </Button>
+        </div>} />
       </div>
 
       {jobsQ.isLoading && <div className="card">Loading jobs...</div>}

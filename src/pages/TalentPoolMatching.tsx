@@ -4,6 +4,7 @@ import { clientService } from "../services/client.service";
 import { candidateService } from "../services/candidate.service";
 import type { Client } from "../types/client";
 import type { Candidate } from "../types/candidate";
+import PageHeader from "../components/ui/PageHeader";
 
 type Embedding = number[];
 
@@ -103,7 +104,7 @@ export default function TalentPoolMatching() {
 
   return (
     <div className="p-6">
-      <h1 className="section-title">Talent Pool Matching</h1>
+      <PageHeader title="Talent Pool Matching" subtitle="Suggest candidates into client pools by semantic affinity" />
       {!modelReady && <p className="text-sm opacity-70">Loading embedding model…</p>}
       <div className="grid grid-cols-1 gap-4 mt-4">
         {suggestions.map(({ client, candidate, score }, idx) => (
