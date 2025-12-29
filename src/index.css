@@ -8,7 +8,7 @@
   --app-surface-muted: 15 23 42; /* slate-800 */
   --app-text-primary: 255 255 255;
   --app-border-subtle: 255 255 255 / 0.12;
-  --app-primary-from: 16 185 129; /* emerald-500 */
+  --app-primary-from: 52 152 219; /* #3498db - Blue per Master Prompt */
 }
 
 body {
@@ -26,10 +26,10 @@ body {
   @apply inline-flex items-center justify-center rounded-lg px-4 py-2 font-medium transition;
 }
 .btn-primary {
-  @apply bg-emerald-600 text-white hover:bg-emerald-500;
+  @apply bg-[rgb(var(--app-primary))] text-white hover:brightness-110;
 }
 .btn-outline {
-  @apply border border-[rgba(var(--app-border-subtle))] text-white hover:border-emerald-400;
+  @apply border border-[rgba(var(--app-border-subtle))] text-white hover:border-[rgb(var(--app-primary))];
 }
 
 .input {
@@ -53,19 +53,23 @@ body {
     --app-surface-muted: 241 245 249;
     --app-surface-elevated: 255 255 255 / 0.9;
     --app-border-subtle: 209 213 219 / 0.7;
-    --app-text-primary: 15 23 42;
+    --app-text-primary: 44 62 80; /* #2c3e50 - Dark Blue/Grey per Master Prompt */
     --app-text-secondary: 71 85 105;
     --app-header-bg: 255 255 255 / 0.85;
     --app-sidebar-bg: 255 255 255;
     --app-sidebar-border: 226 232 240 / 0.9;
-    --app-card-shadow: 0 26px 60px -35px rgba(15, 23, 42, 0.35);
+    --app-card-shadow: 0 26px 60px -35px rgba(44, 62, 80, 0.35);
     --app-backdrop: blur(18px);
-    --app-gradient: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.08), transparent 55%),
-      radial-gradient(circle at 80% 10%, rgba(16, 185, 129, 0.08), transparent 60%),
-      radial-gradient(circle at 50% 80%, rgba(124, 58, 237, 0.06), transparent 55%);
-    --app-primary-from: 16 185 129;
-    --app-primary-to: 34 197 94;
-    --app-primary-text: 15 23 42;
+    --app-gradient: radial-gradient(circle at 20% 20%, rgba(52, 152, 219, 0.08), transparent 55%),
+      radial-gradient(circle at 80% 10%, rgba(39, 174, 96, 0.08), transparent 60%),
+      radial-gradient(circle at 50% 80%, rgba(142, 68, 173, 0.06), transparent 55%);
+    --app-primary: 52 152 219; /* #3498db - Blue per Master Prompt */
+    --app-primary-from: 52 152 219; /* #3498db - Blue */
+    --app-primary-to: 41 128 185; /* #2980b9 - Darker Blue */
+    --app-success: 39 174 96; /* #27ae60 - Green per Master Prompt */
+    --app-warning: 243 156 18; /* #f39c12 - Orange per Master Prompt */
+    --app-error: 231 76 60; /* #e74c3c - Red per Master Prompt */
+    --app-primary-text: 255 255 255; /* White text on blue */
   }
 
   .dark {
@@ -75,19 +79,23 @@ body {
     --app-surface-muted: 22 33 55;
     --app-surface-elevated: 15 23 42 / 0.85;
     --app-border-subtle: 71 85 105 / 0.4;
-    --app-text-primary: 226 232 240;
+    --app-text-primary: 236 240 241; /* #ecf0f1 - Light Grey for dark mode */
     --app-text-secondary: 148 163 184;
     --app-header-bg: 15 23 42 / 0.7;
     --app-sidebar-bg: 13 20 37;
     --app-sidebar-border: 39 55 89 / 0.6;
     --app-card-shadow: 0 26px 60px -32px rgba(8, 47, 73, 0.65);
     --app-backdrop: blur(24px);
-    --app-gradient: radial-gradient(circle at 15% 20%, rgba(96, 165, 250, 0.16), transparent 55%),
-      radial-gradient(circle at 85% 10%, rgba(16, 185, 129, 0.16), transparent 60%),
-      radial-gradient(circle at 50% 85%, rgba(129, 140, 248, 0.12), transparent 55%);
-    --app-primary-from: 34 197 94;
-    --app-primary-to: 16 185 129;
-    --app-primary-text: 15 23 42;
+    --app-gradient: radial-gradient(circle at 15% 20%, rgba(52, 152, 219, 0.16), transparent 55%),
+      radial-gradient(circle at 85% 10%, rgba(39, 174, 96, 0.16), transparent 60%),
+      radial-gradient(circle at 50% 85%, rgba(142, 68, 173, 0.12), transparent 55%);
+    --app-primary: 52 152 219; /* #3498db - Blue per Master Prompt */
+    --app-primary-from: 52 152 219; /* #3498db - Blue */
+    --app-primary-to: 41 128 185; /* #2980b9 - Darker Blue */
+    --app-success: 39 174 96; /* #27ae60 - Green per Master Prompt */
+    --app-warning: 243 156 18; /* #f39c12 - Orange per Master Prompt */
+    --app-error: 231 76 60; /* #e74c3c - Red per Master Prompt */
+    --app-primary-text: 255 255 255; /* White text on blue */
   }
 
   body {
