@@ -77,7 +77,7 @@ export default function Login() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-          <Field label="Email address" htmlFor="email" error={fieldErrors.email}>
+          <Field label="Email address" htmlFor="email" error={fieldErrors.email} required>
             <input
               id="email"
               type="email"
@@ -88,10 +88,11 @@ export default function Login() {
               autoComplete="email"
               aria-invalid={!!fieldErrors.email}
               aria-describedby={fieldErrors.email ? 'email-error' : undefined}
+              aria-required="true"
             />
           </Field>
 
-          <Field label="Tenant ID" htmlFor="tenantId" error={fieldErrors.tenantId}>
+          <Field label="Tenant ID" htmlFor="tenantId" error={fieldErrors.tenantId} required>
             <input
               id="tenantId"
               type="text"
@@ -102,10 +103,11 @@ export default function Login() {
               autoComplete="organization"
               aria-invalid={!!fieldErrors.tenantId}
               aria-describedby={fieldErrors.tenantId ? 'tenantId-error' : undefined}
+              aria-required="true"
             />
           </Field>
 
-          <Field label="Password" htmlFor="password" error={fieldErrors.password}>
+          <Field label="Password" htmlFor="password" error={fieldErrors.password} required>
             <input
               id="password"
               type="password"
@@ -116,6 +118,7 @@ export default function Login() {
               autoComplete="current-password"
               aria-invalid={!!fieldErrors.password}
               aria-describedby={fieldErrors.password ? 'password-error' : undefined}
+              aria-required="true"
             />
           </Field>
 
