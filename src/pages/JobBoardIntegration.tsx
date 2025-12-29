@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Globe, TrendingUp, DollarSign, Eye } from 'lucide-react';
+import { Globe, TrendingUp, DollarSign, Eye, Plus } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
 
@@ -29,6 +29,12 @@ export default function JobBoardIntegrationPage() {
       <PageHeader
         title="Job Board Integration"
         subtitle="Multi-post to Indeed, LinkedIn, Glassdoor with one-click distribution and application auto-import"
+        actions={
+          <Button variant="primary" size="md">
+            <Plus size={16} />
+            <span className="ml-2">Connect Board</span>
+          </Button>
+        }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
