@@ -12,6 +12,13 @@ import {
   ShieldCheck,
   Sparkles,
   X,
+  Bell,
+  Settings,
+  FileCheck,
+  ClipboardCheck,
+  UserCheck,
+  UserSquare,
+  Globe,
 } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
 import clsx from 'clsx';
@@ -32,6 +39,7 @@ const navigationSections = [
     items: [
       { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
       { path: '/reports', icon: TrendingUp, label: 'Reports' },
+      { path: '/notifications', icon: Bell, label: 'Notifications' },
     ],
   },
   {
@@ -53,6 +61,8 @@ const navigationSections = [
       { path: '/jobs', icon: Briefcase, label: 'Jobs' },
       { path: '/interviews', icon: Calendar, label: 'Interviews' },
       { path: '/submissions', icon: FolderKanban, label: 'Submissions' },
+      { path: '/candidate-portal', icon: UserSquare, label: 'Candidate Portal' },
+      { path: '/onboarding', icon: UserCheck, label: 'Onboarding' },
     ],
   },
   {
@@ -80,6 +90,7 @@ const navigationSections = [
       { path: '/silver-medalists', icon: ShieldCheck, label: 'Silver Medalists' },
       { path: '/eeo-data', icon: ShieldCheck, label: 'EEO Data' },
       { path: '/custom-reports', icon: TrendingUp, label: 'Custom Reports' },
+      { path: '/job-board-integration', icon: Globe, label: 'Job Board Integration' },
     ],
   },
   {
@@ -87,6 +98,7 @@ const navigationSections = [
     items: [
       { path: '/interview-guides', icon: FileText, label: 'Guides' },
       { path: '/interview-recordings', icon: FileText, label: 'Recordings' },
+      { path: '/scorecards', icon: ClipboardCheck, label: 'Scorecards' },
     ],
   },
   {
@@ -101,6 +113,9 @@ const navigationSections = [
   {
     title: 'Admin',
     items: [
+      { path: '/users', icon: Users, label: 'User Management' },
+      { path: '/settings', icon: Settings, label: 'Settings' },
+      { path: '/audit-logs', icon: FileCheck, label: 'Audit Logs' },
       { path: '/clients', icon: ShieldCheck, label: 'Clients' },
       { path: '/documents', icon: FileText, label: 'Documents' },
       { path: '/vendors', icon: ShieldCheck, label: 'Vendors' },

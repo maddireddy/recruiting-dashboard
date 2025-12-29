@@ -69,6 +69,15 @@ const SilverMedalistsPage = lazy(() => import('./pages/SilverMedalists'));
 const CustomReportsPage = lazy(() => import('./pages/CustomReports'));
 const InterviewGuidesPage = lazy(() => import('./pages/InterviewGuides'));
 const InterviewRecordingsPage = lazy(() => import('./pages/InterviewRecordings'));
+// Newly added pages for master plan coverage
+const UsersPage = lazy(() => import('./pages/Users'));
+const NotificationsPage = lazy(() => import('./pages/Notifications'));
+const SettingsPage = lazy(() => import('./pages/Settings'));
+const AuditLogsPage = lazy(() => import('./pages/AuditLogs'));
+const ScorecardsPage = lazy(() => import('./pages/Scorecards'));
+const OnboardingPage = lazy(() => import('./pages/Onboarding'));
+const CandidatePortalPage = lazy(() => import('./pages/CandidatePortal'));
+const JobBoardIntegrationPage = lazy(() => import('./pages/JobBoardIntegration'));
 
 
 const queryClient = new QueryClient({
@@ -176,6 +185,15 @@ function App() {
               <Route path="/interview-guides" element={<InterviewGuidesPage />} />
               <Route path="/interview-recordings" element={<InterviewRecordingsPage />} />
               <Route path="/rediscovery" element={<RediscoveryPage />} />
+              {/* Newly added pages for master plan coverage */}
+              <Route path="/users" element={<UsersPage />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/audit-logs" element={<AuditLogsPage />} />
+              <Route path="/scorecards" element={<ScorecardsPage />} />
+              <Route path="/onboarding" element={<OnboardingPage />} />
+              <Route path="/candidate-portal" element={<CandidatePortalPage />} />
+              <Route path="/job-board-integration" element={<JobBoardIntegrationPage />} />
               <Route path="/ai/rediscovery" element={<RediscoveryPage />} />
               <Route path="/ai/talent-pool-matching" element={<TalentPoolMatching />} />
               <Route path="/ai/interview-intelligence" element={<InterviewIntelligencePage />} />
