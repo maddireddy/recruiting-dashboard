@@ -19,6 +19,12 @@ import {
   UserCheck,
   UserSquare,
   Globe,
+  Search,
+  Target,
+  Award,
+  Zap,
+  DollarSign,
+  Building2,
 } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
 import clsx from 'clsx';
@@ -43,92 +49,103 @@ const navigationSections = [
     ],
   },
   {
-    title: 'AI Lab',
-    items: [
-      { path: '/ai', icon: Sparkles, label: 'AI Lab' },
-      { path: '/ai/semantic-search', icon: Sparkles, label: 'Semantic Search' },
-      { path: '/ai/rediscovery', icon: Sparkles, label: 'Rediscovery' },
-      { path: '/ai/talent-pool-matching', icon: Sparkles, label: 'Pool Matching' },
-      { path: '/ai/interview-intelligence', icon: Sparkles, label: 'Interview Intelligence' },
-      { path: '/ai/resume-parser', icon: Sparkles, label: 'Resume Parser' },
-      { path: '/ai/jd-generator', icon: Sparkles, label: 'JD Generator' },
-    ],
-  },
-  {
-    title: 'Talent',
+    title: 'Talent Management',
     items: [
       { path: '/candidates', icon: Users, label: 'Candidates' },
       { path: '/jobs', icon: Briefcase, label: 'Jobs' },
       { path: '/interviews', icon: Calendar, label: 'Interviews' },
       { path: '/submissions', icon: FolderKanban, label: 'Submissions' },
-      { path: '/candidate-portal', icon: UserSquare, label: 'Candidate Portal' },
-      { path: '/onboarding', icon: UserCheck, label: 'Onboarding' },
+      { path: '/offers', icon: Award, label: 'Offers' },
+      { path: '/talent-pools', icon: Users, label: 'Talent Pools' },
     ],
   },
   {
-    title: 'Messaging',
+    title: 'Sourcing & Search',
+    items: [
+      { path: '/advanced-search', icon: Search, label: 'Advanced Search' },
+      { path: '/saved-searches', icon: FileCheck, label: 'Saved Searches' },
+      { path: '/boolean-search-templates', icon: FileText, label: 'Boolean Templates' },
+      { path: '/candidate-sourcings', icon: Target, label: 'Candidate Sourcings' },
+      { path: '/job-board-integration', icon: Globe, label: 'Job Board Integration' },
+      { path: '/bookmarklet-captures', icon: Target, label: 'Bookmarklet Captures' },
+    ],
+  },
+  {
+    title: 'AI Tools',
+    items: [
+      { path: '/ai', icon: Sparkles, label: 'AI Lab' },
+      { path: '/ai/semantic-search', icon: Sparkles, label: 'Semantic Search' },
+      { path: '/ai/resume-parser', icon: Sparkles, label: 'Resume Parser' },
+      { path: '/ai/jd-generator', icon: Sparkles, label: 'JD Generator' },
+      { path: '/ai/rediscovery', icon: Sparkles, label: 'Rediscovery' },
+      { path: '/ai/talent-pool-matching', icon: Sparkles, label: 'Pool Matching' },
+      { path: '/ai/interview-intelligence', icon: Sparkles, label: 'Interview Intelligence' },
+    ],
+  },
+  {
+    title: 'Interview Management',
+    items: [
+      { path: '/interview-guides', icon: FileText, label: 'Interview Guides' },
+      { path: '/interview-recordings', icon: FileText, label: 'Recordings' },
+      { path: '/scorecards', icon: ClipboardCheck, label: 'Scorecards' },
+      { path: '/scheduling', icon: Calendar, label: 'Scheduling' },
+    ],
+  },
+  {
+    title: 'Communication',
     items: [
       { path: '/email-templates', icon: Mail, label: 'Email Templates' },
-      { path: '/email-logs', icon: Sparkles, label: 'Email Logs' },
+      { path: '/email-logs', icon: Mail, label: 'Email Logs' },
       { path: '/sms', icon: Mail, label: 'SMS Campaigns' },
       { path: '/sms/communications', icon: Mail, label: 'SMS Communications' },
     ],
   },
   {
-    title: 'Sourcing',
+    title: 'Automation & Workflows',
     items: [
-      { path: '/advanced-search', icon: Sparkles, label: 'Advanced Search' },
-      { path: '/saved-searches', icon: Sparkles, label: 'Saved Searches' },
-      { path: '/boolean-search-templates', icon: Sparkles, label: 'Boolean Templates' },
-      { path: '/candidate-sourcings', icon: Sparkles, label: 'Candidate Sourcings' },
-      { path: '/rediscovery', icon: Sparkles, label: 'Rediscovery' },
-      { path: '/talent-pools', icon: Users, label: 'Talent Pools' },
-      { path: '/skills-assessments', icon: ShieldCheck, label: 'Skills Assessments' },
+      { path: '/workflows', icon: Zap, label: 'Workflows' },
+      { path: '/calendar-sync', icon: Calendar, label: 'Calendar Sync' },
+    ],
+  },
+  {
+    title: 'Candidate Experience',
+    items: [
+      { path: '/candidate-portal', icon: UserSquare, label: 'Candidate Portal' },
+      { path: '/onboarding', icon: UserCheck, label: 'New Hire Onboarding' },
+    ],
+  },
+  {
+    title: 'Analytics & Compliance',
+    items: [
       { path: '/market-intelligence', icon: TrendingUp, label: 'Market Intelligence' },
       { path: '/diversity-metrics', icon: ShieldCheck, label: 'Diversity Metrics' },
-      { path: '/bookmarklet-captures', icon: Sparkles, label: 'Bookmarklet Captures' },
-      { path: '/silver-medalists', icon: ShieldCheck, label: 'Silver Medalists' },
+      { path: '/skills-assessments', icon: Award, label: 'Skills Assessments' },
+      { path: '/silver-medalists', icon: Award, label: 'Silver Medalists' },
       { path: '/eeo-data', icon: ShieldCheck, label: 'EEO Data' },
       { path: '/custom-reports', icon: TrendingUp, label: 'Custom Reports' },
-      { path: '/job-board-integration', icon: Globe, label: 'Job Board Integration' },
+      { path: '/compliance', icon: ShieldCheck, label: 'Compliance' },
     ],
   },
   {
-    title: 'Interviews',
-    items: [
-      { path: '/interview-guides', icon: FileText, label: 'Guides' },
-      { path: '/interview-recordings', icon: FileText, label: 'Recordings' },
-      { path: '/scorecards', icon: ClipboardCheck, label: 'Scorecards' },
-    ],
-  },
-  {
-    title: 'Automation',
-    items: [
-      { path: '/workflows', icon: Sparkles, label: 'Workflows' },
-      { path: '/calendar-sync', icon: Calendar, label: 'Calendar Sync' },
-      { path: '/interview-intelligence', icon: Sparkles, label: 'Interview Intelligence' },
-      { path: '/scheduling', icon: Calendar, label: 'Scheduling' },
-    ],
-  },
-  {
-    title: 'Admin',
+    title: 'Administration',
     items: [
       { path: '/users', icon: Users, label: 'User Management' },
       { path: '/settings', icon: Settings, label: 'Settings' },
-      { path: '/audit-logs', icon: FileCheck, label: 'Audit Logs' },
-      { path: '/clients', icon: ShieldCheck, label: 'Clients' },
+      { path: '/clients', icon: Building2, label: 'Clients' },
+      { path: '/vendors', icon: Building2, label: 'Vendors' },
+      { path: '/billing', icon: DollarSign, label: 'Billing' },
       { path: '/documents', icon: FileText, label: 'Documents' },
-      { path: '/vendors', icon: ShieldCheck, label: 'Vendors' },
-      { path: '/billing', icon: TrendingUp, label: 'Billing' },
-      { path: '/white-label', icon: FileText, label: 'White Label' },
-      { path: '/api-keys', icon: FileText, label: 'API Keys' },
-      { path: '/compliance', icon: ShieldCheck, label: 'Compliance' },
-      { path: '/offers', icon: Briefcase, label: 'Offers' },
+      { path: '/audit-logs', icon: FileCheck, label: 'Audit Logs' },
+    ],
+  },
+  {
+    title: 'Configuration',
+    items: [
       { path: '/jd-templates', icon: FileText, label: 'JD Templates' },
       { path: '/vendor-submittals', icon: FileText, label: 'Vendor Submittals' },
-      { path: '/mobile-app-configs', icon: FileText, label: 'Mobile App Configs' },
-      { path: '/ai/resume-parser', icon: Sparkles, label: 'AI Resume Parser' },
-      { path: '/ai/jd-generator', icon: Sparkles, label: 'AI JD Generator' },
+      { path: '/white-label', icon: Settings, label: 'White Label' },
+      { path: '/api-keys', icon: FileCheck, label: 'API Keys' },
+      { path: '/mobile-app-configs', icon: Settings, label: 'Mobile App Configs' },
     ],
   },
 ];
@@ -139,10 +156,20 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose, on
     try {
       const raw = localStorage.getItem('sidebar.openGroups');
       if (raw) return JSON.parse(raw);
-      // Default: open Overview and AI Lab for discoverability
-      return { Overview: true, 'AI Lab': true };
+      // Default: open key sections for better UX
+      return {
+        'Overview': true,
+        'Talent Management': true,
+        'AI Tools': true,
+        'Administration': true,
+      };
     } catch {
-      return { Overview: true, 'AI Lab': true };
+      return {
+        'Overview': true,
+        'Talent Management': true,
+        'AI Tools': true,
+        'Administration': true,
+      };
     }
   });
   const toggleGroup = (key: string) => {
@@ -193,6 +220,11 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose, on
                     <NavLink
                       key={item.path}
                       to={item.path}
+                      onClick={() => {
+                        if (variant === 'mobile') {
+                          onClose?.();
+                        }
+                      }}
                       className={({ isActive }) =>
                         `flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg transition relative ${
                           isActive
@@ -228,7 +260,7 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose, on
         </div>
       </div>
     ),
-    [onClose, onNavigate, variant, location.pathname]
+    [onClose, onNavigate, variant, location.pathname, openGroups]
   );
 
   if (variant === 'mobile') {
