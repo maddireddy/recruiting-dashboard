@@ -19,7 +19,7 @@ const schema = z.object({
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
   email: z.string().email('Enter a valid email'),
-  phone: z.string().min(7, 'Enter a valid phone'),
+  phone: z.string().regex(/^[\d\s\-\(\)\+]{10,}$/, 'Enter a valid phone number (at least 10 digits)'),
   visaStatus: z.string().min(1),
   primarySkills: z.string().min(1, 'Enter at least one skill'),
   totalExperience: z.coerce.number().min(0, 'Experience cannot be negative'),

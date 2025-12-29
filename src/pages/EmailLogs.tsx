@@ -108,7 +108,7 @@ export default function EmailLogsPage() {
                         <span className="text-[rgb(var(--app-text-primary))]">{log.toEmail}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 max-w-[260px] truncate text-sm">{log.subject}</td>
+                    <td className="px-4 py-3 max-w-xs md:max-w-sm truncate text-sm">{log.subject}</td>
                     <td className="px-4 py-3 text-xs">
                       {log.templateUsed ? (
                         <span className="chip surface-muted">{log.templateUsed}</span>

@@ -74,7 +74,7 @@ export default function BooleanSearchTemplatesPage() {
                 {templates.map((t: BooleanSearchTemplate) => (
                   <tr key={t.id}>
                     <td className="font-medium">{t.name}</td>
-                    <td className="truncate max-w-[300px]" title={t.query}>{t.query}</td>
+                    <td className="truncate max-w-xs md:max-w-sm" title={t.query}>{t.query}</td>
                     <td>{(t.tags || []).join(', ')}</td>
                     <td className="flex gap-2">
                       <button className="btn btn-sm" onClick={() => startEdit(t)}>Edit</button>

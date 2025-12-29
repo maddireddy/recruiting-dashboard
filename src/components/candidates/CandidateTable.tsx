@@ -252,8 +252,8 @@ export default function CandidateTable({ candidates, onEdit, onDelete, selectedI
   };
 
   return (
-    <div className="card overflow-hidden p-0">
-      <table className="w-full min-w-[960px]">
+    <div className="card overflow-hidden p-0 overflow-x-auto">
+      <table className="w-full min-w-full lg:min-w-max">
         <colgroup>
           <col style={{ width: selectionW }} />
           {visibleColumns.has('name') && <col style={{ width: wName }} />}
