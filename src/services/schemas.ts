@@ -5,8 +5,8 @@ export const clientContactSchema = z.object({
   name: z.string().min(1, 'Contact name is required'),
   title: z.string().min(1, 'Contact title is required'),
   email: z.string().email('Invalid email address'),
-  phone: z.string().min(1, 'Phone number is required'),
-  mobile: z.string().optional(),
+  phone: z.string().regex(/^[\d\s\-\(\)\+]{10,}$/, 'Enter a valid phone number (at least 10 digits)'),
+  mobile: z.string().regex(/^[\d\s\-\(\)\+]{10,}$/, 'Enter a valid phone number (at least 10 digits)').optional().or(z.literal('')),
   isPrimary: z.boolean().optional(),
 });
 
@@ -56,7 +56,7 @@ export const candidateSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
   email: z.string().email('Invalid email address'),
-  phone: z.string().min(1, 'Phone number is required'),
+  phone: z.string().regex(/^[\d\s\-\(\)\+]{10,}$/, 'Enter a valid phone number (at least 10 digits)'),
   visaStatus: z.string().min(1, 'Visa status is required'),
   primarySkills: z.array(z.string()).min(1, 'At least one primary skill is required'),
   secondarySkills: z.array(z.string()).optional(),

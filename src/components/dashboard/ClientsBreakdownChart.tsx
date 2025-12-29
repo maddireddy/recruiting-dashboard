@@ -125,7 +125,7 @@ function ClientsBreakdownTooltip({ active, payload, label, series }: ClientsTool
   const total = rows.reduce((acc, item) => acc + item.value, 0);
 
   return (
-    <div className="min-w-[180px] space-y-2 rounded-xl border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface))] px-4 py-3 shadow-lg">
+    <div className="min-w-44 space-y-2 rounded-xl border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface))] px-4 py-3 shadow-lg">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">{label}</p>
         <p className="text-lg font-semibold text-[rgb(var(--app-text-primary))]">{total.toLocaleString()} total</p>

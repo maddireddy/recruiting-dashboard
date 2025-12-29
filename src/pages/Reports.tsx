@@ -63,7 +63,7 @@ export default function ReportsPage() {
         </div>
         <div className="flex flex-wrap gap-3">
           {EXPORT_ACTIONS.map(({ label, handler }) => (
-            <button key={label} onClick={handler} type="button" className="btn-muted min-w-[170px] justify-center">
+            <button key={label} onClick={handler} type="button" className="btn-muted w-full sm:w-auto sm:min-w-40 justify-center">
               <Download size={18} />
               {label}
             </button>

@@ -111,7 +111,7 @@ export default function KanbanBoard({ jobs, onUpdateStatus, onEdit, onDelete }: 
     >
       <div className="flex h-[calc(100vh-280px)] gap-4 overflow-x-auto pb-4">
         {COLUMN_META.map(status => (
-          <div key={status.id} className="min-w-[260px] max-w-xs flex-shrink-0">
+          <div key={status.id} className="min-w-64 w-full sm:w-80 max-w-xs flex-shrink-0">
             <KanbanColumn
               id={status.id}
               title={status.title}
