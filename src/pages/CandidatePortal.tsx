@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Briefcase, Calendar, FileText, CheckCircle } from 'lucide-react';
+import { Briefcase, Calendar, FileText, CheckCircle, UserCircle } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader';
+import Button from '../components/ui/Button';
 
 export default function CandidatePortalPage() {
   const [applications] = useState([
@@ -22,6 +23,12 @@ export default function CandidatePortalPage() {
       <PageHeader
         title="Candidate Self-Service Portal"
         subtitle="Candidates can track application status, update profiles, and schedule interviews"
+        actions={
+          <Button variant="subtle" size="md">
+            <UserCircle size={16} />
+            <span className="ml-2">Update Profile</span>
+          </Button>
+        }
       />
 
       <div className="grid gap-4 sm:grid-cols-4">

@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Users, CheckCircle, Clock } from 'lucide-react';
+import { Users, CheckCircle, Clock, Plus } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader';
+import Button from '../components/ui/Button';
 
 const STATUS_COLORS = {
   PENDING: 'bg-amber-500/15 text-amber-300',
@@ -20,6 +21,12 @@ export default function OnboardingPage() {
       <PageHeader
         title="New Hire Onboarding"
         subtitle="Digital onboarding workflows with document collection, task checklists, and e-signatures"
+        actions={
+          <Button variant="primary" size="md">
+            <Plus size={16} />
+            <span className="ml-2">New Onboarding</span>
+          </Button>
+        }
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
