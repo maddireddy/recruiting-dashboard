@@ -5,6 +5,7 @@ import axios, {
   type AxiosResponse,
   type RawAxiosRequestHeaders,
 } from 'axios';
+import { CSRFTokenManager } from '../utils/security';
 
 // Use Vite environment variable if provided, otherwise use relative `/api` so
 // Vite dev server proxy (configured in vite.config.ts) can forward requests
@@ -137,11 +138,26 @@ api.interceptors.request.use(
       headers.set('X-AI-Model', aiModel);
     }
 
+    // CSRF Protection: Add CSRF token to headers for state-changing requests
+    // (Follows double-submit cookie pattern)
+    const isStateChanging = ['post', 'put', 'patch', 'delete'].includes(
+      config.method?.toLowerCase() || ''
+    );
+    if (isStateChanging) {
+      const csrfToken = CSRFTokenManager.getInstance().getToken();
+      if (csrfToken) {
+        headers.set('X-XSRF-TOKEN', csrfToken);
+        headers.set('X-CSRF-TOKEN', csrfToken); // Alternative header name
+      }
+    }
+
     // Attach Authorization when token is present; do not hard-reject if absent.
     // This avoids client-side failures for public or pre-auth endpoints and lets
     // the backend decide (401/403) when auth is required.
+    // In PRODUCTION: Token is in httpOnly cookie, no Authorization header needed
+    // In DEVELOPMENT: Token is in localStorage, add Authorization header
     const isAuthEndpoint = Boolean(config.url && config.url.includes('/auth/'));
-    if (!isAuthEndpoint && token) {
+    if (!isAuthEndpoint && token && import.meta.env.DEV) {
       const tokenValue = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
       headers.set('Authorization', tokenValue);
     }
