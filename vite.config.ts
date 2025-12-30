@@ -21,6 +21,7 @@ export default defineConfig(({ mode }) => {
       chunkSizeWarningLimit: 1600,
     },
     server: {
+      middlewareMode: false,
       proxy: {
         '/api': {
           target: proxyTarget,
@@ -29,5 +30,6 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
+    appType: 'spa',
   }
 })
