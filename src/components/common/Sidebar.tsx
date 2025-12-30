@@ -29,6 +29,8 @@ import {
 import { useMemo, useState, useEffect } from 'react';
 import clsx from 'clsx';
 import { authService } from '../../services/auth.service';
+import { useOrganizationStore } from '../../store/organizationStore';
+import { getFeatureForRoute } from '../../config/featureMap';
 
 type SidebarVariant = 'desktop' | 'mobile';
 
@@ -152,6 +154,9 @@ const navigationSections = [
 
 export default function Sidebar({ variant = 'desktop', open = false, onClose, onNavigate }: SidebarProps) {
   const location = useLocation();
+  const { organization, hasFeature } = useOrganizationStore();
+  const currentPlan = organization?.planTier || 'freemium';
+
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     try {
       const raw = localStorage.getItem('sidebar.openGroups');
@@ -204,43 +209,73 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose, on
         </div>
 
         <nav className="flex-1 space-y-6 overflow-y-auto px-4 pb-8">
-          {navigationSections.map((section) => (
-            <div key={section.title} className="mt-4">
-              <button
-                type="button"
-                onClick={() => toggleGroup(section.title)}
-                className="w-full flex items-center justify-between px-4 py-2 text-xs uppercase tracking-wide text-[rgb(var(--app-text-secondary))] hover:text-[rgb(var(--app-text-primary))] transition"
-              >
-                <span>{section.title}</span>
-                <span className={`transition-transform ${openGroups[section.title] ? 'rotate-90' : ''}`}>▸</span>
-              </button>
-              {openGroups[section.title] && (
-                <nav className="mt-3 space-y-1">
-                  {section.items.map((item) => (
-                    <NavLink
-                      key={item.path}
-                      to={item.path}
-                      onClick={() => {
-                        if (variant === 'mobile') {
-                          onClose?.();
+          {navigationSections.map((section) => {
+            // Filter items based on feature access
+            const accessibleItems = section.items.filter((item) => {
+              const featureReq = getFeatureForRoute(item.path);
+              if (!featureReq) return true; // Default: allow
+              return hasFeature(featureReq.feature);
+            });
+
+            // Hide entire section if no accessible items
+            if (accessibleItems.length === 0) return null;
+
+            return (
+              <div key={section.title} className="mt-4">
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(section.title)}
+                  className="w-full flex items-center justify-between px-4 py-2 text-xs uppercase tracking-wide text-[rgb(var(--app-text-secondary))] hover:text-[rgb(var(--app-text-primary))] transition"
+                >
+                  <span>{section.title}</span>
+                  <span className={`transition-transform ${openGroups[section.title] ? 'rotate-90' : ''}`}>▸</span>
+                </button>
+                {openGroups[section.title] && (
+                  <nav className="mt-3 space-y-1">
+                    {accessibleItems.map((item) => (
+                      <NavLink
+                        key={item.path}
+                        to={item.path}
+                        onClick={() => {
+                          if (variant === 'mobile') {
+                            onClose?.();
+                          }
+                        }}
+                        className={({ isActive }) =>
+                          `flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg transition relative ${
+                            isActive
+                              ? 'bg-[rgba(var(--app-primary-from),0.15)] text-[rgb(var(--app-text-primary))] font-medium before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-[rgb(var(--app-primary-from))] before:rounded-r-md'
+                              : 'text-[rgb(var(--app-text-secondary))] hover:text-[rgb(var(--app-text-primary))] hover:bg-[rgba(var(--app-primary-from),0.08)]'
+                          }`
                         }
-                      }}
-                      className={({ isActive }) =>
-                        `flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg transition relative ${
-                          isActive
-                            ? 'bg-[rgba(var(--app-primary-from),0.15)] text-[rgb(var(--app-text-primary))] font-medium before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-[rgb(var(--app-primary-from))] before:rounded-r-md'
-                            : 'text-[rgb(var(--app-text-secondary))] hover:text-[rgb(var(--app-text-primary))] hover:bg-[rgba(var(--app-primary-from),0.08)]'
-                        }`
-                      }
-                    >
-                      <item.icon className="h-4 w-4 opacity-80" />
-                      <span>{item.label}</span>
-                    </NavLink>
-                  ))}
-                </nav>
+                      >
+                        <item.icon className="h-4 w-4 opacity-80" />
+                        <span>{item.label}</span>
+                      </NavLink>
+                    ))}
+                  </nav>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Plan Badge */}
+          <div className="px-4 py-3 mx-4 rounded-xl border border-[rgba(var(--app-border-subtle))] bg-[rgba(var(--app-primary-from),0.05)]">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-muted">Current Plan</p>
+                <p className="text-sm font-semibold text-[rgb(var(--app-text-primary))] capitalize">{currentPlan}</p>
+              </div>
+              {currentPlan !== 'pro' && currentPlan !== 'enterprise' && (
+                <NavLink
+                  to="/billing"
+                  className="text-xs font-medium text-[rgb(var(--app-primary-from))] hover:underline"
+                >
+                  Upgrade
+                </NavLink>
               )}
             </div>
-          ))}
+          </div>
         </nav>
 
         <div className="border-t border-[rgba(var(--app-sidebar-border))] px-6 py-6">

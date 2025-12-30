@@ -21,10 +21,13 @@ import { PipelineOverview } from '../components/dashboard/PipelineOverview';
 import { QuickActionsCard } from '../components/dashboard/QuickActionsCard';
 import { ActivityFeedCard } from '../components/dashboard/ActivityFeedCard';
 import { TalentFocusCard } from '../components/dashboard/TalentFocusCard';
+import { useNavigate } from 'react-router-dom';
 
 const PIPELINE_PALETTE = ['#38bdf8', '#6366f1', '#f97316', '#22c55e', '#f43f5e'];
 
 export default function DashboardPage() {
+  const navigate = useNavigate();
+
   // Summary stats
   const summaryQuery = useQuery({
     queryKey: ['analytics-summary'],
@@ -225,7 +228,15 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-10">
-      <PageHeader title="Dashboard" subtitle="A command center built for recruiting teams." actions={<Button variant="subtle">Quick Action</Button>} />
+      <PageHeader
+        title="Dashboard"
+        subtitle="A command center built for recruiting teams."
+        actions={
+          <Button variant="subtle" onClick={() => navigate('/settings')}>
+            Settings
+          </Button>
+        }
+      />
 
       {isEmptyState && <GettingStartedWidget />}
 

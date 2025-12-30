@@ -116,13 +116,13 @@ export default function Header({ onMenuClick }: HeaderProps) {
             >
               <Bell size={18} />
             </button>
-            <button
-              type="button"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] transition"
+            <Link
+              to="/settings"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] transition hover:border-[rgba(var(--app-primary-from),0.4)]"
               aria-label="Global settings"
             >
               <Settings size={18} />
-            </button>
+            </Link>
             <ThemeToggle />
             <ExportMenu />
             <div className="ml-1 flex items-center gap-3 rounded-2xl border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] px-3 py-1.5 text-sm text-[rgb(var(--app-text-primary))]">

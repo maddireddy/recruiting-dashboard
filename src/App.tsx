@@ -10,6 +10,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './store/authStore';
 import Loader from './components/ui/Loader';
+import { SubdomainRouter } from './components/routing/SubdomainRouter';
 import ClientsPage from './pages/Clients';
 import InterviewsPage from './pages/Interviews';
 import EmailTemplatesPage from './pages/EmailTemplates';
@@ -119,9 +120,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <ErrorBoundary>
-          <Suspense fallback={<Loader /> }>
-            <Routes>
+        <SubdomainRouter>
+          <ErrorBoundary>
+            <Suspense fallback={<Loader /> }>
+              <Routes>
             {/* Public Routes */}
             <Route element={<AuthLayout />}>
               <Route path="/login" element={<Login />} />
@@ -235,9 +237,10 @@ function App() {
               {/* Public booking route for self-scheduling */}
               <Route path="/schedule/:linkId" element={<SlotSelector />} />
             </Route>
-            </Routes>
-          </Suspense>
-        </ErrorBoundary>
+              </Routes>
+            </Suspense>
+          </ErrorBoundary>
+        </SubdomainRouter>
       </BrowserRouter>
       <ReactQueryDevtoolsBridge />
       <Toaster position="top-right" />
