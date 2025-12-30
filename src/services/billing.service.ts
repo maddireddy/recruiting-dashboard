@@ -59,7 +59,13 @@ export const billingService = {
   checkout: async (planId: string, tenantId?: string) => {
     const headers: Record<string, string> = {};
     if (tenantId) headers['X-Tenant-ID'] = tenantId;
-    const { data } = await api.post('/billing/checkout', { planId }, { headers });
-    return data as { url: string };
+    // Updated to match backend Stripe integration endpoint
+    const { data } = await api.post('/billing/stripe/create-checkout-session', {
+      planTier: planId,
+      billingInterval: 'monthly',
+      customerEmail: localStorage.getItem('userId') || 'user@example.com',
+      organizationId: tenantId || 'default'
+    }, { headers });
+    return data as { checkoutUrl: string };
   },
 };

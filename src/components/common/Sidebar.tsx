@@ -29,6 +29,8 @@ import {
 import { useMemo, useState, useEffect } from 'react';
 import clsx from 'clsx';
 import { authService } from '../../services/auth.service';
+import { useOrganizationStore } from '../../store/organizationStore';
+import { getFeatureForRoute } from '../../config/featureMap';
 
 type SidebarVariant = 'desktop' | 'mobile';
 
@@ -152,6 +154,9 @@ const navigationSections = [
 
 export default function Sidebar({ variant = 'desktop', open = false, onClose, onNavigate }: SidebarProps) {
   const location = useLocation();
+  const { organization, hasFeature } = useOrganizationStore();
+  const currentPlan = organization?.planTier || 'freemium';
+
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     try {
       const raw = localStorage.getItem('sidebar.openGroups');
@@ -185,17 +190,17 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose, on
 
   const renderNav = useMemo(
     () => (
-      <div className="flex h-full flex-col bg-white text-[#1E293B] border-r border-[#E2E8F0]">
-        <div className="relative flex items-center justify-between px-6 py-6 border-b border-[#E2E8F0]">
+      <div className="flex h-full flex-col sidebar-shell bg-[rgb(var(--app-surface-muted))] text-[rgb(var(--app-text-primary))]">
+        <div className="relative flex items-center justify-between px-6 py-6 border-b border-[rgba(var(--app-sidebar-border))]">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.35em] text-[#64748B]">BenchSales</p>
-            <h1 className="mt-1 text-xl font-semibold bg-gradient-to-r from-[#3498db] to-[#2980b9] bg-clip-text text-transparent">Recruiting OS</h1>
+            <p className="text-[10px] uppercase tracking-[0.35em] text-muted">BenchSales</p>
+            <h1 className="mt-1 text-xl font-semibold">Recruiting OS</h1>
           </div>
           {variant === 'mobile' && (
             <button
               type="button"
               onClick={onClose}
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#E2E8F0] bg-white text-[#1E293B] transition hover:border-[#3498db] hover:text-[#3498db]"
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] text-[rgb(var(--app-text-primary))] transition hover:border-[rgba(var(--app-primary-from),0.4)] hover:text-[rgb(var(--app-text-primary))]"
               aria-label="Close navigation"
             >
               <X size={18} />
@@ -203,56 +208,86 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose, on
           )}
         </div>
 
-        <nav className="flex-1 space-y-6 overflow-y-auto px-4 pb-8 bg-[#F8FAFC]">
-          {navigationSections.map((section) => (
-            <div key={section.title} className="mt-4">
-              <button
-                type="button"
-                onClick={() => toggleGroup(section.title)}
-                className="w-full flex items-center justify-between px-4 py-2 text-xs uppercase tracking-wide text-[#64748B] hover:text-[#1E293B] font-semibold transition"
-              >
-                <span>{section.title}</span>
-                <span className={`transition-transform ${openGroups[section.title] ? 'rotate-90' : ''}`}>▸</span>
-              </button>
-              {openGroups[section.title] && (
-                <nav className="mt-3 space-y-1">
-                  {section.items.map((item) => (
-                    <NavLink
-                      key={item.path}
-                      to={item.path}
-                      onClick={() => {
-                        if (variant === 'mobile') {
-                          onClose?.();
+        <nav className="flex-1 space-y-6 overflow-y-auto px-4 pb-8">
+          {navigationSections.map((section) => {
+            // Filter items based on feature access
+            const accessibleItems = section.items.filter((item) => {
+              const featureReq = getFeatureForRoute(item.path);
+              if (!featureReq) return true; // Default: allow
+              return hasFeature(featureReq.feature);
+            });
+
+            // Hide entire section if no accessible items
+            if (accessibleItems.length === 0) return null;
+
+            return (
+              <div key={section.title} className="mt-4">
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(section.title)}
+                  className="w-full flex items-center justify-between px-4 py-2 text-xs uppercase tracking-wide text-[rgb(var(--app-text-secondary))] hover:text-[rgb(var(--app-text-primary))] transition"
+                >
+                  <span>{section.title}</span>
+                  <span className={`transition-transform ${openGroups[section.title] ? 'rotate-90' : ''}`}>▸</span>
+                </button>
+                {openGroups[section.title] && (
+                  <nav className="mt-3 space-y-1">
+                    {accessibleItems.map((item) => (
+                      <NavLink
+                        key={item.path}
+                        to={item.path}
+                        onClick={() => {
+                          if (variant === 'mobile') {
+                            onClose?.();
+                          }
+                        }}
+                        className={({ isActive }) =>
+                          `flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg transition relative ${
+                            isActive
+                              ? 'bg-[rgba(var(--app-primary-from),0.15)] text-[rgb(var(--app-text-primary))] font-medium before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-[rgb(var(--app-primary-from))] before:rounded-r-md'
+                              : 'text-[rgb(var(--app-text-secondary))] hover:text-[rgb(var(--app-text-primary))] hover:bg-[rgba(var(--app-primary-from),0.08)]'
+                          }`
                         }
-                      }}
-                      className={({ isActive }) =>
-                        `flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg transition relative ${
-                          isActive
-                            ? 'bg-gradient-to-r from-[#3498db]/10 to-[#2980b9]/10 text-[#1E293B] font-semibold border-l-4 border-[#3498db] shadow-sm'
-                            : 'text-[#64748B] hover:text-[#1E293B] hover:bg-white hover:shadow-sm'
-                        }`
-                      }
-                    >
-                      <item.icon className="h-4 w-4 opacity-80" />
-                      <span>{item.label}</span>
-                    </NavLink>
-                  ))}
-                </nav>
+                      >
+                        <item.icon className="h-4 w-4 opacity-80" />
+                        <span>{item.label}</span>
+                      </NavLink>
+                    ))}
+                  </nav>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Plan Badge */}
+          <div className="px-4 py-3 mx-4 rounded-xl border border-[rgba(var(--app-border-subtle))] bg-[rgba(var(--app-primary-from),0.05)]">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-muted">Current Plan</p>
+                <p className="text-sm font-semibold text-[rgb(var(--app-text-primary))] capitalize">{currentPlan}</p>
+              </div>
+              {currentPlan !== 'pro' && currentPlan !== 'enterprise' && (
+                <NavLink
+                  to="/billing"
+                  className="text-xs font-medium text-[rgb(var(--app-primary-from))] hover:underline"
+                >
+                  Upgrade
+                </NavLink>
               )}
             </div>
-          ))}
+          </div>
         </nav>
 
-        <div className="border-t border-[#E2E8F0] px-6 py-6 bg-white">
+        <div className="border-t border-[rgba(var(--app-sidebar-border))] px-6 py-6">
           <button
             type="button"
             onClick={() => {
               authService.logout();
               onClose?.();
             }}
-            className="flex w-full items-center gap-3 rounded-xl border border-[#E2E8F0] bg-white px-4 py-3 text-sm font-medium text-[#64748B] transition hover:border-red-300 hover:bg-red-50 hover:text-red-600 shadow-sm"
+            className="flex w-full items-center gap-3 rounded-xl border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] px-4 py-3 text-sm font-medium text-muted transition hover:border-[rgba(var(--app-primary-from),0.4)] hover:text-[rgb(var(--app-text-primary))]"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-100 text-red-600">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-500/10 text-red-400">
               <LogOut size={18} />
             </span>
             Logout
@@ -267,7 +302,7 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose, on
     return (
       <div
         className={clsx(
-          'fixed inset-0 z-50 bg-black/20 backdrop-blur-sm transition-opacity duration-200 lg:hidden',
+          'fixed inset-0 z-50 bg-[rgba(15,23,42,0.55)] backdrop-blur-md transition-opacity duration-200 lg:hidden',
           open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
         )}
       >
@@ -285,7 +320,7 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose, on
   }
 
   return (
-    <aside className="hidden h-full w-full lg:flex bg-white">
+    <aside className="hidden h-full w-full lg:flex bg-[rgb(var(--app-surface-muted))]">
       {renderNav}
     </aside>
   );

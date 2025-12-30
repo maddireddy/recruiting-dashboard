@@ -144,3 +144,33 @@ export const useOrganizationStore = create<OrganizationState>()(
     }
   )
 );
+
+/**
+ * Initialize organization with default testing data if none exists
+ * This is useful for development and testing
+ * Sets plan to 'pro' for full feature access during development
+ */
+export function initializeDefaultOrganization() {
+  const store = useOrganizationStore.getState();
+
+  if (!store.organization) {
+    const defaultOrg: OrganizationConfig = {
+      id: 'default-org-123',
+      name: 'Demo Organization',
+      subdomain: 'demo',
+      brandColor: '#3b82f6',
+      planTier: 'pro', // Set to 'pro' for full feature access during testing
+      planLimits: PLAN_LIMITS.pro,
+      billingInterval: 'monthly',
+      createdAt: new Date().toISOString(),
+      settings: {
+        timezone: 'America/New_York',
+        dateFormat: 'MM/DD/YYYY',
+        currency: 'USD',
+      },
+    };
+
+    store.setOrganization(defaultOrg);
+    console.log('[OrganizationStore] Initialized with default organization:', defaultOrg.name, '- Plan:', defaultOrg.planTier);
+  }
+}
