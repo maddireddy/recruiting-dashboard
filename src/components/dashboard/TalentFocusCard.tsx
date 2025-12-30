@@ -1,3 +1,4 @@
+import React from 'react';
 import { Users, Briefcase, Target } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 
@@ -28,7 +29,7 @@ const highlights = [
   },
 ];
 
-export function TalentFocusCard({ metrics }: { metrics: TalentMetrics }) {
+export const TalentFocusCard = React.memo(function TalentFocusCard({ metrics }: { metrics: TalentMetrics }) {
   const totalCandidates = metrics.totalCandidates ?? 0;
   const placedCandidates = metrics.placedCandidates ?? 0;
   const benchCandidates = metrics.benchCandidates ?? 0;
@@ -108,4 +109,4 @@ export function TalentFocusCard({ metrics }: { metrics: TalentMetrics }) {
       </CardContent>
     </Card>
   );
-}
+});

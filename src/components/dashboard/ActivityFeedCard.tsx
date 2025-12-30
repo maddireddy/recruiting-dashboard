@@ -1,3 +1,4 @@
+import React from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { cn } from '../../lib/utils';
@@ -17,7 +18,7 @@ const toneColors: Record<NonNullable<ActivityItem['tone']>, string> = {
   warning: 'bg-amber-400/10 text-amber-300',
 };
 
-export function ActivityFeedCard({ items }: { items: ActivityItem[] }) {
+export const ActivityFeedCard = React.memo(function ActivityFeedCard({ items }: { items: ActivityItem[] }) {
   return (
     <Card className="flex h-full flex-col justify-between">
       <CardHeader>
@@ -50,4 +51,4 @@ export function ActivityFeedCard({ items }: { items: ActivityItem[] }) {
       </CardContent>
     </Card>
   );
-}
+});

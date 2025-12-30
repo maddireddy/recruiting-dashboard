@@ -86,6 +86,7 @@ const CandidateAssignmentsPage = lazy(() => import('./pages/CandidateAssignments
 const EmployeeTimesheetsPage = lazy(() => import('./pages/EmployeeTimesheets'));
 const ContractorTimesheetsPage = lazy(() => import('./pages/ContractorTimesheets'));
 const InvoiceManagementPage = lazy(() => import('./pages/InvoiceManagement'));
+const WorkflowManagementPage = lazy(() => import('./pages/WorkflowManagement'));
 
 
 const queryClient = new QueryClient({
@@ -210,6 +211,7 @@ function App() {
               <Route path="/employee-timesheets" element={<EmployeeTimesheetsPage />} />
               <Route path="/contractor-timesheets" element={<ContractorTimesheetsPage />} />
               <Route path="/invoices" element={<InvoiceManagementPage />} />
+              <Route path="/workflow-management" element={<WorkflowManagementPage />} />
 
               <Route path="/ai/rediscovery" element={<RediscoveryPage />} />
               <Route path="/ai/talent-pool-matching" element={<TalentPoolMatching />} />

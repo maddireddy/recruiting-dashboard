@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import StatsCard from '../components/dashboard/StatsCard.tsx';
 import {
@@ -13,7 +13,7 @@ import {
   Mail,
 } from 'lucide-react';
 import { GettingStartedWidget } from '../components/dashboard/GettingStartedWidget';
-import api from '../services/api';
+import analyticsService from '../services/analytics.service';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import Button from '../components/ui/Button';
 import PageHeader from '../components/ui/PageHeader';
@@ -25,20 +25,32 @@ import { useNavigate } from 'react-router-dom';
 
 const PIPELINE_PALETTE = ['#38bdf8', '#6366f1', '#f97316', '#22c55e', '#f43f5e'];
 
+// Cache for 2 minutes to reduce API calls
+const QUERY_STALE_TIME = 2 * 60 * 1000;
+
 export default function DashboardPage() {
   const navigate = useNavigate();
 
-  // Summary stats
+  // Summary stats with caching - using dedicated service
   const summaryQuery = useQuery({
     queryKey: ['analytics-summary'],
-    queryFn: () => api.get('/analytics/summary').then(res => res.data)
+    queryFn: () => analyticsService.getSummary(),
+    staleTime: QUERY_STALE_TIME,
+    refetchOnWindowFocus: false,
   });
 
-  // Submission pipeline for stage overview
+  // Submission pipeline for stage overview with caching - using dedicated service
   const funnelQuery = useQuery({
     queryKey: ['submission-pipeline'],
-    queryFn: () => api.get('/analytics/submission-pipeline').then(res => res.data)
+    queryFn: () => analyticsService.getSubmissionPipeline(),
+    staleTime: QUERY_STALE_TIME,
+    refetchOnWindowFocus: false,
   });
+
+  // Memoize navigation handler
+  const handleNavigateToSettings = useCallback(() => {
+    navigate('/settings');
+  }, [navigate]);
 
   const stats = useMemo(
     () => [
@@ -226,13 +238,28 @@ export default function DashboardPage() {
     ];
   }, [summaryQuery.data, funnelData]);
 
+  // Better loading skeleton
+  const LoadingSkeleton = useCallback(() => (
+    <div className="space-y-6 animate-pulse">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-6">
+        {[...Array(5)].map((_, i) => (
+          <div key={i} className="card h-32 bg-[rgba(var(--app-surface-muted),0.5)]" />
+        ))}
+      </div>
+      <div className="grid gap-5 xl:grid-cols-2">
+        <div className="card h-96 bg-[rgba(var(--app-surface-muted),0.5)]" />
+        <div className="card h-96 bg-[rgba(var(--app-surface-muted),0.5)]" />
+      </div>
+    </div>
+  ), []);
+
   return (
     <div className="space-y-10">
       <PageHeader
         title="Dashboard"
         subtitle="A command center built for recruiting teams."
         actions={
-          <Button variant="subtle" onClick={() => navigate('/settings')}>
+          <Button variant="subtle" onClick={handleNavigateToSettings}>
             Settings
           </Button>
         }
@@ -241,9 +268,7 @@ export default function DashboardPage() {
       {isEmptyState && <GettingStartedWidget />}
 
       {summaryQuery.isLoading || funnelQuery.isLoading ? (
-        <div className="card animate-pulse" role="status" aria-live="polite">
-          Loading dashboard...
-        </div>
+        <LoadingSkeleton />
       ) : summaryQuery.error || funnelQuery.error ? (
         <div className="card border border-red-500/40 bg-red-500/10 text-red-400">
           Error loading dashboard data. Please try again later.

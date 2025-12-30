@@ -1,3 +1,4 @@
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { cn } from '../../lib/utils';
 import { TrendingDown, TrendingUp, Minus } from 'lucide-react';
@@ -10,7 +11,7 @@ export type PipelineStage = {
   color: string;
 };
 
-export function PipelineOverview({ stages }: { stages: PipelineStage[] }) {
+export const PipelineOverview = React.memo(function PipelineOverview({ stages }: { stages: PipelineStage[] }) {
   const maxCount = Math.max(...stages.map((stage) => stage.count), 1);
   const totalStages = stages.length;
 
@@ -102,4 +103,4 @@ export function PipelineOverview({ stages }: { stages: PipelineStage[] }) {
       </CardContent>
     </Card>
   );
-}
+});

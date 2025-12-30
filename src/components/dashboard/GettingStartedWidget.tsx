@@ -1,9 +1,10 @@
+import React from 'react';
 import { CheckCircle, PlusCircle, Users, Briefcase } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import Button from '../ui/Button';
 import { useNavigate } from 'react-router-dom';
 
-export function GettingStartedWidget() {
+export const GettingStartedWidget = React.memo(function GettingStartedWidget() {
   const navigate = useNavigate();
 
   const steps = [
@@ -69,4 +70,4 @@ export function GettingStartedWidget() {
       </CardContent>
     </Card>
   );
-}
+});

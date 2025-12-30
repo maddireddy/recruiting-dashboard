@@ -1,3 +1,4 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
 import { ArrowUpRight } from 'lucide-react';
@@ -21,7 +22,7 @@ const toneStyles: Record<NonNullable<QuickAction['tone']>, string> = {
 
 const getToneClasses = (tone: QuickAction['tone']) => toneStyles[tone ?? 'default'];
 
-export function QuickActionsCard({ actions }: { actions: QuickAction[] }) {
+export const QuickActionsCard = React.memo(function QuickActionsCard({ actions }: { actions: QuickAction[] }) {
   return (
     <Card className="flex h-full flex-col justify-between">
       <CardHeader>
@@ -51,4 +52,4 @@ export function QuickActionsCard({ actions }: { actions: QuickAction[] }) {
       </CardContent>
     </Card>
   );
-}
+});

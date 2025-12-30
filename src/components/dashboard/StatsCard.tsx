@@ -9,7 +9,7 @@ interface StatsCardProps {
   accentClassName?: string;
 }
 
-export default function StatsCard({ title, value, icon, accentClassName }: StatsCardProps) {
+const StatsCard = React.memo(function StatsCard({ title, value, icon, accentClassName }: StatsCardProps) {
   const displayValue = typeof value === 'number' ? value.toLocaleString() : value;
   const numericValue = typeof value === 'number' ? value : 0;
   
@@ -39,4 +39,6 @@ export default function StatsCard({ title, value, icon, accentClassName }: Stats
       )}
     </Card>
   );
-}
+});
+
+export default StatsCard;
