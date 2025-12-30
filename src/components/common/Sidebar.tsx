@@ -130,6 +130,13 @@ const navigationSections = [
     ],
   },
   {
+    title: 'Workflow & Automation',
+    items: [
+      { path: '/workflow-management', icon: Zap, label: 'Workflow Management' },
+      { path: '/workflows', icon: FolderKanban, label: 'Custom Workflows' },
+    ],
+  },
+  {
     title: 'Analytics & Compliance',
     items: [
       { path: '/market-intelligence', icon: TrendingUp, label: 'Market Intelligence' },

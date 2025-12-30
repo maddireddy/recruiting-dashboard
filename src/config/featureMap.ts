@@ -100,6 +100,9 @@ export const FEATURE_MAP: Record<string, FeatureRequirement> = {
   '/employee-timesheets': { feature: 'advanced-analytics', description: 'Employee timesheet management', availableIn: ['pro', 'enterprise'] },
   '/contractor-timesheets': { feature: 'advanced-analytics', description: 'Contractor timesheet tracking', availableIn: ['pro', 'enterprise'] },
   '/invoices': { feature: 'advanced-analytics', description: 'Invoice generation and tracking', availableIn: ['pro', 'enterprise'] },
+
+  // Workflow & Automation - Pro+
+  '/workflow-management': { feature: 'custom-workflows', description: 'Business Process Management (BPM) workflows', availableIn: ['pro', 'enterprise'] },
 };
 
 /**
