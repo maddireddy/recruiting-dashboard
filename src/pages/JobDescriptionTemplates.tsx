@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { FileText, Plus, Search, Sparkles, Filter, ChevronDown, ChevronUp, Trash2, Edit, Copy } from 'lucide-react';
 import { useList, useCreate, useUpdate, useDelete } from '../services/hooks';
 import { jdTemplateService } from '../services/jdTemplate.service';
+import { aiService } from '../services/ai.service';
 import type { JobDescriptionTemplate } from '../types/jobDescriptionTemplate';
 import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
@@ -22,6 +23,7 @@ export default function JobDescriptionTemplatesPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [sortField, setSortField] = useState<SortField>('updatedAt');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [showAIModal, setShowAIModal] = useState(false);
 
   const templatesQ = useList<JobDescriptionTemplate[]>('jd-templates', () => jdTemplateService.list(tenantId), tenantId);
   const createM = useCreate<Partial<JobDescriptionTemplate>, JobDescriptionTemplate>('jd-templates', jdTemplateService.create, tenantId);
@@ -149,8 +151,18 @@ export default function JobDescriptionTemplatesPage() {
   };
 
   const handleAIGenerate = () => {
-    toast.success('AI Generator coming soon!');
-    // TODO: Integrate with AI service
+    setShowAIModal(true);
+  };
+
+  const handleAIGenerateComplete = (content: string) => {
+    // Open edit modal with AI-generated content
+    setSelected({
+      name: '',
+      content,
+      tags: [],
+    } as JobDescriptionTemplate);
+    setShowAIModal(false);
+    setShowModal(true);
   };
 
   return (
@@ -408,13 +420,20 @@ export default function JobDescriptionTemplatesPage() {
         </div>
       )}
 
-      {/* Modal */}
+      {/* Edit Modal */}
       <EditModal
         open={showModal}
         initial={selected || undefined}
         onClose={() => { setShowModal(false); setSelected(null); }}
         onSave={handleSave}
         saving={createM.isPending || updateM.isPending}
+      />
+
+      {/* AI Generator Modal */}
+      <AIGeneratorModal
+        open={showAIModal}
+        onClose={() => setShowAIModal(false)}
+        onGenerate={handleAIGenerateComplete}
       />
     </div>
   );
@@ -507,6 +526,174 @@ function EditModal({ open, initial, onClose, onSave, saving }: {
           </Button>
           <Button variant="primary" onClick={handleSubmit} disabled={saving}>
             {saving ? 'Saving...' : 'Save Template'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AIGeneratorModal({ open, onClose, onGenerate }: {
+  open: boolean;
+  onClose: () => void;
+  onGenerate: (content: string) => void;
+}) {
+  const [jobTitle, setJobTitle] = useState('');
+  const [department, setDepartment] = useState('');
+  const [level, setLevel] = useState<'junior' | 'mid' | 'senior' | 'lead' | 'executive'>('mid');
+  const [location, setLocation] = useState('');
+  const [remotePolicy, setRemotePolicy] = useState<'remote' | 'hybrid' | 'onsite'>('hybrid');
+  const [keyRequirements, setKeyRequirements] = useState('');
+  const [generating, setGenerating] = useState(false);
+
+  if (!open) return null;
+
+  const handleGenerate = async () => {
+    if (!jobTitle.trim()) {
+      toast.error('Job title is required');
+      return;
+    }
+
+    setGenerating(true);
+    try {
+      const content = await aiService.generateJobDescription({
+        jobTitle: jobTitle.trim(),
+        department: department.trim() || undefined,
+        level,
+        location: location.trim() || undefined,
+        remotePolicy,
+        keyRequirements: keyRequirements
+          .split('\n')
+          .map(r => r.trim())
+          .filter(Boolean),
+      });
+
+      toast.success('Job description generated!');
+      onGenerate(content);
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to generate job description');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="card w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="pb-4 border-b border-[rgba(var(--app-border-subtle))]">
+          <div className="flex items-center gap-2">
+            <Sparkles size={24} className="text-[rgb(var(--app-primary))]" />
+            <h2 className="text-xl font-semibold text-[rgb(var(--app-text-primary))]">
+              AI Job Description Generator
+            </h2>
+          </div>
+          <p className="text-sm text-muted mt-1">
+            Provide some details about the role, and we'll generate a comprehensive job description for you
+          </p>
+        </div>
+
+        {/* Form */}
+        <div className="py-6 space-y-5">
+          <Field label="Job Title" htmlFor="jobTitle" required>
+            <input
+              id="jobTitle"
+              type="text"
+              value={jobTitle}
+              onChange={(e) => setJobTitle(e.target.value)}
+              className="input"
+              placeholder="e.g., Senior Software Engineer"
+              autoFocus
+            />
+          </Field>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Department" htmlFor="department">
+              <input
+                id="department"
+                type="text"
+                value={department}
+                onChange={(e) => setDepartment(e.target.value)}
+                className="input"
+                placeholder="e.g., Engineering"
+              />
+            </Field>
+
+            <Field label="Level" htmlFor="level">
+              <select
+                id="level"
+                value={level}
+                onChange={(e) => setLevel(e.target.value as any)}
+                className="input"
+              >
+                <option value="junior">Junior</option>
+                <option value="mid">Mid-level</option>
+                <option value="senior">Senior</option>
+                <option value="lead">Lead</option>
+                <option value="executive">Executive</option>
+              </select>
+            </Field>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Location" htmlFor="location">
+              <input
+                id="location"
+                type="text"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                className="input"
+                placeholder="e.g., San Francisco, CA"
+              />
+            </Field>
+
+            <Field label="Remote Policy" htmlFor="remotePolicy">
+              <select
+                id="remotePolicy"
+                value={remotePolicy}
+                onChange={(e) => setRemotePolicy(e.target.value as any)}
+                className="input"
+              >
+                <option value="onsite">Onsite</option>
+                <option value="hybrid">Hybrid</option>
+                <option value="remote">Fully Remote</option>
+              </select>
+            </Field>
+          </div>
+
+          <Field
+            label="Key Requirements"
+            htmlFor="keyRequirements"
+            hint="One per line (e.g., '5+ years of React experience')"
+          >
+            <textarea
+              id="keyRequirements"
+              value={keyRequirements}
+              onChange={(e) => setKeyRequirements(e.target.value)}
+              className="input"
+              rows={5}
+              placeholder="5+ years of React experience&#10;Strong TypeScript skills&#10;Experience with cloud platforms (AWS/GCP/Azure)"
+            />
+          </Field>
+        </div>
+
+        {/* Footer */}
+        <div className="pt-4 border-t border-[rgba(var(--app-border-subtle))] flex justify-end gap-3">
+          <Button variant="ghost" onClick={onClose} disabled={generating}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleGenerate} disabled={generating}>
+            {generating ? (
+              <>
+                <Sparkles size={16} className="animate-pulse" />
+                <span className="ml-2">Generating...</span>
+              </>
+            ) : (
+              <>
+                <Sparkles size={16} />
+                <span className="ml-2">Generate with AI</span>
+              </>
+            )}
           </Button>
         </div>
       </div>

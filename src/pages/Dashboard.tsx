@@ -47,9 +47,19 @@ export default function DashboardPage() {
     refetchOnWindowFocus: false,
   });
 
-  // Memoize navigation handler
+  // Memoize navigation handlers
   const handleNavigateToSettings = useCallback(() => {
     navigate('/settings');
+  }, [navigate]);
+
+  const handleBuildHiringPlan = useCallback(() => {
+    // Navigate to reports page where hiring plans can be created
+    navigate('/reports?view=hiring-plan');
+  }, [navigate]);
+
+  const handleViewWeeklyBriefing = useCallback(() => {
+    // Navigate to reports page with weekly briefing filter
+    navigate('/reports?view=weekly-briefing&period=week');
   }, [navigate]);
 
   const stats = useMemo(
@@ -291,8 +301,12 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div className="flex flex-col gap-3 sm:items-end">
-                <Button variant="primary" size="md">Build hiring plan</Button>
-                <Button variant="subtle" size="md">View weekly briefing</Button>
+                <Button variant="primary" size="md" onClick={handleBuildHiringPlan}>
+                  Build hiring plan
+                </Button>
+                <Button variant="subtle" size="md" onClick={handleViewWeeklyBriefing}>
+                  View weekly briefing
+                </Button>
               </div>
             </CardHeader>
             <CardContent className="relative z-10">

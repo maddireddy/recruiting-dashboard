@@ -9,11 +9,13 @@ import EmptyState from '../components/ui/EmptyState';
 import { TableSkeleton } from '../components/ui/LoadingStates';
 import { toast } from 'react-hot-toast';
 import Field from '../components/ui/Field';
+import { useNavigate } from 'react-router-dom';
 
 type SortField = 'name' | 'updatedAt';
 type SortOrder = 'asc' | 'desc';
 
 export default function SavedSearchesPage() {
+  const navigate = useNavigate();
   const tenantId = localStorage.getItem('tenantId') || undefined;
   const [selected, setSelected] = useState<SavedSearch | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -134,8 +136,27 @@ export default function SavedSearchesPage() {
   };
 
   const handleExecuteSearch = (search: SavedSearch) => {
+    // Navigate to candidates page with the saved search applied
+    const params = new URLSearchParams();
+
+    if (search.query) {
+      params.set('q', search.query);
+    }
+
+    if (search.filters) {
+      Object.entries(search.filters).forEach(([key, value]) => {
+        if (value) {
+          params.set(key, String(value));
+        }
+      });
+    }
+
+    const targetPage = search.searchType === 'jobs' ? '/jobs' : '/candidates';
+    const queryString = params.toString();
+    const url = queryString ? `${targetPage}?${queryString}` : targetPage;
+
     toast.success(`Executing search: ${search.name}`);
-    // TODO: Implement search execution logic
+    navigate(url);
   };
 
   return (
