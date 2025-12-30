@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiKeysService, type ApiKey } from '../services/apikeys.service';
+import { listApiKeys, createApiKey, updateApiKey, deleteApiKey, type ApiKey } from '../services/apikeys.service';
 import { toast } from 'react-hot-toast';
 import Table from '../components/common/Table';
 import { z } from 'zod';

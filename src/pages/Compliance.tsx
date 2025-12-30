@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { complianceService } from '../services/compliance.service';
+import { getCompliance, type Compliance } from '../services/compliance.service';
 import { toast } from 'react-hot-toast';
 
 export default function Compliance() {

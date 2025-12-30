@@ -3,7 +3,6 @@ import { toast } from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
 import { Card } from '../components/ui/card';
 
 export default function InterviewIntelligence() {
@@ -60,43 +59,6 @@ export default function InterviewIntelligence() {
           <div className="font-medium">Summary</div>
           <div className="text-sm mt-1">{summary}</div>
         </Card>
-      )}
-    </div>
-  );
-}
-      const { pipeline } = await import('@xenova/transformers');
-      const sentimentPipe = await pipeline('sentiment-analysis', 'Xenova/distilbert-base-uncased-finetuned-sst-2-english');
-      const summarizer = await pipeline('summarization', 'Xenova/distilbart-cnn-6-6');
-      const s = await sentimentPipe(text);
-      setSentiment((s as any)[0]?.label ?? null);
-      const sum = await summarizer(text, { max_length: 120, min_length: 60 });
-      setSummary((sum as any)[0]?.summary_text ?? null);
-    } catch (e: any) {
-      toast.error(e?.message || 'AI analysis failed');
-      setSentiment(null);
-      setSummary(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="p-6 space-y-4">
-      <h1 className="text-2xl font-semibold">Interview Intelligence</h1>
-      <p className="text-muted">Analyze interview notes for sentiment and summary.</p>
-      <motion.textarea initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-        value={text} onChange={(e) => setText(e.target.value)}
-        className="w-full rounded border p-3 min-h-[160px]" placeholder="Paste interview notes..." />
-      <motion.button whileTap={{ scale: 0.98 }} onClick={analyze} disabled={loading || !text.trim()}
-        className="rounded bg-emerald-600 px-4 py-2 text-white disabled:opacity-50">
-        {loading ? 'Analyzing...' : 'Analyze'}
-      </motion.button>
-      {sentiment && <p className="text-sm">Sentiment: <span className="font-medium">{sentiment}</span></p>}
-      {summary && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded border p-3">
-          <p className="text-sm text-gray-600">Summary</p>
-          <p>{summary}</p>
-        </motion.div>
       )}
     </div>
   );

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { offerApi } from '../api/offerApi';
 import type { Offer } from '../api/offerApi';
 import { Link, useNavigate } from 'react-router-dom';
-import { FileCheck, Plus, Loader as LoaderIcon } from 'lucide-react';
+import { FileCheck, Plus } from 'lucide-react';
 import Button from '../components/ui/Button';
 import { Card } from '../components/ui/card';
 import EmptyState from '../components/common/EmptyState';

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { FileText, Plus, Search, Filter, ChevronDown, ChevronUp, Trash2, Edit, UserCheck } from 'lucide-react';
+import { Plus, Search, Filter, ChevronDown, ChevronUp, Trash2, Edit, UserCheck } from 'lucide-react';
 import { useList, useCreate, useUpdate, useDelete } from '../services/hooks';
 import { vendorSubmittalService } from '../services/vendorSubmittal.service';
 import type { VendorSubmittal } from '../types/vendorSubmittal';

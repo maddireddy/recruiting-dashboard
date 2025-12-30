@@ -69,7 +69,7 @@ export function isValidEmail(email: string): boolean {
  * @returns true if valid, false otherwise
  */
 export function isValidPhone(phone: string): boolean {
-  if (!phone || typeof email !== 'string') return false;
+  if (!phone || typeof phone !== 'string') return false;
   return phoneRegex.test(phone.trim());
 }
 

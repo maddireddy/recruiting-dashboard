@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { whiteLabelService, type WhiteLabelConfig } from '../services/whitelabel.service';
+import { getWhiteLabel, updateWhiteLabel, type WhiteLabel } from '../services/whitelabel.service';
 import { toast } from 'react-hot-toast';
 import { z } from 'zod';
 import { Palette, Globe, Image, Save } from 'lucide-react';

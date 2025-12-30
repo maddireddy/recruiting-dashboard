@@ -51,7 +51,7 @@ export default function InterviewGuides() {
   if (isLoading) {
     return (
       <div className="space-y-6 p-6">
-        <PageHeader title="Interview Guides" description="Manage interview guide templates" />
+        <PageHeader title="Interview Guides" subtitle="Manage interview guide templates" />
         <div className="text-center py-12">Loading...</div>
       </div>
     );
