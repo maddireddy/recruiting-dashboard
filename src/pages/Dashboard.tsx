@@ -21,6 +21,8 @@ import { PipelineOverview } from '../components/dashboard/PipelineOverview';
 import { QuickActionsCard } from '../components/dashboard/QuickActionsCard';
 import { ActivityFeedCard } from '../components/dashboard/ActivityFeedCard';
 import { TalentFocusCard } from '../components/dashboard/TalentFocusCard';
+import { Link } from 'react-router-dom';
+import { isGPT51CodexMaxEnabled, getActiveAIModel } from '../lib/aiConfig';
 
 const PIPELINE_PALETTE = ['#38bdf8', '#6366f1', '#f97316', '#22c55e', '#f43f5e'];
 
@@ -227,6 +229,33 @@ export default function DashboardPage() {
     <div className="space-y-10">
       <PageHeader title="Dashboard" subtitle="A command center built for recruiting teams." actions={<Button variant="subtle">Quick Action</Button>} />
 
+      {isGPT51CodexMaxEnabled() && (
+        <div className="rounded-xl border-2 border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 p-5 shadow-sm">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-lg">
+                <Sparkles className="h-5 w-5 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-emerald-900">
+                  {getActiveAIModel()} is Active
+                </h3>
+                <p className="mt-1 text-sm text-emerald-700">
+                  Advanced AI capabilities are enabled for all clients. Experience enhanced candidate matching,
+                  intelligent resume parsing, and predictive analytics across the platform.
+                </p>
+              </div>
+            </div>
+            <Link 
+              to="/settings" 
+              className="whitespace-nowrap rounded-lg border border-emerald-200 bg-white px-4 py-2 text-sm font-medium text-emerald-700 transition hover:border-emerald-400 hover:bg-emerald-50 shadow-sm"
+            >
+              Configure AI
+            </Link>
+          </div>
+        </div>
+      )}
+
       {isEmptyState && <GettingStartedWidget />}
 
       {summaryQuery.isLoading || funnelQuery.isLoading ? (
@@ -239,19 +268,19 @@ export default function DashboardPage() {
         </div>
       ) : (
         <>
-          <Card className="relative overflow-hidden border-none bg-[rgba(var(--app-surface-elevated),0.95)]">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,rgba(56,189,248,0.18),transparent_60%),radial-gradient(circle_at_80%_0%,rgba(129,140,248,0.2),transparent_55%),radial-gradient(circle_at_50%_100%,rgba(34,197,94,0.18),transparent_60%)]" />
+          <Card className="relative overflow-hidden border border-[#E2E8F0] bg-white shadow-xl">
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-50/50 via-white to-purple-50/30" />
             <CardHeader className="relative z-10 gap-6 sm:flex-row sm:items-end sm:justify-between">
               <div className="space-y-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">Weekly wrap</p>
-                <CardTitle className="text-2xl sm:text-3xl">Stay ahead of hiring momentum</CardTitle>
-                <CardDescription className="max-w-lg">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#64748B]">Weekly wrap</p>
+                <CardTitle className="text-2xl sm:text-3xl text-[#0F172A]">Stay ahead of hiring momentum</CardTitle>
+                <CardDescription className="max-w-lg text-[#64748B]">
                   Align talent partners and hiring managers on the priorities that drive the next wave of hires.
                 </CardDescription>
-                <div className="flex flex-wrap items-center gap-3 text-xs text-muted">
-                  <span className="chip surface-muted">Bench refreshed hourly</span>
-                  <span className="chip surface-muted">Offer workflows automated</span>
-                  <span className="chip surface-muted">Reporting to Slack enabled</span>
+                <div className="flex flex-wrap items-center gap-3 text-xs">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-emerald-700 font-medium">Bench refreshed hourly</span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-blue-700 font-medium">Offer workflows automated</span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-purple-200 bg-purple-50 px-3 py-1.5 text-purple-700 font-medium">Reporting to Slack enabled</span>
                 </div>
               </div>
               <div className="flex flex-col gap-3 sm:items-end">
@@ -264,11 +293,11 @@ export default function DashboardPage() {
                 {heroHighlights.map((highlight) => (
                   <div
                     key={highlight.id}
-                    className="rounded-2xl border border-[rgba(var(--app-border-subtle))] bg-[rgba(var(--app-surface-muted),0.65)] p-4 backdrop-blur-xl"
+                    className="rounded-2xl border border-[#E2E8F0] bg-white/80 backdrop-blur-sm p-5 shadow-sm hover:shadow-md transition-shadow"
                   >
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">{highlight.label}</p>
-                    <p className="text-xl font-semibold text-[rgb(var(--app-text-primary))]">{highlight.value}</p>
-                    <p className="text-xs text-muted">{highlight.detail}</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#64748B]">{highlight.label}</p>
+                    <p className="text-2xl font-bold text-[#0F172A] mt-2">{highlight.value}</p>
+                    <p className="text-xs text-[#64748B] mt-1">{highlight.detail}</p>
                   </div>
                 ))}
               </div>

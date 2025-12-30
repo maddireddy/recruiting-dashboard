@@ -1,6 +1,88 @@
 import api from './api';
 import type { Candidate } from '../types';
 
+export interface AdminCandidate {
+  id: string;
+  tenantId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  location?: string;
+  status: 'active' | 'applied' | 'interview' | 'offer' | 'hired' | 'rejected';
+  skills: string[];
+  experience: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const getHeaders = (tenantId?: string) => {
+  const token = localStorage.getItem('token');
+  const headers: any = { 'Authorization': `Bearer ${token}` };
+  if (tenantId) headers['X-Tenant-ID'] = tenantId;
+  return headers;
+};
+
+export async function listCandidates(tenantId?: string): Promise<Candidate[]> {
+  try {
+    const { data } = await api.get('/api/candidates', {
+      headers: getHeaders(tenantId)
+    });
+    return Array.isArray(data) ? data : data?.content || [];
+  } catch (error) {
+    console.error('Error fetching candidates:', error);
+    return [];
+  }
+}
+
+export async function getCandidate(id: string, tenantId?: string): Promise<Candidate | null> {
+  try {
+    const { data } = await api.get(`/api/candidates/${id}`, {
+      headers: getHeaders(tenantId)
+    });
+    return data;
+  } catch (error) {
+    console.error(`Error fetching candidate ${id}:`, error);
+    return null;
+  }
+}
+
+export async function createCandidate(candidate: Omit<AdminCandidate, 'id' | 'createdAt' | 'updatedAt'>, tenantId?: string): Promise<Candidate> {
+  try {
+    const { data } = await api.post('/api/candidates', candidate, {
+      headers: getHeaders(tenantId)
+    });
+    return data;
+  } catch (error) {
+    console.error('Error creating candidate:', error);
+    throw error;
+  }
+}
+
+export async function updateCandidate(id: string, candidate: Partial<Candidate>, tenantId?: string): Promise<Candidate> {
+  try {
+    const { data } = await api.put(`/api/candidates/${id}`, candidate, {
+      headers: getHeaders(tenantId)
+    });
+    return data;
+  } catch (error) {
+    console.error('Error updating candidate:', error);
+    throw error;
+  }
+}
+
+export async function deleteCandidate(id: string, tenantId?: string): Promise<void> {
+  try {
+    await api.delete(`/api/candidates/${id}`, {
+      headers: getHeaders(tenantId)
+    });
+  } catch (error) {
+    console.error('Error deleting candidate:', error);
+    throw error;
+  }
+}
+
+// Keep legacy service interface for backward compatibility
 export const candidateService = {
   getAll: async (page = 0, size = 10, tenantId?: string) => {
     const headers: Record<string, string> = {};
@@ -15,7 +97,6 @@ export const candidateService = {
       if (import.meta.env.DEV) {
         console.debug('[candidateService.getAll] error', error?.response?.status, error?.message);
       }
-      // Return safe fallback
       return [];
     }
   },
@@ -117,7 +198,6 @@ export const candidateService = {
       if (import.meta.env.DEV) {
         console.debug('[candidateService.search] error', error?.response?.status, error?.message);
       }
-      // Return safe fallback
       return [];
     }
   }

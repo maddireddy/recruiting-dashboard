@@ -15,10 +15,10 @@ export default function MainLayout() {
   }, []);
 
   return (
-    <div className="relative min-h-screen text-[rgb(var(--app-text-primary))] overflow-x-hidden">
-      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 btn-muted">Skip to content</a>
+    <div className="relative min-h-screen bg-[#F8FAFC] text-[#1E293B] overflow-x-hidden">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 rounded-lg bg-white border border-[#E2E8F0] px-4 py-2 text-sm font-medium shadow-lg">Skip to content</a>
       <div className="relative flex min-h-screen">
-        <div className="sidebar-shell hidden border-r lg:flex lg:w-[260px] xl:w-[280px]">
+        <div className="hidden border-r border-[#E2E8F0] lg:flex lg:w-[260px] xl:w-[280px] bg-white shadow-sm">
           <Sidebar variant="desktop" onNavigate={handleCloseSidebar} />
         </div>
 

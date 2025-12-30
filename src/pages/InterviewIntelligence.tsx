@@ -64,20 +64,6 @@ export default function InterviewIntelligence() {
     </div>
   );
 }
-import { useState } from 'react';
-import { toast } from 'react-hot-toast';
-import { motion } from 'framer-motion';
-
-export default function InterviewIntelligence() {
-  const [text, setText] = useState('');
-  const [sentiment, setSentiment] = useState<string | null>(null);
-  const [summary, setSummary] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  const analyze = async () => {
-    if (!text.trim()) return toast.error('Enter interview notes');
-    setLoading(true);
-    try {
       const { pipeline } = await import('@xenova/transformers');
       const sentimentPipe = await pipeline('sentiment-analysis', 'Xenova/distilbert-base-uncased-finetuned-sst-2-english');
       const summarizer = await pipeline('summarization', 'Xenova/distilbart-cnn-6-6');

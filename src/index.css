@@ -2,43 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* App-wide UI polish for consistent look & feel */
-:root {
-  --app-surface: 17 24 39; /* slate-900 */
-  --app-surface-muted: 15 23 42; /* slate-800 */
-  --app-text-primary: 255 255 255;
-  --app-border-subtle: 255 255 255 / 0.12;
-  --app-primary-from: 52 152 219; /* #3498db - Blue per Master Prompt */
-}
-
-body {
-  background: rgb(var(--app-surface));
-  color: rgb(var(--app-text-primary));
-  /* Prevent horizontal scroll caused by wide grids */
-  overflow-x: hidden;
-}
-
-.card {
-  @apply rounded-2xl border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-elevated))] p-5 shadow-[var(--app-card-shadow)];
-}
-
-.btn {
-  @apply inline-flex items-center justify-center rounded-lg px-4 py-2 font-medium transition;
-}
-.btn-primary {
-  @apply bg-[rgb(var(--app-primary))] text-white hover:brightness-110;
-}
-.btn-outline {
-  @apply border border-[rgba(var(--app-border-subtle))] text-white hover:border-[rgb(var(--app-primary))];
-}
-
-.input {
-  @apply rounded-lg border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface))] px-3 py-2;
-}
-.input-bordered { @apply border; }
-
-.section-title { @apply text-xl font-semibold tracking-tight text-[rgb(var(--app-text-primary))]; }
-
 /* Page transitions baseline using Motion-friendly classes */
 .page-enter { opacity: 0; transform: translateY(12px); }
 .page-enter-active { opacity: 1; transform: translateY(0); transition: all 220ms ease; }

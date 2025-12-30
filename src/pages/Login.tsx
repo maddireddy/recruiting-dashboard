@@ -59,31 +59,31 @@ export default function Login() {
   };
   
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-[rgb(var(--app-surface))] px-4 py-12">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(var(--app-primary-from),0.12),transparent_55%)]" aria-hidden />
+    <div className="relative flex min-h-screen items-center justify-center bg-[#F1F5F9] px-4 py-12">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(52,152,219,0.08),transparent_60%)]" aria-hidden />
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: 'easeOut' }}
-        className="card relative z-10 w-full max-w-md space-y-6"
+        className="relative z-10 w-full max-w-md space-y-6 rounded-2xl border border-[#E2E8F0] bg-white p-8 shadow-xl"
       >
         <div className="space-y-2 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--app-border-subtle))] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#CBD5E1] bg-[#F8FAFC] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#64748B]">
             <ShieldCheck size={14} />
             BenchSales Portal
           </div>
-          <h1 className="text-3xl font-semibold text-[rgb(var(--app-text-primary))]">Sign in</h1>
-          <p className="text-sm text-muted">Access the recruiting control center for jobs, submissions, and client insights.</p>
+          <h1 className="text-3xl font-semibold text-[#0F172A]">Sign in</h1>
+          <p className="text-sm text-[#64748B]">Access the recruiting control center for jobs, submissions, and client insights.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-          <Field label="Email address" htmlFor="email" error={fieldErrors.email} required>
+          <Field label="Email address" htmlFor="email" error={fieldErrors.email} required variant="light">
             <input
               id="email"
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="input"
+              className="w-full rounded-lg border border-[#CBD5E1] bg-white px-4 py-3 text-[#0F172A] placeholder:text-[#94A3B8] focus:border-[#3498db] focus:outline-none focus:ring-2 focus:ring-[#3498db]/20 transition-all"
               placeholder="admin@example.com"
               autoComplete="email"
               aria-invalid={!!fieldErrors.email}
@@ -92,13 +92,13 @@ export default function Login() {
             />
           </Field>
 
-          <Field label="Tenant ID" htmlFor="tenantId" error={fieldErrors.tenantId} required>
+          <Field label="Tenant ID" htmlFor="tenantId" error={fieldErrors.tenantId} required variant="light">
             <input
               id="tenantId"
               type="text"
               value={tenantId}
               onChange={(event) => setTenantId(event.target.value)}
-              className="input"
+              className="w-full rounded-lg border border-[#CBD5E1] bg-white px-4 py-3 text-[#0F172A] placeholder:text-[#94A3B8] focus:border-[#3498db] focus:outline-none focus:ring-2 focus:ring-[#3498db]/20 transition-all"
               placeholder="Enter your tenant ID"
               autoComplete="organization"
               aria-invalid={!!fieldErrors.tenantId}
@@ -107,13 +107,13 @@ export default function Login() {
             />
           </Field>
 
-          <Field label="Password" htmlFor="password" error={fieldErrors.password} required>
+          <Field label="Password" htmlFor="password" error={fieldErrors.password} required variant="light">
             <input
               id="password"
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="input"
+              className="w-full rounded-lg border border-[#CBD5E1] bg-white px-4 py-3 text-[#0F172A] placeholder:text-[#94A3B8] focus:border-[#3498db] focus:outline-none focus:ring-2 focus:ring-[#3498db]/20 transition-all"
               placeholder="Enter your password"
               autoComplete="current-password"
               aria-invalid={!!fieldErrors.password}

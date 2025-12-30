@@ -185,17 +185,17 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose, on
 
   const renderNav = useMemo(
     () => (
-      <div className="flex h-full flex-col sidebar-shell bg-[rgb(var(--app-surface-muted))] text-[rgb(var(--app-text-primary))]">
-        <div className="relative flex items-center justify-between px-6 py-6 border-b border-[rgba(var(--app-sidebar-border))]">
+      <div className="flex h-full flex-col bg-white text-[#1E293B] border-r border-[#E2E8F0]">
+        <div className="relative flex items-center justify-between px-6 py-6 border-b border-[#E2E8F0]">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.35em] text-muted">BenchSales</p>
-            <h1 className="mt-1 text-xl font-semibold">Recruiting OS</h1>
+            <p className="text-[10px] uppercase tracking-[0.35em] text-[#64748B]">BenchSales</p>
+            <h1 className="mt-1 text-xl font-semibold bg-gradient-to-r from-[#3498db] to-[#2980b9] bg-clip-text text-transparent">Recruiting OS</h1>
           </div>
           {variant === 'mobile' && (
             <button
               type="button"
               onClick={onClose}
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] text-[rgb(var(--app-text-primary))] transition hover:border-[rgba(var(--app-primary-from),0.4)] hover:text-[rgb(var(--app-text-primary))]"
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#E2E8F0] bg-white text-[#1E293B] transition hover:border-[#3498db] hover:text-[#3498db]"
               aria-label="Close navigation"
             >
               <X size={18} />
@@ -203,13 +203,13 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose, on
           )}
         </div>
 
-        <nav className="flex-1 space-y-6 overflow-y-auto px-4 pb-8">
+        <nav className="flex-1 space-y-6 overflow-y-auto px-4 pb-8 bg-[#F8FAFC]">
           {navigationSections.map((section) => (
             <div key={section.title} className="mt-4">
               <button
                 type="button"
                 onClick={() => toggleGroup(section.title)}
-                className="w-full flex items-center justify-between px-4 py-2 text-xs uppercase tracking-wide text-[rgb(var(--app-text-secondary))] hover:text-[rgb(var(--app-text-primary))] transition"
+                className="w-full flex items-center justify-between px-4 py-2 text-xs uppercase tracking-wide text-[#64748B] hover:text-[#1E293B] font-semibold transition"
               >
                 <span>{section.title}</span>
                 <span className={`transition-transform ${openGroups[section.title] ? 'rotate-90' : ''}`}>▸</span>
@@ -228,8 +228,8 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose, on
                       className={({ isActive }) =>
                         `flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg transition relative ${
                           isActive
-                            ? 'bg-[rgba(var(--app-primary-from),0.15)] text-[rgb(var(--app-text-primary))] font-medium before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-[rgb(var(--app-primary-from))] before:rounded-r-md'
-                            : 'text-[rgb(var(--app-text-secondary))] hover:text-[rgb(var(--app-text-primary))] hover:bg-[rgba(var(--app-primary-from),0.08)]'
+                            ? 'bg-gradient-to-r from-[#3498db]/10 to-[#2980b9]/10 text-[#1E293B] font-semibold border-l-4 border-[#3498db] shadow-sm'
+                            : 'text-[#64748B] hover:text-[#1E293B] hover:bg-white hover:shadow-sm'
                         }`
                       }
                     >
@@ -243,16 +243,16 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose, on
           ))}
         </nav>
 
-        <div className="border-t border-[rgba(var(--app-sidebar-border))] px-6 py-6">
+        <div className="border-t border-[#E2E8F0] px-6 py-6 bg-white">
           <button
             type="button"
             onClick={() => {
               authService.logout();
               onClose?.();
             }}
-            className="flex w-full items-center gap-3 rounded-xl border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] px-4 py-3 text-sm font-medium text-muted transition hover:border-[rgba(var(--app-primary-from),0.4)] hover:text-[rgb(var(--app-text-primary))]"
+            className="flex w-full items-center gap-3 rounded-xl border border-[#E2E8F0] bg-white px-4 py-3 text-sm font-medium text-[#64748B] transition hover:border-red-300 hover:bg-red-50 hover:text-red-600 shadow-sm"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-500/10 text-red-400">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-100 text-red-600">
               <LogOut size={18} />
             </span>
             Logout
@@ -267,7 +267,7 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose, on
     return (
       <div
         className={clsx(
-          'fixed inset-0 z-50 bg-[rgba(15,23,42,0.55)] backdrop-blur-md transition-opacity duration-200 lg:hidden',
+          'fixed inset-0 z-50 bg-black/20 backdrop-blur-sm transition-opacity duration-200 lg:hidden',
           open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
         )}
       >
@@ -285,7 +285,7 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose, on
   }
 
   return (
-    <aside className="hidden h-full w-full lg:flex bg-[rgb(var(--app-surface-muted))]">
+    <aside className="hidden h-full w-full lg:flex bg-white">
       {renderNav}
     </aside>
   );

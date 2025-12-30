@@ -116,6 +116,17 @@ let clients = [
   { id: 'cli-1', name: 'Acme Corp', industry: 'Retail', description: 'Omnichannel retail innovator' },
   { id: 'cli-2', name: 'Globex', industry: 'FinTech', description: 'Payments platform' },
 ]
+let interviewGuides = [
+  { id: 'guide-1', name: 'Technical Assessment', role: 'Engineer', description: 'Standard tech interview format', sections: [{ title: 'Coding Challenge', questions: ['Implement a binary tree traversal'] }, { title: 'System Design', questions: ['Design a URL shortener'] }], createdAt: new Date().toISOString() },
+  { id: 'guide-2', name: 'Behavioral Interview', role: 'Manager', description: 'STAR format questions', sections: [{ title: 'Leadership', questions: ['Tell me about a time you led a team'] }, { title: 'Teamwork', questions: ['Describe a conflict with a colleague'] }], createdAt: new Date().toISOString() },
+]
+let recordings = [
+  { id: 'rec-1', candidateId: 'cand-1', interviewId: 'int-1', url: 'https://example.com/video.mp4', durationSeconds: 1800 },
+  { id: 'rec-2', candidateId: 'cand-2', interviewId: 'int-2', url: 'https://example.com/video2.mp4', durationSeconds: 2400 },
+]
+let scorecards = [
+  { id: 'sc-1', name: 'Senior Engineer Scorecard', criteria: [{ id: 'c1', name: 'Technical Skills', weight: 40 }, { id: 'c2', name: 'Communication', weight: 30 }, { id: 'c3', name: 'Problem Solving', weight: 30 }], createdAt: new Date().toISOString() },
+]
 
 export const handlers = [
   // Auth login
@@ -279,6 +290,90 @@ export const handlers = [
     }
     apiKeys.splice(index, 1)
     return HttpResponse.json({ message: 'API key revoked' })
+  }),
+
+  // Interview Guides
+  http.get('/api/interview-guides', () => {
+    return HttpResponse.json(interviewGuides)
+  }),
+  http.post('/api/interview-guides', async ({ request }: any) => {
+    const body = await request.json()
+    const guide = { id: `guide-${Date.now()}`, ...body, createdAt: new Date().toISOString() }
+    interviewGuides.push(guide)
+    return HttpResponse.json(guide, { status: 201 })
+  }),
+  http.get('/api/interview-guides/:id', ({ params }: any) => {
+    const guide = interviewGuides.find(g => g.id === params.id)
+    return guide ? HttpResponse.json(guide) : HttpResponse.json({ error: 'Not found' }, { status: 404 })
+  }),
+  http.put('/api/interview-guides/:id', async ({ params, request }: any) => {
+    const body = await request.json()
+    const index = interviewGuides.findIndex(g => g.id === params.id)
+    if (index === -1) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+    interviewGuides[index] = { ...interviewGuides[index], ...body }
+    return HttpResponse.json(interviewGuides[index])
+  }),
+  http.delete('/api/interview-guides/:id', ({ params }: any) => {
+    const index = interviewGuides.findIndex(g => g.id === params.id)
+    if (index === -1) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+    const [guide] = interviewGuides.splice(index, 1)
+    return HttpResponse.json(guide)
+  }),
+
+  // Interview Recordings
+  http.get('/api/interview-recordings', () => {
+    return HttpResponse.json(recordings)
+  }),
+  http.post('/api/interview-recordings', async ({ request }: any) => {
+    const body = await request.json()
+    const recording = { id: `rec-${Date.now()}`, ...body }
+    recordings.push(recording)
+    return HttpResponse.json(recording, { status: 201 })
+  }),
+  http.get('/api/interview-recordings/:id', ({ params }: any) => {
+    const recording = recordings.find(r => r.id === params.id)
+    return recording ? HttpResponse.json(recording) : HttpResponse.json({ error: 'Not found' }, { status: 404 })
+  }),
+  http.put('/api/interview-recordings/:id', async ({ params, request }: any) => {
+    const body = await request.json()
+    const index = recordings.findIndex(r => r.id === params.id)
+    if (index === -1) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+    recordings[index] = { ...recordings[index], ...body }
+    return HttpResponse.json(recordings[index])
+  }),
+  http.delete('/api/interview-recordings/:id', ({ params }: any) => {
+    const index = recordings.findIndex(r => r.id === params.id)
+    if (index === -1) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+    const [recording] = recordings.splice(index, 1)
+    return HttpResponse.json(recording)
+  }),
+
+  // Scorecards
+  http.get('/api/scorecards', () => {
+    return HttpResponse.json(scorecards)
+  }),
+  http.post('/api/scorecards', async ({ request }: any) => {
+    const body = await request.json()
+    const scorecard = { id: `sc-${Date.now()}`, ...body, createdAt: new Date().toISOString() }
+    scorecards.push(scorecard)
+    return HttpResponse.json(scorecard, { status: 201 })
+  }),
+  http.get('/api/scorecards/:id', ({ params }: any) => {
+    const scorecard = scorecards.find(s => s.id === params.id)
+    return scorecard ? HttpResponse.json(scorecard) : HttpResponse.json({ error: 'Not found' }, { status: 404 })
+  }),
+  http.put('/api/scorecards/:id', async ({ params, request }: any) => {
+    const body = await request.json()
+    const index = scorecards.findIndex(s => s.id === params.id)
+    if (index === -1) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+    scorecards[index] = { ...scorecards[index], ...body }
+    return HttpResponse.json(scorecards[index])
+  }),
+  http.delete('/api/scorecards/:id', ({ params }: any) => {
+    const index = scorecards.findIndex(s => s.id === params.id)
+    if (index === -1) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+    const [scorecard] = scorecards.splice(index, 1)
+    return HttpResponse.json(scorecard)
   }),
 
   // White Label

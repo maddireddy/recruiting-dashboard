@@ -1,29 +1,45 @@
 import api from './api';
 
-export interface WhiteLabelConfig {
-  id?: string;
+export interface WhiteLabel {
+  id: string;
+  tenantId: string;
+  companyName: string;
   domain: string;
-  logoUrl?: string;
-  brandColor?: string;
+  logoUrl: string;
+  faviconUrl: string;
+  primaryColor: string;
+  secondaryColor: string;
+  emailTemplate: string;
+  enabled: boolean;
 }
 
-export const whiteLabelService = {
-  get: async (tenantId?: string) => {
-    const headers: Record<string, string> = {};
-    if (tenantId) headers['X-Tenant-ID'] = tenantId;
-    try {
-      const { data } = await api.get('/whitelabel', { headers });
-      return data as WhiteLabelConfig;
-    } catch (err: any) {
-      console.warn('[whiteLabelService.get] failed', err?.response?.status, err?.message);
-      // Return a safe default to keep UI rendering
-      return { domain: '', logoUrl: '', brandColor: '#3b82f6' } as WhiteLabelConfig;
-    }
-  },
-  save: async (config: WhiteLabelConfig, tenantId?: string) => {
-    const headers: Record<string, string> = {};
-    if (tenantId) headers['X-Tenant-ID'] = tenantId;
-    const { data } = await api.post('/whitelabel', config, { headers });
-    return data as WhiteLabelConfig;
-  },
+const getHeaders = (tenantId?: string) => {
+  const token = localStorage.getItem('token');
+  const headers: any = { 'Authorization': `Bearer ${token}` };
+  if (tenantId) headers['X-Tenant-ID'] = tenantId;
+  return headers;
 };
+
+export async function getWhiteLabel(tenantId?: string): Promise<WhiteLabel | null> {
+  try {
+    const { data } = await api.get('/api/white-label', {
+      headers: getHeaders(tenantId)
+    });
+    return data;
+  } catch (error) {
+    console.error('Error fetching white label:', error);
+    return null;
+  }
+}
+
+export async function updateWhiteLabel(whiteLabel: Partial<WhiteLabel>, tenantId?: string): Promise<WhiteLabel> {
+  try {
+    const { data } = await api.put('/api/white-label', whiteLabel, {
+      headers: getHeaders(tenantId)
+    });
+    return data;
+  } catch (error) {
+    console.error('Error updating white label:', error);
+    throw error;
+  }
+}

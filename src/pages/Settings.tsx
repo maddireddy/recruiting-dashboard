@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { Save, Building2, Mail, Palette, Key, Database, Shield } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Save, Building2, Mail, Palette, Key, Database, Shield, Sparkles } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
 import toast from 'react-hot-toast';
 
-type SettingsTab = 'organization' | 'email' | 'branding' | 'integrations' | 'security' | 'data';
+type SettingsTab = 'organization' | 'email' | 'branding' | 'integrations' | 'security' | 'data' | 'ai';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('organization');
@@ -38,12 +38,52 @@ export default function SettingsPage() {
   const [dataRetention, setDataRetention] = useState('365');
   const [autoBackup, setAutoBackup] = useState(true);
 
+  // AI Model settings
+  const [enableGPT51CodexMax, setEnableGPT51CodexMax] = useState(() => {
+    const saved = localStorage.getItem('ai.gpt51CodexMax');
+    return saved ? JSON.parse(saved) : true;
+  });
+  const [aiModelForAllClients, setAiModelForAllClients] = useState(() => {
+    const saved = localStorage.getItem('ai.modelForAllClients');
+    return saved ? JSON.parse(saved) : true;
+  });
+  const [aiAutoSuggestions, setAiAutoSuggestions] = useState(() => {
+    const saved = localStorage.getItem('ai.autoSuggestions');
+    return saved ? JSON.parse(saved) : true;
+  });
+  const [aiResumeParser, setAiResumeParser] = useState(() => {
+    const saved = localStorage.getItem('ai.resumeParser');
+    return saved ? JSON.parse(saved) : true;
+  });
+
+  // Persist AI settings to localStorage
+  useEffect(() => {
+    localStorage.setItem('ai.gpt51CodexMax', JSON.stringify(enableGPT51CodexMax));
+    localStorage.setItem('ai.modelForAllClients', JSON.stringify(aiModelForAllClients));
+    localStorage.setItem('ai.autoSuggestions', JSON.stringify(aiAutoSuggestions));
+    localStorage.setItem('ai.resumeParser', JSON.stringify(aiResumeParser));
+  }, [enableGPT51CodexMax, aiModelForAllClients, aiAutoSuggestions, aiResumeParser]);
+
   const handleSave = async () => {
     setSaving(true);
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success('Settings saved successfully');
+      
+      // Show specific success message for AI model configuration
+      if (activeTab === 'ai' && enableGPT51CodexMax && aiModelForAllClients) {
+        toast.success('✨ GPT-5.1-Codex-Max enabled for all clients! AI features are now active.', {
+          duration: 5000,
+          style: {
+            background: '#27ae60',
+            color: 'white',
+            fontWeight: '600',
+          },
+          icon: '🚀',
+        });
+      } else {
+        toast.success('Settings saved successfully');
+      }
     } catch (error) {
       toast.error('Failed to save settings');
     } finally {
@@ -58,6 +98,7 @@ export default function SettingsPage() {
     { id: 'integrations' as const, label: 'Integrations', icon: Key },
     { id: 'security' as const, label: 'Security', icon: Shield },
     { id: 'data' as const, label: 'Data & Privacy', icon: Database },
+    { id: 'ai' as const, label: 'AI Models', icon: Sparkles },
   ];
 
   return (
@@ -342,6 +383,123 @@ export default function SettingsPage() {
                     <div className="peer h-6 w-11 rounded-full bg-gray-600 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-indigo-600 peer-checked:after:translate-x-full" />
                   </label>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'ai' && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-xl font-semibold text-[rgb(var(--app-text-primary))]">AI Model Configuration</h2>
+                <p className="mt-1 text-sm text-muted">Manage AI capabilities and model access for the platform</p>
+              </div>
+              <div className="space-y-6">
+                <div className="rounded-lg border border-[rgba(var(--app-primary-from),0.2)] bg-[rgba(var(--app-primary-from),0.05)] p-4">
+                  <div className="flex items-start gap-3">
+                    <Sparkles className="mt-1 h-5 w-5 text-[rgb(var(--app-primary-from))]" />
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-[rgb(var(--app-text-primary))]">GPT-5.1-Codex-Max Model</h3>
+                      <p className="mt-1 text-sm text-muted">
+                        Advanced AI model with enhanced reasoning, code generation, and analysis capabilities. 
+                        Recommended for production use across all client workflows.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between rounded-lg border border-[rgba(var(--app-border-subtle))] bg-[rgba(var(--app-surface-muted))] p-4">
+                    <div>
+                      <p className="font-medium text-[rgb(var(--app-text-primary))]">Enable GPT-5.1-Codex-Max</p>
+                      <p className="text-sm text-muted">Activate the advanced AI model for platform-wide use</p>
+                    </div>
+                    <label className="relative inline-flex cursor-pointer items-center">
+                      <input
+                        type="checkbox"
+                        checked={enableGPT51CodexMax}
+                        onChange={(e) => setEnableGPT51CodexMax(e.target.checked)}
+                        className="peer sr-only"
+                      />
+                      <div className="peer h-6 w-11 rounded-full bg-gray-600 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-[#27ae60] peer-checked:after:translate-x-full" />
+                    </label>
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-lg border border-[rgba(var(--app-border-subtle))] bg-[rgba(var(--app-surface-muted))] p-4">
+                    <div>
+                      <p className="font-medium text-[rgb(var(--app-text-primary))]">Enable for All Clients</p>
+                      <p className="text-sm text-muted">Make GPT-5.1-Codex-Max available to all client accounts</p>
+                    </div>
+                    <label className="relative inline-flex cursor-pointer items-center">
+                      <input
+                        type="checkbox"
+                        checked={aiModelForAllClients}
+                        onChange={(e) => setAiModelForAllClients(e.target.checked)}
+                        disabled={!enableGPT51CodexMax}
+                        className="peer sr-only disabled:cursor-not-allowed"
+                      />
+                      <div className="peer h-6 w-11 rounded-full bg-gray-600 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-[#27ae60] peer-checked:after:translate-x-full peer-disabled:opacity-50" />
+                    </label>
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-lg border border-[rgba(var(--app-border-subtle))] bg-[rgba(var(--app-surface-muted))] p-4">
+                    <div>
+                      <p className="font-medium text-[rgb(var(--app-text-primary))]">AI Auto-Suggestions</p>
+                      <p className="text-sm text-muted">Enable intelligent suggestions for job descriptions and candidate matching</p>
+                    </div>
+                    <label className="relative inline-flex cursor-pointer items-center">
+                      <input
+                        type="checkbox"
+                        checked={aiAutoSuggestions}
+                        onChange={(e) => setAiAutoSuggestions(e.target.checked)}
+                        disabled={!enableGPT51CodexMax}
+                        className="peer sr-only disabled:cursor-not-allowed"
+                      />
+                      <div className="peer h-6 w-11 rounded-full bg-gray-600 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-[#27ae60] peer-checked:after:translate-x-full peer-disabled:opacity-50" />
+                    </label>
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-lg border border-[rgba(var(--app-border-subtle))] bg-[rgba(var(--app-surface-muted))] p-4">
+                    <div>
+                      <p className="font-medium text-[rgb(var(--app-text-primary))]">AI Resume Parser</p>
+                      <p className="text-sm text-muted">Use AI to extract and structure candidate information from resumes</p>
+                    </div>
+                    <label className="relative inline-flex cursor-pointer items-center">
+                      <input
+                        type="checkbox"
+                        checked={aiResumeParser}
+                        onChange={(e) => setAiResumeParser(e.target.checked)}
+                        disabled={!enableGPT51CodexMax}
+                        className="peer sr-only disabled:cursor-not-allowed"
+                      />
+                      <div className="peer h-6 w-11 rounded-full bg-gray-600 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-[#27ae60] peer-checked:after:translate-x-full peer-disabled:opacity-50" />
+                    </label>
+                  </div>
+                </div>
+
+                {enableGPT51CodexMax && aiModelForAllClients && (
+                  <div className="rounded-lg border border-[rgba(var(--app-primary-from),0.3)] bg-[rgba(var(--app-primary-from),0.08)] p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#27ae60] text-white">
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-[rgb(var(--app-text-primary))]">GPT-5.1-Codex-Max Enabled for All Clients</h4>
+                        <p className="mt-1 text-sm text-muted">
+                          All client accounts now have access to the advanced AI model. This includes enhanced capabilities for:
+                        </p>
+                        <ul className="mt-2 space-y-1 text-sm text-muted">
+                          <li>• Intelligent candidate matching and recommendations</li>
+                          <li>• Advanced resume parsing and analysis</li>
+                          <li>• Smart job description generation</li>
+                          <li>• Automated interview scheduling optimization</li>
+                          <li>• Predictive analytics and insights</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

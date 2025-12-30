@@ -57,45 +57,45 @@ export default function Header({ onMenuClick }: HeaderProps) {
   const pageTitle = breadcrumbs[breadcrumbs.length - 1]?.label ?? 'Overview';
 
   return (
-    <header className="header-shell sticky top-0 z-40 border-b">
+    <header className="sticky top-0 z-40 border-b border-[#E2E8F0] bg-white/95 backdrop-blur-sm shadow-sm">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
         <div className="flex flex-1 items-center gap-4">
           <button
             type="button"
             onClick={onMenuClick}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] transition lg:hidden"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#E2E8F0] bg-white text-[#1E293B] transition hover:bg-[#F8FAFC] hover:border-[#3498db]"
             aria-label="Open navigation"
           >
             <Menu size={20} />
           </button>
 
           <div className="lg:hidden">
-            <h2 className="text-lg font-semibold text-[rgb(var(--app-text-primary))]">{pageTitle}</h2>
+            <h2 className="text-lg font-semibold text-[#0F172A]">{pageTitle}</h2>
           </div>
 
           <div className="hidden lg:flex lg:flex-col">
-            <nav className="flex items-center gap-2 text-xs font-medium text-muted">
+            <nav className="flex items-center gap-2 text-xs font-medium text-[#64748B]">
               {breadcrumbs.map((crumb, index) => (
                 <span key={crumb.href} className="flex items-center gap-2">
-                  {index !== 0 && <ChevronRight size={12} className="text-muted" />}
+                  {index !== 0 && <ChevronRight size={12} className="text-[#94A3B8]" />}
                   {index === breadcrumbs.length - 1 ? (
-                    <span className="text-[rgb(var(--app-text-primary))]">{crumb.label}</span>
+                    <span className="text-[#0F172A] font-semibold">{crumb.label}</span>
                   ) : (
-                    <Link to={crumb.href} className="transition hover:text-[rgb(var(--app-primary-from))]">
+                    <Link to={crumb.href} className="transition hover:text-[#3498db]">
                       {crumb.label}
                     </Link>
                   )}
                 </span>
               ))}
             </nav>
-            <h2 className="text-lg font-semibold text-[rgb(var(--app-text-primary))] sm:text-xl">{pageTitle}</h2>
+            <h2 className="text-lg font-semibold text-[#0F172A] sm:text-xl">{pageTitle}</h2>
           </div>
         </div>
 
         <div className="flex flex-1 items-center justify-end gap-3">
           <div className="hidden sm:flex sm:flex-1">
             <GlobalSearchBar />
-            <div className="ml-2 hidden items-center gap-1 rounded-md border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] px-2 py-1 text-[11px] font-semibold uppercase tracking-widest text-muted sm:flex">
+            <div className="ml-2 hidden items-center gap-1 rounded-md border border-[#E2E8F0] bg-[#F8FAFC] px-2 py-1 text-[11px] font-semibold uppercase tracking-widest text-[#64748B] sm:flex">
               <Command size={12} />
               <span>K</span>
             </div>
@@ -104,34 +104,34 @@ export default function Header({ onMenuClick }: HeaderProps) {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] transition"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#E2E8F0] bg-white text-[#64748B] transition hover:bg-gradient-to-br hover:from-[#3498db]/10 hover:to-[#2980b9]/10 hover:text-[#3498db] hover:border-[#3498db]"
               aria-label="Open command menu"
             >
               <Sparkles size={18} />
             </button>
             <button
               type="button"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] transition"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#E2E8F0] bg-white text-[#64748B] transition hover:bg-[#F8FAFC] hover:text-[#0F172A] hover:border-[#CBD5E1]"
               aria-label="Notifications"
             >
               <Bell size={18} />
             </button>
             <button
               type="button"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] transition"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#E2E8F0] bg-white text-[#64748B] transition hover:bg-[#F8FAFC] hover:text-[#0F172A] hover:border-[#CBD5E1]"
               aria-label="Global settings"
             >
               <Settings size={18} />
             </button>
             <ThemeToggle />
             <ExportMenu />
-            <div className="ml-1 flex items-center gap-3 rounded-2xl border border-[rgba(var(--app-border-subtle))] bg-[rgb(var(--app-surface-muted))] px-3 py-1.5 text-sm text-[rgb(var(--app-text-primary))]">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400/30 to-emerald-500/30 text-[rgb(var(--app-primary-from))]">
+            <div className="ml-1 flex items-center gap-3 rounded-2xl border border-[#E2E8F0] bg-white px-3 py-1.5 text-sm shadow-sm hover:shadow-md transition">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#3498db] to-[#2980b9] text-white font-semibold">
                 {initials}
               </div>
               <div className="hidden sm:flex sm:flex-col">
-                <span className="text-xs font-semibold text-muted">Welcome back</span>
-                <span className="text-sm font-medium">{userEmail}</span>
+                <span className="text-xs font-semibold text-[#64748B]">Welcome back</span>
+                <span className="text-sm font-medium text-[#0F172A]">{userEmail}</span>
               </div>
             </div>
           </div>
