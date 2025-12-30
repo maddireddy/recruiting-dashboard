@@ -93,6 +93,13 @@ export const FEATURE_MAP: Record<string, FeatureRequirement> = {
   '/candidate-sourcings': { feature: 'advanced-search', description: 'Candidate sourcing', availableIn: ['starter', 'pro', 'enterprise'] },
   '/job-board-integration': { feature: 'api-access', description: 'Job board integration', availableIn: ['pro', 'enterprise'] },
   '/bookmarklet-captures': { feature: 'advanced-search', description: 'Bookmarklet captures', availableIn: ['starter', 'pro', 'enterprise'] },
+
+  // Staffing & Operations Management - Pro+
+  '/internal-chat': { feature: 'internal-chat', description: 'Team collaboration chat', availableIn: ['pro', 'enterprise'] },
+  '/candidate-assignments': { feature: 'advanced-analytics', description: 'Candidate assignment tracking', availableIn: ['pro', 'enterprise'] },
+  '/employee-timesheets': { feature: 'advanced-analytics', description: 'Employee timesheet management', availableIn: ['pro', 'enterprise'] },
+  '/contractor-timesheets': { feature: 'advanced-analytics', description: 'Contractor timesheet tracking', availableIn: ['pro', 'enterprise'] },
+  '/invoices': { feature: 'advanced-analytics', description: 'Invoice generation and tracking', availableIn: ['pro', 'enterprise'] },
 };
 
 /**
