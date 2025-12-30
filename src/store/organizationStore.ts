@@ -85,6 +85,9 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
       'interview-intelligence',
       'talent-pools',
       'offer-management',
+      'internal-chat',
+      'timesheet-management',
+      'invoice-management',
     ],
   },
   enterprise: {
@@ -116,6 +119,9 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
       'custom-integrations',
       'audit-logs',
       'compliance',
+      'internal-chat',
+      'timesheet-management',
+      'invoice-management',
     ],
   },
 };

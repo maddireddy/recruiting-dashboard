@@ -25,6 +25,9 @@ import {
   Zap,
   DollarSign,
   Building2,
+  MessageSquare,
+  Clock,
+  Receipt,
 } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
 import clsx from 'clsx';
@@ -114,6 +117,16 @@ const navigationSections = [
     items: [
       { path: '/candidate-portal', icon: UserSquare, label: 'Candidate Portal' },
       { path: '/onboarding', icon: UserCheck, label: 'New Hire Onboarding' },
+    ],
+  },
+  {
+    title: 'Staffing Operations',
+    items: [
+      { path: '/internal-chat', icon: MessageSquare, label: 'Internal Chat' },
+      { path: '/candidate-assignments', icon: Users, label: 'Candidate Assignments' },
+      { path: '/employee-timesheets', icon: Clock, label: 'Employee Timesheets' },
+      { path: '/contractor-timesheets', icon: Clock, label: 'Contractor Timesheets' },
+      { path: '/invoices', icon: Receipt, label: 'Invoices' },
     ],
   },
   {

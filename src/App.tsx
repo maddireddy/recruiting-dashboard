@@ -80,6 +80,13 @@ const OnboardingPage = lazy(() => import('./pages/Onboarding'));
 const CandidatePortalPage = lazy(() => import('./pages/CandidatePortal'));
 const JobBoardIntegrationPage = lazy(() => import('./pages/JobBoardIntegration'));
 
+// Staffing & Operations Management (Pro/Enterprise features)
+const InternalChatPage = lazy(() => import('./pages/InternalChat'));
+const CandidateAssignmentsPage = lazy(() => import('./pages/CandidateAssignments'));
+const EmployeeTimesheetsPage = lazy(() => import('./pages/EmployeeTimesheets'));
+const ContractorTimesheetsPage = lazy(() => import('./pages/ContractorTimesheets'));
+const InvoiceManagementPage = lazy(() => import('./pages/InvoiceManagement'));
+
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -196,6 +203,14 @@ function App() {
               <Route path="/onboarding" element={<OnboardingPage />} />
               <Route path="/candidate-portal" element={<CandidatePortalPage />} />
               <Route path="/job-board-integration" element={<JobBoardIntegrationPage />} />
+
+              {/* Staffing & Operations Management */}
+              <Route path="/internal-chat" element={<InternalChatPage />} />
+              <Route path="/candidate-assignments" element={<CandidateAssignmentsPage />} />
+              <Route path="/employee-timesheets" element={<EmployeeTimesheetsPage />} />
+              <Route path="/contractor-timesheets" element={<ContractorTimesheetsPage />} />
+              <Route path="/invoices" element={<InvoiceManagementPage />} />
+
               <Route path="/ai/rediscovery" element={<RediscoveryPage />} />
               <Route path="/ai/talent-pool-matching" element={<TalentPoolMatching />} />
               <Route path="/ai/interview-intelligence" element={<InterviewIntelligencePage />} />
