@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import { useState, useCallback } from 'react';
 import Sidebar from '../components/common/Sidebar';
 import Header from '../components/common/Header';
+import SupportButton from '../components/support/SupportButton';
 
 export default function MainLayout() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -38,6 +39,9 @@ export default function MainLayout() {
         onNavigate={handleCloseSidebar}
         onClose={handleCloseSidebar}
       />
+
+      {/* Floating support button */}
+      <SupportButton variant="floating" />
     </div>
   );
 }

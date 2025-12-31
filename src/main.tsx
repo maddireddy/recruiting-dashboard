@@ -4,10 +4,14 @@ import './index.css'
 import App from './App.tsx'
 import { ThemeProvider } from './context/ThemeContext'
 import { initializeDefaultOrganization } from './store/organizationStore'
+import { initializeMonitoring } from './lib/monitoring'
 
 // Initialize MSW in development behind a feature flag to mock new endpoints
 // Set VITE_USE_MOCKS=true in your env to enable mocks in dev.
 async function bootstrap() {
+  // Initialize error tracking and monitoring
+  initializeMonitoring();
+
   // Initialize default organization for testing/development
   initializeDefaultOrganization();
 
