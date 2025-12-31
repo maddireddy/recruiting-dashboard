@@ -33,9 +33,11 @@ mongoose
 // Routes
 const onboardingRoutes = require('./routes/onboarding');
 const employeeRoutes = require('./routes/employees');
+const departmentRoutes = require('./routes/departments');
 
 app.use('/api/v1/onboarding', onboardingRoutes);
 app.use('/api/v1/employees', employeeRoutes);
+app.use('/api/v1/departments', departmentRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -90,6 +92,7 @@ app.listen(PORT, () => {
 ║   API Endpoints:                             ║
 ║   - POST /api/v1/onboarding/*                ║
 ║   - GET/POST /api/v1/employees/*             ║
+║   - GET/POST /api/v1/departments/*           ║
 ║                                              ║
 ║   Health: http://localhost:${PORT}/health    ║
 ║                                              ║
