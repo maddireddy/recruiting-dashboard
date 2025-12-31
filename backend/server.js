@@ -34,10 +34,12 @@ mongoose
 const onboardingRoutes = require('./routes/onboarding');
 const employeeRoutes = require('./routes/employees');
 const departmentRoutes = require('./routes/departments');
+const careerPageRoutes = require('./routes/careerPages');
 
 app.use('/api/v1/onboarding', onboardingRoutes);
 app.use('/api/v1/employees', employeeRoutes);
 app.use('/api/v1/departments', departmentRoutes);
+app.use('/api/v1/career-pages', careerPageRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -93,6 +95,7 @@ app.listen(PORT, () => {
 ║   - POST /api/v1/onboarding/*                ║
 ║   - GET/POST /api/v1/employees/*             ║
 ║   - GET/POST /api/v1/departments/*           ║
+║   - GET/PUT /api/v1/career-pages/*           ║
 ║                                              ║
 ║   Health: http://localhost:${PORT}/health    ║
 ║                                              ║
