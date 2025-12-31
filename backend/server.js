@@ -37,6 +37,7 @@ const departmentRoutes = require('./routes/departments');
 const careerPageRoutes = require('./routes/careerPages');
 const notificationRoutes = require('./routes/notifications');
 const emailTemplateRoutes = require('./routes/emailTemplates');
+const webhookRoutes = require('./routes/webhooks');
 
 app.use('/api/v1/onboarding', onboardingRoutes);
 app.use('/api/v1/employees', employeeRoutes);
@@ -44,6 +45,7 @@ app.use('/api/v1/departments', departmentRoutes);
 app.use('/api/v1/career-pages', careerPageRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/email-templates', emailTemplateRoutes);
+app.use('/api/v1/webhooks', webhookRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

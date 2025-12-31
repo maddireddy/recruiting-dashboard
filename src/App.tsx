@@ -74,13 +74,23 @@ const InterviewGuidesPage = lazy(() => import('./pages/InterviewGuides'));
 const InterviewRecordingsPage = lazy(() => import('./pages/InterviewRecordings'));
 // Newly added pages for master plan coverage
 const UsersPage = lazy(() => import('./pages/Users'));
-const NotificationsPage = lazy(() => import('./pages/Notifications'));
+const NotificationsPage = lazy(() => import('./pages/notifications/NotificationCenter'));
+const NotificationPreferencesPage = lazy(() => import('./pages/notifications/NotificationPreferences'));
 const SettingsPage = lazy(() => import('./pages/Settings'));
 const AuditLogsPage = lazy(() => import('./pages/AuditLogs'));
 const ScorecardsPage = lazy(() => import('./pages/Scorecards'));
 const OnboardingPage = lazy(() => import('./pages/Onboarding'));
 const CandidatePortalPage = lazy(() => import('./pages/CandidatePortal'));
 const JobBoardIntegrationPage = lazy(() => import('./pages/JobBoardIntegration'));
+
+// Email Template Management
+const EmailTemplateListPage = lazy(() => import('./pages/email-templates/EmailTemplateList'));
+const EmailTemplateEditorPage = lazy(() => import('./pages/email-templates/EmailTemplateEditor'));
+
+// Webhook Management
+const WebhookManagementPage = lazy(() => import('./pages/webhooks/WebhookManagement'));
+const WebhookEditorPage = lazy(() => import('./pages/webhooks/WebhookEditor'));
+const WebhookLogsPage = lazy(() => import('./pages/webhooks/WebhookLogs'));
 
 // Staffing & Operations Management (Pro/Enterprise features)
 const InternalChatPage = lazy(() => import('./pages/InternalChat'));
@@ -157,7 +167,10 @@ function App() {
               <Route path="/clients" element={<ClientsPage />} />
               <Route path="/interviews" element={<InterviewsPage />} />
               <Route path="/documents" element={<DocumentsPage />} />
-              <Route path="/email-templates" element={<EmailTemplatesPage />} />
+              {/* Email Template Management */}
+              <Route path="/email-templates" element={<EmailTemplateListPage />} />
+              <Route path="/email-templates/new" element={<EmailTemplateEditorPage />} />
+              <Route path="/email-templates/:id" element={<EmailTemplateEditorPage />} />
               <Route path="/email-logs" element={<EmailLogsPage />}/>
               <Route path="/reports" element={<ReportsPage />} />
               {/* Scheduling (authenticated) */}
@@ -201,6 +214,7 @@ function App() {
               {/* Newly added pages for master plan coverage */}
               <Route path="/users" element={<UsersPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
+              <Route path="/notifications/preferences" element={<NotificationPreferencesPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/audit-logs" element={<AuditLogsPage />} />
               <Route path="/scorecards" element={<ScorecardsPage />} />
@@ -215,6 +229,12 @@ function App() {
               <Route path="/contractor-timesheets" element={<ContractorTimesheetsPage />} />
               <Route path="/invoices" element={<InvoiceManagementPage />} />
               <Route path="/workflow-management" element={<WorkflowManagementPage />} />
+
+              {/* Webhook Management */}
+              <Route path="/webhooks" element={<WebhookManagementPage />} />
+              <Route path="/webhooks/new" element={<WebhookEditorPage />} />
+              <Route path="/webhooks/:id" element={<WebhookEditorPage />} />
+              <Route path="/webhooks/:id/logs" element={<WebhookLogsPage />} />
 
               <Route path="/ai/rediscovery" element={<RediscoveryPage />} />
               <Route path="/ai/talent-pool-matching" element={<TalentPoolMatching />} />
