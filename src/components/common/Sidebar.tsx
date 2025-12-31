@@ -54,7 +54,7 @@ const navigationSections = [
     ],
   },
   {
-    title: 'Talent Management',
+    title: 'Core Recruiting',
     items: [
       { path: '/candidates', icon: Users, label: 'Candidates' },
       { path: '/jobs', icon: Briefcase, label: 'Jobs' },
@@ -62,24 +62,25 @@ const navigationSections = [
       { path: '/submissions', icon: FolderKanban, label: 'Submissions' },
       { path: '/offers', icon: Award, label: 'Offers' },
       { path: '/talent-pools', icon: Users, label: 'Talent Pools' },
+      { path: '/onboarding', icon: UserCheck, label: 'Onboarding' },
     ],
   },
   {
     title: 'Sourcing & Search',
     items: [
       { path: '/advanced-search', icon: Search, label: 'Advanced Search' },
+      { path: '/ai/semantic-search', icon: Sparkles, label: 'Semantic Search' },
       { path: '/saved-searches', icon: FileCheck, label: 'Saved Searches' },
       { path: '/boolean-search-templates', icon: FileText, label: 'Boolean Templates' },
       { path: '/candidate-sourcings', icon: Target, label: 'Candidate Sourcings' },
-      { path: '/job-board-integration', icon: Globe, label: 'Job Board Integration' },
-      { path: '/bookmarklet-captures', icon: Target, label: 'Bookmarklet Captures' },
+      { path: '/job-board-integration', icon: Globe, label: 'Job Boards' },
+      { path: '/bookmarklet-captures', icon: Target, label: 'Bookmarklet' },
     ],
   },
   {
     title: 'AI Tools',
     items: [
       { path: '/ai', icon: Sparkles, label: 'AI Lab' },
-      { path: '/ai/semantic-search', icon: Sparkles, label: 'Semantic Search' },
       { path: '/ai/resume-parser', icon: Sparkles, label: 'Resume Parser' },
       { path: '/ai/jd-generator', icon: Sparkles, label: 'JD Generator' },
       { path: '/ai/rediscovery', icon: Sparkles, label: 'Rediscovery' },
@@ -94,6 +95,7 @@ const navigationSections = [
       { path: '/interview-recordings', icon: FileText, label: 'Recordings' },
       { path: '/scorecards', icon: ClipboardCheck, label: 'Scorecards' },
       { path: '/scheduling', icon: Calendar, label: 'Scheduling' },
+      { path: '/calendar-sync', icon: Calendar, label: 'Calendar Sync' },
     ],
   },
   {
@@ -101,62 +103,42 @@ const navigationSections = [
     items: [
       { path: '/email-templates', icon: Mail, label: 'Email Templates' },
       { path: '/email-logs', icon: Mail, label: 'Email Logs' },
-      { path: '/sms', icon: Mail, label: 'SMS Campaigns' },
-      { path: '/sms/communications', icon: Mail, label: 'SMS Communications' },
-    ],
-  },
-  {
-    title: 'Automation & Workflows',
-    items: [
-      { path: '/workflows', icon: Zap, label: 'Workflows' },
-      { path: '/calendar-sync', icon: Calendar, label: 'Calendar Sync' },
-    ],
-  },
-  {
-    title: 'Candidate Experience',
-    items: [
-      { path: '/candidate-portal', icon: UserSquare, label: 'Candidate Portal' },
-      { path: '/onboarding', icon: UserCheck, label: 'New Hire Onboarding' },
-    ],
-  },
-  {
-    title: 'Staffing Operations',
-    items: [
+      { path: '/sms', icon: MessageSquare, label: 'SMS Campaigns' },
+      { path: '/sms/communications', icon: MessageSquare, label: 'SMS Communications' },
       { path: '/internal-chat', icon: MessageSquare, label: 'Internal Chat' },
-      { path: '/candidate-assignments', icon: Users, label: 'Candidate Assignments' },
-      { path: '/employee-timesheets', icon: Clock, label: 'Employee Timesheets' },
-      { path: '/contractor-timesheets', icon: Clock, label: 'Contractor Timesheets' },
-      { path: '/invoices', icon: Receipt, label: 'Invoices' },
     ],
   },
   {
-    title: 'Workflow & Automation',
+    title: 'Automation & Operations',
     items: [
-      { path: '/workflow-management', icon: Zap, label: 'Workflow Management' },
-      { path: '/workflows', icon: FolderKanban, label: 'Custom Workflows' },
+      { path: '/workflow-management', icon: Zap, label: 'Workflow Designer' },
+      { path: '/candidate-assignments', icon: Users, label: 'Assignments' },
+      { path: '/employee-timesheets', icon: Clock, label: 'Employee Hours' },
+      { path: '/contractor-timesheets', icon: Clock, label: 'Contractor Hours' },
+      { path: '/invoices', icon: Receipt, label: 'Invoices' },
     ],
   },
   {
     title: 'Analytics & Compliance',
     items: [
+      { path: '/custom-reports', icon: TrendingUp, label: 'Custom Reports' },
       { path: '/market-intelligence', icon: TrendingUp, label: 'Market Intelligence' },
       { path: '/diversity-metrics', icon: ShieldCheck, label: 'Diversity Metrics' },
       { path: '/skills-assessments', icon: Award, label: 'Skills Assessments' },
       { path: '/silver-medalists', icon: Award, label: 'Silver Medalists' },
       { path: '/eeo-data', icon: ShieldCheck, label: 'EEO Data' },
-      { path: '/custom-reports', icon: TrendingUp, label: 'Custom Reports' },
       { path: '/compliance', icon: ShieldCheck, label: 'Compliance' },
     ],
   },
   {
     title: 'Administration',
     items: [
-      { path: '/users', icon: Users, label: 'User Management' },
-      { path: '/settings', icon: Settings, label: 'Settings' },
+      { path: '/users', icon: Users, label: 'Users' },
       { path: '/clients', icon: Building2, label: 'Clients' },
       { path: '/vendors', icon: Building2, label: 'Vendors' },
-      { path: '/billing', icon: DollarSign, label: 'Billing' },
       { path: '/documents', icon: FileText, label: 'Documents' },
+      { path: '/settings', icon: Settings, label: 'Settings' },
+      { path: '/billing', icon: DollarSign, label: 'Billing' },
       { path: '/audit-logs', icon: FileCheck, label: 'Audit Logs' },
     ],
   },
@@ -167,7 +149,9 @@ const navigationSections = [
       { path: '/vendor-submittals', icon: FileText, label: 'Vendor Submittals' },
       { path: '/white-label', icon: Settings, label: 'White Label' },
       { path: '/api-keys', icon: FileCheck, label: 'API Keys' },
-      { path: '/mobile-app-configs', icon: Settings, label: 'Mobile App Configs' },
+      { path: '/mobile-app-configs', icon: Settings, label: 'Mobile App' },
+      { path: '/candidate-portal', icon: UserSquare, label: 'Candidate Portal' },
+      { path: '/referrals', icon: Users, label: 'Referrals' },
     ],
   },
 ];
@@ -184,14 +168,14 @@ export default function Sidebar({ variant = 'desktop', open = false, onClose, on
       // Default: open key sections for better UX
       return {
         'Overview': true,
-        'Talent Management': true,
+        'Core Recruiting': true,
         'AI Tools': true,
         'Administration': true,
       };
     } catch {
       return {
         'Overview': true,
-        'Talent Management': true,
+        'Core Recruiting': true,
         'AI Tools': true,
         'Administration': true,
       };

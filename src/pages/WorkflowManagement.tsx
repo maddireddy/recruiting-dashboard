@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { WORKFLOW_TEMPLATES } from '../config/workflowTemplates';
 import { workflowEngine } from '../services/workflow.engine';
 import type { WorkflowTemplate, WorkflowDefinition } from '../types/workflow';
+import { logger } from '../lib/logger';
 
 export default function WorkflowManagementPage() {
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'recruiting' | 'staffing' | 'finance' | 'hr'>('all');
@@ -87,14 +88,19 @@ export default function WorkflowManagementPage() {
       setActiveWorkflows((prev) => [...prev, workflowDefinition]);
       setInstalledTemplates((prev) => new Set([...prev, template.id]));
 
-      // Show success notification (you can integrate with toast/notification system)
-      console.log(`✅ Workflow "${template.name}" installed successfully!`);
+      // Log success
+      logger.success(`Workflow "${template.name}" installed successfully`, {
+        workflowId: workflowDefinition.id,
+        templateId: template.id,
+      });
 
       // In a real app, you would also persist this to the backend:
       // await api.post('/api/workflows', workflowDefinition);
     } catch (error) {
-      console.error('Failed to install workflow:', error);
-      // Show error notification
+      logger.error('Failed to install workflow', error, {
+        templateId: template.id,
+        templateName: template.name,
+      });
       alert(`Failed to install workflow: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setInstalling(null);
@@ -114,12 +120,15 @@ export default function WorkflowManagementPage() {
         return newSet;
       });
 
-      console.log(`✅ Workflow uninstalled successfully!`);
+      // Unregister from engine
+      workflowEngine.unregisterWorkflow(workflowId);
+
+      logger.success('Workflow uninstalled successfully', { workflowId, templateId });
 
       // In a real app, you would also call the backend:
       // await api.delete(`/api/workflows/${workflowId}`);
     } catch (error) {
-      console.error('Failed to uninstall workflow:', error);
+      logger.error('Failed to uninstall workflow', error, { workflowId });
       alert(`Failed to uninstall workflow: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };

@@ -14,6 +14,7 @@ import type {
   WorkflowHistoryEntry,
   WorkflowEntityType,
 } from '../types/workflow';
+import { logger } from '../lib/logger';
 
 export class WorkflowEngine {
   private workflows: Map<string, WorkflowDefinition> = new Map();
@@ -24,6 +25,30 @@ export class WorkflowEngine {
    */
   registerWorkflow(workflow: WorkflowDefinition): void {
     this.workflows.set(workflow.id, workflow);
+    logger.workflow('Workflow registered', {
+      workflowId: workflow.id,
+      name: workflow.name,
+      entityType: workflow.entityType,
+    });
+  }
+
+  /**
+   * Unregister a workflow definition
+   */
+  unregisterWorkflow(workflowId: string): void {
+    const removed = this.workflows.delete(workflowId);
+    if (removed) {
+      logger.workflow('Workflow unregistered', { workflowId });
+    } else {
+      logger.warn('Attempted to unregister non-existent workflow', { workflowId });
+    }
+  }
+
+  /**
+   * Get all registered workflows
+   */
+  getAll(): WorkflowDefinition[] {
+    return Array.from(this.workflows.values());
   }
 
   /**
@@ -278,38 +303,63 @@ export class WorkflowEngine {
   ): Promise<void> {
     switch (action.type) {
       case 'notification':
-        console.log(`[Workflow] Send notification:`, action.config.template);
+        logger.workflow('Send notification', {
+          template: action.config.template,
+          instanceId: instance.id,
+          workflowId: workflow.id,
+        });
         // Would integrate with notification service
         break;
 
       case 'email':
-        console.log(`[Workflow] Send email to:`, action.config.recipients);
+        logger.workflow('Send email', {
+          recipients: action.config.recipients,
+          instanceId: instance.id,
+          workflowId: workflow.id,
+        });
         // Would integrate with email service
         break;
 
       case 'webhook':
-        console.log(`[Workflow] Trigger webhook:`, action.config.webhookUrl);
+        logger.workflow('Trigger webhook', {
+          webhookUrl: action.config.webhookUrl,
+          instanceId: instance.id,
+          workflowId: workflow.id,
+        });
         // Would make HTTP request to webhook URL
         break;
 
       case 'update_field':
         if (action.config.field) {
           instance.metadata[action.config.field] = action.config.value;
+          logger.workflow('Updated field', {
+            field: action.config.field,
+            value: action.config.value,
+            instanceId: instance.id,
+          });
         }
         break;
 
       case 'assign_user':
         instance.assignedTo = action.config.userId;
         instance.assignedToName = action.config.userName;
+        logger.workflow('Assigned user', {
+          userId: action.config.userId,
+          userName: action.config.userName,
+          instanceId: instance.id,
+        });
         break;
 
       case 'create_task':
-        console.log(`[Workflow] Create task:`, action.config);
+        logger.workflow('Create task', {
+          config: action.config,
+          instanceId: instance.id,
+        });
         // Would integrate with task service
         break;
 
       default:
-        console.log(`[Workflow] Unknown action type:`, action.type);
+        logger.warn('Unknown workflow action type', { actionType: action.type });
     }
   }
 
