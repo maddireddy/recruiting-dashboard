@@ -15,6 +15,7 @@ import type {
   WorkflowEntityType,
 } from '../types/workflow';
 import { logger } from '../lib/logger';
+import { actionHandlerRegistry } from './workflow/action-handlers';
 
 export class WorkflowEngine {
   private workflows: Map<string, WorkflowDefinition> = new Map();
@@ -287,7 +288,11 @@ export class WorkflowEngine {
       try {
         await this.executeAction(action, instance, workflow);
       } catch (error) {
-        console.error(`Failed to execute action ${action.id}:`, error);
+        logger.error('Failed to execute workflow action', error, {
+          actionId: action.id,
+          actionType: action.type,
+          instanceId: instance.id,
+        });
         // Continue with other actions even if one fails
       }
     }
@@ -301,34 +306,8 @@ export class WorkflowEngine {
     instance: WorkflowInstance,
     workflow: WorkflowDefinition
   ): Promise<void> {
+    // Handle built-in actions that modify state directly
     switch (action.type) {
-      case 'notification':
-        logger.workflow('Send notification', {
-          template: action.config.template,
-          instanceId: instance.id,
-          workflowId: workflow.id,
-        });
-        // Would integrate with notification service
-        break;
-
-      case 'email':
-        logger.workflow('Send email', {
-          recipients: action.config.recipients,
-          instanceId: instance.id,
-          workflowId: workflow.id,
-        });
-        // Would integrate with email service
-        break;
-
-      case 'webhook':
-        logger.workflow('Trigger webhook', {
-          webhookUrl: action.config.webhookUrl,
-          instanceId: instance.id,
-          workflowId: workflow.id,
-        });
-        // Would make HTTP request to webhook URL
-        break;
-
       case 'update_field':
         if (action.config.field) {
           instance.metadata[action.config.field] = action.config.value;
@@ -338,7 +317,7 @@ export class WorkflowEngine {
             instanceId: instance.id,
           });
         }
-        break;
+        return;
 
       case 'assign_user':
         instance.assignedTo = action.config.userId;
@@ -348,19 +327,11 @@ export class WorkflowEngine {
           userName: action.config.userName,
           instanceId: instance.id,
         });
-        break;
-
-      case 'create_task':
-        logger.workflow('Create task', {
-          config: action.config,
-          instanceId: instance.id,
-        });
-        // Would integrate with task service
-        break;
-
-      default:
-        logger.warn('Unknown workflow action type', { actionType: action.type });
+        return;
     }
+
+    // Use action handler registry for all other actions
+    await actionHandlerRegistry.executeAction(action, instance);
   }
 
   /**
