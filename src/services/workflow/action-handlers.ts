@@ -6,7 +6,7 @@
 
 import { logger } from '../../lib/logger';
 import type { WorkflowAction, WorkflowInstance } from '../../types/workflow';
-import { api } from '../api';
+import api from '../api';
 
 export interface ActionHandler {
   execute(
