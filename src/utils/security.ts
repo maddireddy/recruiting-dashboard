@@ -119,7 +119,7 @@ export const CSP_DIRECTIVES = {
   'style-src': ["'self'", "'unsafe-inline'"],
   'img-src': ["'self'", 'data:', 'https:'],
   'font-src': ["'self'", 'data:'],
-  'connect-src': ["'self'", process.env.VITE_API_URL || 'http://localhost:8084'],
+  'connect-src': ["'self'", import.meta.env.VITE_API_URL || 'http://localhost:8084'],
   'frame-ancestors': ["'none'"],
   'base-uri': ["'self'"],
   'form-action': ["'self'"],

@@ -3,7 +3,7 @@ import { Plus, Send, Eye, Download, DollarSign, AlertCircle, CheckCircle, Clock,
 import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Invoice, InvoiceStatus, InvoiceType, InvoiceLineItem } from '../types/staffing';
+import type { Invoice, InvoiceStatus, InvoiceType, InvoiceLineItem } from '../types/staffing';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';

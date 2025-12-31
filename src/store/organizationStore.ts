@@ -142,7 +142,16 @@ export const useOrganizationStore = create<OrganizationState>()(
       clearOrganization: () => set({ organization: null, isLoading: false, error: null }),
       hasFeature: (feature) => {
         const org = get().organization;
-        return org?.planLimits.features.includes(feature) ?? false;
+        // Merge persisted plan limits with latest defaults so new features are not locked out
+        if (!org) {
+          return PLAN_LIMITS.pro.features.includes(feature);
+        }
+
+        const baseFeatures = PLAN_LIMITS[org.planTier]?.features ?? [];
+        const orgFeatures = org.planLimits?.features ?? [];
+        const merged = new Set([...baseFeatures, ...orgFeatures]);
+
+        return merged.has(feature);
       },
     }),
     {

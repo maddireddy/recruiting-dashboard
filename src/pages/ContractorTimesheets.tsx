@@ -3,7 +3,7 @@ import { Plus, Send, CheckCircle, AlertCircle, Clock, DollarSign, FileText } fro
 import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { ContractorTimesheet, ContractorTimesheetEntry, ContractorTimesheetStatus } from '../types/staffing';
+import type { ContractorTimesheet, ContractorTimesheetEntry, ContractorTimesheetStatus } from '../types/staffing';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';

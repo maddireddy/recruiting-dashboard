@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Send, Plus, Search, Users, Hash, AtSign, Paperclip, Smile, MoreVertical, Phone, Video } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
-import { ChatChannel, ChatMessage, UserPresence, ChatChannelType } from '../types/staffing';
+import type { ChatChannel, ChatMessage, UserPresence, ChatChannelType } from '../types/staffing';
 import { useOrganizationStore } from '../store/organizationStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';

@@ -3,7 +3,7 @@ import { UserPlus, Search, Filter, Clock, Phone, Mail, Calendar, FileText, Trend
 import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { CandidateAssignment, CandidateActivity, RecruiterWorkload } from '../types/staffing';
+import type { CandidateAssignment, CandidateActivity, RecruiterWorkload } from '../types/staffing';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
 
