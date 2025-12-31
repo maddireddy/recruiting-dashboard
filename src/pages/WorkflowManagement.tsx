@@ -410,6 +410,7 @@ export default function WorkflowManagementPage() {
               </div>
             </CardContent>
           </Card>
+        ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {activeWorkflows.map((workflow) => (
               <WorkflowCard
@@ -418,8 +419,6 @@ export default function WorkflowManagementPage() {
                 onUninstall={handleUninstallWorkflow}
               />
             ))}
-          </div>
-            })}
           </div>
         )}
       </div>
