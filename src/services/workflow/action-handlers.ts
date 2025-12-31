@@ -19,7 +19,7 @@ export interface ActionHandler {
  * Email Action Handler
  * Sends emails using the backend email service
  */
-export class EmailActionHandler implements ActionHandler {
+class EmailActionHandler implements ActionHandler {
   async execute(action: WorkflowAction, instance: WorkflowInstance): Promise<void> {
     try {
       const { recipients, template, subject, body } = action.config;
@@ -71,7 +71,7 @@ export class EmailActionHandler implements ActionHandler {
  * Notification Action Handler
  * Creates in-app notifications
  */
-export class NotificationActionHandler implements ActionHandler {
+class NotificationActionHandler implements ActionHandler {
   async execute(action: WorkflowAction, instance: WorkflowInstance): Promise<void> {
     try {
       const { template, recipients, title, message } = action.config;
@@ -125,7 +125,7 @@ export class NotificationActionHandler implements ActionHandler {
  * Webhook Action Handler
  * Triggers external webhooks
  */
-export class WebhookActionHandler implements ActionHandler {
+class WebhookActionHandler implements ActionHandler {
   async execute(action: WorkflowAction, instance: WorkflowInstance): Promise<void> {
     try {
       const { webhookUrl, method = 'POST', headers = {} } = action.config;
@@ -193,7 +193,7 @@ export class WebhookActionHandler implements ActionHandler {
  * Task Creation Action Handler
  * Creates tasks in the task management system
  */
-export class TaskActionHandler implements ActionHandler {
+class TaskActionHandler implements ActionHandler {
   async execute(action: WorkflowAction, instance: WorkflowInstance): Promise<void> {
     try {
       const { title, description, assignedTo, dueDate, priority } = action.config;
