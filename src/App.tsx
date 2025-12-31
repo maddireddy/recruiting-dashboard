@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Suspense, lazy } from 'react';
+import { IntercomProvider } from 'react-use-intercom';
 import SemanticSearch from './pages/SemanticSearch';
 import AiLab from './pages/AiLab';
 import TalentPoolMatching from './pages/TalentPoolMatching';
@@ -11,6 +12,7 @@ import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './store/authStore';
 import Loader from './components/ui/Loader';
 import { SubdomainRouter } from './components/routing/SubdomainRouter';
+import { INTERCOM_APP_ID } from './services/support.service';
 import ClientsPage from './pages/Clients';
 import InterviewsPage from './pages/Interviews';
 import EmailTemplatesPage from './pages/EmailTemplates';
@@ -126,12 +128,13 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <SubdomainRouter>
-          <ErrorBoundary>
-            <Suspense fallback={<Loader /> }>
-              <Routes>
+    <IntercomProvider appId={INTERCOM_APP_ID} autoBoot={false}>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <SubdomainRouter>
+            <ErrorBoundary>
+              <Suspense fallback={<Loader /> }>
+                <Routes>
             {/* Public Routes */}
             <Route element={<AuthLayout />}>
               <Route path="/login" element={<Login />} />
@@ -254,14 +257,15 @@ function App() {
               {/* Public booking route for self-scheduling */}
               <Route path="/schedule/:linkId" element={<SlotSelector />} />
             </Route>
-              </Routes>
-            </Suspense>
-          </ErrorBoundary>
-        </SubdomainRouter>
-      </BrowserRouter>
-      <ReactQueryDevtoolsBridge />
-      <Toaster position="top-right" />
-    </QueryClientProvider>
+                </Routes>
+              </Suspense>
+            </ErrorBoundary>
+          </SubdomainRouter>
+        </BrowserRouter>
+        <ReactQueryDevtoolsBridge />
+        <Toaster position="top-right" />
+      </QueryClientProvider>
+    </IntercomProvider>
   );
 }
 

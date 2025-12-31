@@ -6,6 +6,8 @@
  * - Production: Integration with error tracking (Sentry, CloudWatch, etc.)
  */
 
+import { captureException, captureMessage, addBreadcrumb } from './monitoring';
+
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 interface LogContext {
@@ -153,25 +155,14 @@ class Logger {
     message: string,
     context?: LogContext
   ): void {
-    // TODO: Implement integration with logging service
-    // Example: CloudWatch Logs, Datadog, LogRocket, etc.
-
     try {
-      // Placeholder for production logging integration
-      // In a real implementation, you would send this to your logging service:
-      //
-      // await fetch('/api/logs', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     level,
-      //     message,
-      //     context,
-      //     timestamp: new Date().toISOString(),
-      //     userAgent: navigator.userAgent,
-      //     url: window.location.href,
-      //   }),
-      // });
+      // Send to Sentry as breadcrumb for context
+      addBreadcrumb(level, message, context);
+
+      // For warnings and errors, also capture as message
+      if (level === 'warn' || level === 'error') {
+        captureMessage(message, level === 'warn' ? 'warning' : 'error', context);
+      }
     } catch (err) {
       // Fail silently - don't let logging break the app
       console.error('Failed to send log to logging service:', err);
@@ -187,31 +178,24 @@ class Logger {
     error?: Error | unknown,
     context?: LogContext
   ): void {
-    // TODO: Implement integration with error tracking service
-
     try {
-      // Placeholder for Sentry integration
-      // In a real implementation with Sentry installed:
-      //
-      // import * as Sentry from '@sentry/react';
-      //
-      // if (error instanceof Error) {
-      //   Sentry.captureException(error, {
-      //     contexts: {
-      //       custom: context,
-      //     },
-      //     tags: {
-      //       message,
-      //     },
-      //   });
-      // } else {
-      //   Sentry.captureMessage(message, {
-      //     level: 'error',
-      //     contexts: {
-      //       custom: { error, ...context },
-      //     },
-      //   });
-      // }
+      // Send to Sentry error tracking
+      if (error instanceof Error) {
+        // Capture as exception with full stack trace
+        captureException(error, {
+          message,
+          ...context,
+        });
+      } else if (error) {
+        // Capture as message if not an Error object
+        captureMessage(message, 'error', {
+          error,
+          ...context,
+        });
+      } else {
+        // No error object, just capture the message
+        captureMessage(message, 'error', context);
+      }
     } catch (err) {
       // Fail silently
       console.error('Failed to send error to tracking service:', err);
