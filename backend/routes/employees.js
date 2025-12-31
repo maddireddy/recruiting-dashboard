@@ -10,6 +10,9 @@ router.use(authenticateToken);
 // Get next available employee ID
 router.get('/next-id', employeeController.getNextEmployeeId);
 
+// Get employee statistics
+router.get('/stats', checkPermission('employees.view'), employeeController.getStats);
+
 // Export employees
 router.get('/export', checkPermission('employees.export'), employeeController.exportEmployees);
 

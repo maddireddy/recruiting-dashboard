@@ -380,3 +380,54 @@ exports.getDepartmentEmployees = async (req, res) => {
     });
   }
 };
+
+/**
+ * Get department statistics
+ * GET /api/v1/departments/stats
+ */
+exports.getStats = async (req, res) => {
+  try {
+    const { organizationId } = req.user;
+
+    const [total, active, topLevel, departments] = await Promise.all([
+      Department.countDocuments({ organizationId }),
+      Department.countDocuments({ organizationId, status: 'active' }),
+      Department.countDocuments({ organizationId, parent: null }),
+      Department.find({ organizationId }).select('name'),
+    ]);
+
+    // Get employee counts per department
+    const byDepartment = await Promise.all(
+      departments.map(async (dept) => {
+        const employeeCount = await Employee.countDocuments({
+          'employment.department': dept._id,
+          organizationId,
+        });
+        return {
+          name: dept.name,
+          employeeCount,
+        };
+      })
+    );
+
+    const totalEmployees = byDepartment.reduce((sum, d) => sum + d.employeeCount, 0);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        total,
+        active,
+        topLevel,
+        totalEmployees,
+        byDepartment: byDepartment.filter(d => d.employeeCount > 0),
+      },
+    });
+  } catch (error) {
+    console.error('Get department stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get department statistics',
+      error: error.message,
+    });
+  }
+};

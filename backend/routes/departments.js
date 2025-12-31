@@ -9,6 +9,9 @@ router.use(authenticateToken);
 // Get department hierarchy
 router.get('/hierarchy', departmentController.getDepartmentHierarchy);
 
+// Get department statistics
+router.get('/stats', departmentController.getStats);
+
 // Get all departments
 router.get('/', departmentController.getDepartments);
 

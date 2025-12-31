@@ -753,3 +753,73 @@ exports.exportEmployees = async (req, res) => {
     });
   }
 };
+
+/**
+ * Get employee statistics
+ * GET /api/v1/employees/stats
+ */
+exports.getStats = async (req, res) => {
+  try {
+    const { organizationId } = req.user;
+
+    const [total, active, inactive, onLeave, byDepartment, byRole] = await Promise.all([
+      Employee.countDocuments({ organizationId }),
+      Employee.countDocuments({ organizationId, 'employment.status': 'active' }),
+      Employee.countDocuments({ organizationId, 'employment.status': 'inactive' }),
+      Employee.countDocuments({ organizationId, 'employment.status': 'on-leave' }),
+
+      // Group by department
+      Employee.aggregate([
+        { $match: { organizationId } },
+        {
+          $lookup: {
+            from: 'departments',
+            localField: 'employment.department',
+            foreignField: '_id',
+            as: 'deptInfo',
+          },
+        },
+        { $unwind: { path: '$deptInfo', preserveNullAndEmptyArrays: true } },
+        {
+          $group: {
+            _id: '$deptInfo.name',
+            count: { $sum: 1 },
+          },
+        },
+        { $match: { _id: { $ne: null } } },
+        { $sort: { count: -1 } },
+      ]),
+
+      // Group by role
+      Employee.aggregate([
+        { $match: { organizationId } },
+        {
+          $group: {
+            _id: '$access.role',
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { count: -1 } },
+      ]),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        total,
+        active,
+        inactive,
+        onLeave,
+        byDepartment: byDepartment.map((d) => ({ department: d._id, count: d.count })),
+        byRole: byRole.map((r) => ({ role: r._id, count: r.count })),
+      },
+    });
+  } catch (error) {
+    console.error('Get employee stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get employee statistics',
+      error: error.message,
+    });
+  }
+};
