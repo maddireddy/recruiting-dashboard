@@ -35,11 +35,15 @@ const onboardingRoutes = require('./routes/onboarding');
 const employeeRoutes = require('./routes/employees');
 const departmentRoutes = require('./routes/departments');
 const careerPageRoutes = require('./routes/careerPages');
+const notificationRoutes = require('./routes/notifications');
+const emailTemplateRoutes = require('./routes/emailTemplates');
 
 app.use('/api/v1/onboarding', onboardingRoutes);
 app.use('/api/v1/employees', employeeRoutes);
 app.use('/api/v1/departments', departmentRoutes);
 app.use('/api/v1/career-pages', careerPageRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/email-templates', emailTemplateRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -96,6 +100,8 @@ app.listen(PORT, () => {
 ║   - GET/POST /api/v1/employees/*             ║
 ║   - GET/POST /api/v1/departments/*           ║
 ║   - GET/PUT /api/v1/career-pages/*           ║
+║   - GET/PUT /api/v1/notifications/*          ║
+║   - GET/POST /api/v1/email-templates/*       ║
 ║                                              ║
 ║   Health: http://localhost:${PORT}/health    ║
 ║                                              ║

@@ -137,6 +137,73 @@ exports.sendWelcomeEmail = async (email, data) => {
  */
 exports.generateTemporaryPassword = generateStrongPassword;
 
+/**
+ * Send email (generic)
+ */
+exports.sendEmail = async ({ to, subject, text, html, from, fromName, replyTo, attachments }) => {
+  try {
+    console.log(`[EmailService] Sending email to: ${to}`);
+    console.log(`[EmailService] Subject: ${subject}`);
+
+    // In production: integrate with SendGrid, AWS SES, etc.
+    // For now, just log the email
+
+    return {
+      success: true,
+      messageId: `msg-${Date.now()}`,
+    };
+  } catch (error) {
+    console.error('[EmailService] Send email error:', error);
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+};
+
+/**
+ * Send email using template
+ */
+exports.sendTemplateEmail = async ({ to, templateId, variables, organizationId }) => {
+  try {
+    const EmailTemplate = require('../models/EmailTemplate');
+
+    const template = await EmailTemplate.findOne({
+      _id: templateId,
+      organizationId,
+      status: 'active',
+    });
+
+    if (!template) {
+      throw new Error('Email template not found or not active');
+    }
+
+    const rendered = template.render(variables);
+
+    const result = await this.sendEmail({
+      to,
+      subject: rendered.subject,
+      text: rendered.body,
+      html: rendered.bodyHtml,
+      from: template.fromEmail,
+      fromName: template.fromName,
+      replyTo: template.replyTo,
+    });
+
+    if (result.success) {
+      await template.incrementUsage();
+    }
+
+    return result;
+  } catch (error) {
+    console.error('[EmailService] Send template email error:', error);
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+};
+
 // Helper Functions
 
 function generateStrongPassword() {
