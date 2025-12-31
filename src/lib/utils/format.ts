@@ -42,9 +42,9 @@ export function formatPhoneNumber(phone: string): string {
     return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
   }
 
-  // Format as +X XXX XXX-XXXX for 11-digit international numbers
+  // Format as X (XXX) XXX-XXXX for 11-digit international numbers starting with 1
   if (cleaned.length === 11 && cleaned.startsWith('1')) {
-    return `+${cleaned[0]} (${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7)}`;
+    return `${cleaned[0]} (${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7)}`;
   }
 
   // Return original if format not recognized
@@ -52,23 +52,23 @@ export function formatPhoneNumber(phone: string): string {
 }
 
 /**
- * Format a percentage
+ * Format a percentage (accepts decimal value, e.g., 0.5 = 50%)
  */
-export function formatPercentage(value: number, decimals: number = 1): string {
-  return `${value.toFixed(decimals)}%`;
+export function formatPercentage(value: number, decimals: number = 0): string {
+  return `${(value * 100).toFixed(decimals)}%`;
 }
 
 /**
  * Format file size in human-readable format
  */
 export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 Bytes';
+  if (bytes === 0) return '0 B';
 
   const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  return (bytes / Math.pow(k, i)).toFixed(1) + ' ' + sizes[i];
 }
 
 /**
@@ -116,4 +116,11 @@ export function formatList(items: string[]): string {
   if (items.length === 2) return `${items[0]} and ${items[1]}`;
 
   return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
+}
+
+/**
+ * Format a number with thousand separators
+ */
+export function formatNumber(num: number): string {
+  return new Intl.NumberFormat('en-US').format(num);
 }
